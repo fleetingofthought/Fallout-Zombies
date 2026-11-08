@@ -1,4 +1,6 @@
-![New Vegas Zombies](assets/logo.png)
+<p align="center">
+  <img src="assets/logo.png" alt="Fallout Zombies" width="450">
+</p>
 
 # Fallout Zombies
 
