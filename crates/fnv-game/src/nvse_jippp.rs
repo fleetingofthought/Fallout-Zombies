@@ -129,6 +129,16 @@ fn weapon_degradation(g: &Game, weapon: FormId, ammo: Option<FormId>) -> f64 {
     crate::nvse::record_float(v.max(0.0))
 }
 
+/// An extender call made by a script of `plugin` (lower case, e.g. "mymod.esp"): the
+/// runtime node lists keep and clear entries by the calling plugin, which a query or the
+/// console does not have. For tests and for callers that know their plugin.
+pub fn call_as(g: &mut Game, plugin: &str, name: &str, subject: Option<FormId>, args: &[XVal]) -> Option<Result<XVal, String>> {
+    g.other.plugin = plugin.to_ascii_lowercase();
+    let r = crate::nvse::call(g, &RunCtx::default(), &name.to_ascii_lowercase(), subject, args);
+    g.other.plugin.clear();
+    r
+}
+
 /// The functions of this file; `None` for any other name.
 pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormId>, args: &[XVal]) -> Option<Result<XVal, String>> {
     let zero = XVal::Num(0.0);
@@ -150,10 +160,11 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
             let Some(model) = crate::nif_blocks::model_of(g, src) else { return Some(Ok(zero)) };
             let entry = format!("{node}|{model}");
             let list = g.jippp.nodes.entry(target).or_default();
-            let had = list.iter().any(|n| n.attached && n.spec == entry);
             list.retain(|n| !(n.attached && n.spec == entry));
+            // A remove succeeds for a form with a model whether or not the entry was
+            // there [observed: jipppln, a second remove gives 1 again].
             if mode & 1 == 0 {
-                return Some(Ok(XVal::Num(f64::from(u8::from(had)))));
+                return Some(Ok(XVal::Num(1.0)));
             }
             let plugin = g.other.plugin.clone();
             list.push(RuntimeNode { attached: true, spec: entry, plugin: plugin.clone() });
@@ -179,6 +190,12 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // both forms being valid, an empty source too].
         "copyruntimenodes" => {
             let (Some(to), Some(from)) = (form(args, 0), form(args, 1)) else { return Some(Ok(zero)) };
+            // A script of no plugin (the console, a runtime-compiled script) copies
+            // nothing: 0 [observed: jipppln, from the probe's own runtime-compiled script;
+            // hypothesis: the reason, as ClearRuntimeNodes's].
+            if g.other.plugin.is_empty() {
+                return Some(Ok(zero));
+            }
             if !g.data.sigs.contains_key(&to) && crate::functions::base_of(g, to).is_none() {
                 return Some(Ok(zero));
             }
@@ -196,6 +213,12 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         "clearruntimenodes" => {
             let Some(f) = form(args, 0) else { return Some(Ok(zero)) };
             let plugin = g.other.plugin.clone();
+            // A script of no plugin owns no entries: 0, nothing cleared [observed:
+            // jipppln, after the probe's own InsertNode; hypothesis: the entries count as
+            // no mod's].
+            if plugin.is_empty() {
+                return Some(Ok(zero));
+            }
             let list = g.jippp.nodes.entry(f).or_default();
             let gone: Vec<RuntimeNode> = list.iter().filter(|n| n.plugin == plugin).cloned().collect();
             list.retain(|n| n.plugin != plugin);
@@ -209,8 +232,9 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
             XVal::Num(gone.len() as f64)
         }
         // `object query [mode]`: 2 an AttachModel entry, 1 an InsertNode entry, of exactly
-        // that spec; 0 any entry whose spec holds the text [documented: HasRuntimeNode's
-        // modes; hypothesis: mode 0 by default, exact case].
+        // that spec; 0 any entry whose target path (before `|`) holds the text [documented:
+        // HasRuntimeNode's modes, "nodes that contain this path"; observed: jipppln, the
+        // new node's name and "Bip01|" read 0; hypothesis: mode 0 by default, exact case].
         "hasruntimenode" => {
             let Some(f) = form(args, 0) else { return Some(Ok(zero)) };
             let q = text(args, 1);
@@ -219,7 +243,7 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
             let found = match mode {
                 2 => list.iter().any(|n| n.attached && n.spec == q),
                 1 => list.iter().any(|n| !n.attached && n.spec == q),
-                _ => !q.is_empty() && list.iter().any(|n| n.spec.contains(&q)),
+                _ => !q.is_empty() && list.iter().any(|n| n.spec.split('|').next().unwrap_or("").contains(&q)),
             };
             XVal::Num(f64::from(u8::from(found)))
         }
@@ -267,6 +291,10 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
                     (XKey::Str("Flags".into()), XVal::Num(0.0)),
                 ];
                 out.push((XKey::Num(i as f64), XVal::Array(g.ext.new_array(ArrayKind::StringMap, m))));
+            }
+            // No effect to list gives no array [observed: jipppln, ar_Size −1].
+            if out.is_empty() {
+                return Some(Ok(XVal::Array(0)));
             }
             XVal::Array(g.ext.new_array(ArrayKind::List, out))
         }
@@ -330,15 +358,30 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
             if !(0..=1).contains(&ty) {
                 return Some(Ok(XVal::Num(crate::script_input::UNBOUND)));
             }
-            return crate::nvse::call(g, ctx, "getcontrol", subject, &[args.first().cloned().unwrap_or(XVal::Num(-1.0)), XVal::Num(ty as f64)]);
+            let r = crate::nvse::call(g, ctx, "getcontrol", subject, &[args.first().cloned().unwrap_or(XVal::Num(-1.0)), XVal::Num(ty as f64)]);
+            // A control with no key reads 255 [observed: jipppln, Attack's key]; no mouse
+            // button stays −1 [observed].
+            if ty == 0 {
+                if let Some(Ok(XVal::Num(x))) = r {
+                    if x < 0.0 {
+                        return Some(Ok(XVal::Num(255.0)));
+                    }
+                }
+            }
+            return r;
         }
         // The engine drops the reference to the floor beneath it [documented:
         // ClampToGround]: the game knows no ground, so the call waits for the engine
         // (`Game::take_clamp_requests`; follow-up: the engine does not take it yet).
         "clamptoground" => {
-            if let Some(r) = subject.filter(|&r| crate::functions::base_of(g, r).is_some()) {
-                crate::nvse_vheyes::queue_once(&mut g.jippp.clamp, r);
-            }
+            // A base form as the calling object stops the script [observed: jipppln
+            // clamp.base, "script call failed"]: worded as the VM's NoReference, which
+            // stops non-strict runs too. A weapon is its own base (`base_of`), so the
+            // base must differ from the form.
+            let Some(r) = subject.filter(|&r| crate::functions::base_of(g, r).is_some_and(|b| b != r)) else {
+                return Some(Err(fnv_script::vm::VmError::NoReference(name.to_string()).to_string()));
+            };
+            crate::nvse_vheyes::queue_once(&mut g.jippp.clamp, r);
             zero
         }
         // [decision: NVForever reckons the carried weight afresh at each read

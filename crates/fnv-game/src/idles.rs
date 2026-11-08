@@ -59,6 +59,8 @@ pub enum IdleSource {
     Stimpak,
     /// An actor picks up a weapon or ammunition it fetched (`crate::rearm`).
     PickUp,
+    /// An actor with a live explosive planted in its pocket panics ([`Game::panic_idle`]).
+    Panic,
 }
 
 /// Which fidgets of the idle tree are played: the branch below a node whose conditions
@@ -334,6 +336,46 @@ impl<'a> Game<'a> {
         roots.into_iter().find(|r| !held_back(*r) && self.idle_allowed(actor, *r))
     }
 
+    /// The panic idle of `actor`, with a live explosive in its pocket, from the idle tree,
+    /// or `None` (docs/spec-notes/pickpocket.md §5): the roots of the actor's own `folder`
+    /// in chain order whose conditions name `GetPlantedExplosive == 1`, gone into as for
+    /// [`Game::pick_idle`] (the first leaf with a file whose conditions pass; a root that
+    /// is itself such an idle is the pick when its conditions pass) [observed:
+    /// FalloutNV.esm has one, `PanicExplosivePlanted` 0x00042F24 under
+    /// `Characters\_Male\IdleAnims`, whose leaves are `PanicGrenadePlantPA` (GetEquipped
+    /// on a form list, the power armour one) and `PanicGrenadePlant`; no creature folder
+    /// has one, so a creature plays none and only stands; hypothesis: the original's idle
+    /// manager plays it by its conditions while GetPlantedExplosive holds].
+    pub fn panic_idle(&mut self, actor: FormId, folder: &str, held_back: &dyn Fn(FormId) -> bool) -> Option<FormId> {
+        let data = self.data;
+        let folder = folder.to_ascii_lowercase();
+        let roots: Vec<FormId> = data
+            .idle_children
+            .get(&None)
+            .into_iter()
+            .flatten()
+            .copied()
+            .filter(|r| {
+                data.idles.get(r).is_some_and(|d| d.model.as_deref().is_some_and(|m| m.to_ascii_lowercase().starts_with(&folder)) && names(d.conditions.as_deref().unwrap_or_default(), GET_PLANTED_EXPLOSIVE, 1.0))
+            })
+            .collect();
+        for root in roots {
+            if !self.idle_allowed(actor, root) {
+                continue;
+            }
+            if !data.idle_children.contains_key(&Some(root)) {
+                if data.idles[&root].has_file() && !held_back(root) {
+                    return Some(root);
+                }
+                continue;
+            }
+            if let Some((leaf, _)) = self.first_leaf(actor, root, None, true, held_back) {
+                return Some(leaf);
+            }
+        }
+        None
+    }
+
     /// The idle `actor` plays for a script's `PickIdle`, or `None`: the idle tree walked
     /// as for an NPC's fidget ([`Game::fidget`]: the roots of the actor's own `folder` in
     /// chain order, the first node whose conditions pass gone into, the first leaf with
@@ -520,7 +562,8 @@ impl<'a> Game<'a> {
     /// Category:Dialogue, each response can name an idle for the speaker and one for the
     /// listener].
     pub(crate) fn ask_response_idles(&mut self, speaker: FormId, listener: Option<FormId>, info: FormId, response: usize) {
-        let Some(r) = self.data.infos.get(&info).and_then(|d| d.responses.get(response)) else { return };
+        let dv = self.dialogue_view();
+        let Some(r) = dv.info(&info).and_then(|d| d.responses.get(response)) else { return };
         let (s, l) = (r.speaker_idle, r.listener_idle);
         if let Some(idle) = s {
             self.ask_idle(speaker, idle, IdleSource::Speaker);
@@ -611,6 +654,8 @@ const GET_SITTING: u16 = 0x109F;
 const GET_SLEEPING: u16 = 0x1031;
 /// Opcode of `GetIsAlerted` (`functions::mod`).
 const GET_IS_ALERTED: u16 = 0x105B;
+/// Opcode of `GetPlantedExplosive` (`functions::mod`).
+const GET_PLANTED_EXPLOSIVE: u16 = 0x11AC;
 /// The procedure of a fleeing actor, 16 FLEE (`functions::ai_state`).
 const FLEE_PROCEDURE: f64 = 16.0;
 

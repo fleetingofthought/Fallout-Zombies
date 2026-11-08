@@ -199,7 +199,10 @@ velocities [design, 2026-10-21]:
 
 At rest it is **held** (`PhysWorld::set_ragdoll_at_rest`): its bodies become fixed, so it
 lies still, costs nothing, and still stops rays and loose objects. A hit's shove or a
-blast within reach makes it a ragdoll again. Walking into it or rolling a barrel onto it
+blast within reach makes it a ragdoll again. Roused by a hit's shove alone it moves for
+at most 1 s before it is held again (`MAX_AWAKE_SHOVED`), not 3 s: a shot's shove has
+fallen back within half a second [design: owner-review item 51, 2026-11-08; a cost guard
+for battles, where corpses are shot again often]. Walking into it or rolling a barrel onto it
 does not.
 
 **Memory.** The bone poses of a ragdoll at rest are remembered by reference. A ragdoll

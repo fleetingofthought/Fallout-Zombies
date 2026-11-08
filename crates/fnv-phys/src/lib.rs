@@ -44,7 +44,7 @@ pub mod world;
 
 pub use actors::{HitVolume, PartCapsule};
 pub use arrival::Arrival;
-pub use character::{Character, CharacterInput, CharacterParams, CharacterStep, Push, SpotRefused};
+pub use character::{Character, CharacterInput, CharacterParams, CharacterStep, Push, SpotRefused, STUCK_RETRY};
 pub use convert::ConvertError;
 pub use grab::{Grip, GripOn, HoldParams};
 pub use layers::LayerSet;

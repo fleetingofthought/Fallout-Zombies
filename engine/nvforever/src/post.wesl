@@ -70,15 +70,16 @@ fn blur(uv: vec2<f32>, dir: vec2<f32>) -> vec4<f32> {
     return blur_step(uv, dir, 2.0);
 }
 
-// The HDR bright pass's blur: its step in `post.params.w` (post.rs `BrightPass`).
+// The HDR bright pass's blur: its step in `-post.params.w`, negative so that the shared
+// composite does not read it as a sharpening strength (post.rs `BrightPass`).
 @fragment
 fn blur_across_fine(in: FullscreenVertexOutput) -> @location(0) vec4<f32> {
-    return blur_step(in.uv, vec2(1.0, 0.0), post.params.w);
+    return blur_step(in.uv, vec2(1.0, 0.0), -post.params.w);
 }
 
 @fragment
 fn blur_down_fine(in: FullscreenVertexOutput) -> @location(0) vec4<f32> {
-    return blur_step(in.uv, vec2(0.0, 1.0), post.params.w);
+    return blur_step(in.uv, vec2(0.0, 1.0), -post.params.w);
 }
 
 fn blur_step(uv: vec2<f32>, dir: vec2<f32>, step: f32) -> vec4<f32> {

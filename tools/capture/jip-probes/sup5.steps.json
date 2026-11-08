@@ -1,0 +1,204 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "sup5",
+ "title": "sup5, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (ExcelReadFloat \"NVFProbe\\sup5\\none\" 0 0 0) (ExcelGetWorkSheetCount \"NVFProbe\\sup5\\none\") (ExcelGetRowCount \"NVFProbe\\sup5\\none\" 0) (ExcelGetCellValueType \"NVFProbe\\sup5\\none\" 0 0 0))\nEnd\n",
+   "label": "sup5.xl.missing",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"[%z]\" (ExcelReadString \"NVFProbe\\sup5\\none\" 0 0 0))\nEnd\n",
+   "label": "sup5.xl.missing.string",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := ExcelWriteFloat \"NVFProbe\\sup5\\book\" 0 0 0 10\nlet fB := ExcelWriteString \"NVFProbe\\sup5\\book\" 0 4 1 \"MyText\"\nSetFunctionValue (sv_Construct \"%g %g\" fA fB)\nEnd\n",
+   "label": "sup5.xl.write",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g [%z] %g %g %g\" (ExcelReadFloat \"NVFProbe\\sup5\\book\" 0 0 0) (ExcelReadString \"NVFProbe\\sup5\\book\" 0 4 1) (ExcelGetCellValueType \"NVFProbe\\sup5\\book\" 0 0 0) (ExcelGetCellValueType \"NVFProbe\\sup5\\book\" 0 4 1) (ExcelGetCellValueType \"NVFProbe\\sup5\\book\" 0 1 1))\nEnd\n",
+   "label": "sup5.xl.read",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nExcelWriteFloat \"NVFProbe\\sup5\\book\" 0 1 0 3.25\nExcelWriteString \"NVFProbe\\sup5\\book\" 0 2 0 \"\"\nSetFunctionValue (sv_Construct \"%g %g\" (ExcelGetCellValueType \"NVFProbe\\sup5\\book\" 0 1 0) (ExcelGetCellValueType \"NVFProbe\\sup5\\book\" 0 2 0))\nEnd\n",
+   "label": "sup5.xl.types",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g [%z]\" (ExcelReadFloat \"NVFProbe\\sup5\\book\" 0 4 1) (ExcelReadString \"NVFProbe\\sup5\\book\" 0 0 0))\nEnd\n",
+   "label": "sup5.xl.cross",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g %g %g\" (ExcelGetRowCount \"NVFProbe\\sup5\\book\" 0) (ExcelGetColCount \"NVFProbe\\sup5\\book\" 0) (ExcelGetWorkSheetCount \"NVFProbe\\sup5\\book\"))\nEnd\n",
+   "label": "sup5.xl.counts",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := ExcelWriteFloat \"NVFProbe\\sup5\\book\" 2 0 0 1.5\nSetFunctionValue (sv_Construct \"%g %g [%z] [%z] [%z]\" fA (ExcelGetWorkSheetCount \"NVFProbe\\sup5\\book\") (ExcelSetSheetName \"NVFProbe\\sup5\\book\" 0) (ExcelSetSheetName \"NVFProbe\\sup5\\book\" 1) (ExcelSetSheetName \"NVFProbe\\sup5\\book\" 2))\nEnd\n",
+   "label": "sup5.xl.sheet3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g %g [%z]\" (ExcelGetRowCount \"NVFProbe\\sup5\\book\" 7) (ExcelReadFloat \"NVFProbe\\sup5\\book\" 7 0 0) (ExcelSetSheetName \"NVFProbe\\sup5\\book\" 7))\nEnd\n",
+   "label": "sup5.xl.missing.sheet",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"[%z] [%z]\" (ExcelSetSheetName \"NVFProbe\\sup5\\book\" 1 \"A name far longer than thirty-one letters\") (ExcelSetSheetName \"NVFProbe\\sup5\\book\" 1))\nEnd\n",
+   "label": "sup5.xl.rename",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := ExcelEraseCell \"NVFProbe\\sup5\\book\" 0 4 1\nlet fB := ExcelEraseSheet \"NVFProbe\\sup5\\book\" 2\nSetFunctionValue (sv_Construct \"%g %g %g %g %g\" fA fB (ExcelGetCellValueType \"NVFProbe\\sup5\\book\" 0 4 1) (ExcelGetRowCount \"NVFProbe\\sup5\\book\" 2) (ExcelGetWorkSheetCount \"NVFProbe\\sup5\\book\"))\nEnd\n",
+   "label": "sup5.xl.erase",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aIn := ar_Construct \"array\"\nar_Append aIn 2\nar_Append aIn \"MyString\"\nar_Append aIn 3.5\nar_Append aIn rP\nlet fA := ExcelArrayToFile \"NVFProbe\\sup5\\arr\" 0 0 0 aIn\nSetFunctionValue (sv_Construct \"%g %g [%z] %g [%z] %g\" fA (ExcelReadFloat \"NVFProbe\\sup5\\arr\" 0 0 0) (ExcelReadString \"NVFProbe\\sup5\\arr\" 0 1 0) (ExcelReadFloat \"NVFProbe\\sup5\\arr\" 0 2 0) (ExcelReadString \"NVFProbe\\sup5\\arr\" 0 3 0) (ExcelGetCellValueType \"NVFProbe\\sup5\\arr\" 0 3 0))\nEnd\n",
+   "label": "sup5.xl.arr.to",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aIn := ar_Construct \"array\"\nar_Append aIn 7\nar_Append aIn 8\nlet fA := ExcelArrayToFile \"NVFProbe\\sup5\\arr\" 1 0 0 aIn 1\nSetFunctionValue (sv_Construct \"%g %g %g\" fA (ExcelReadFloat \"NVFProbe\\sup5\\arr\" 1 0 1) (ExcelGetRowCount \"NVFProbe\\sup5\\arr\" 1))\nEnd\n",
+   "label": "sup5.xl.arr.row",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nExcelWriteString \"NVFProbe\\sup5\\arr\" 0 6 0 \"*FalloutNV.esm:000014\"\nlet aList := ExcelArrayFromFile \"NVFProbe\\sup5\\arr\" 0 0 0\nSetFunctionValue (sv_Construct \"%g %g %z %g %z %i\" (ar_Size aList) (aList[0]) (aList[1]) (aList[2]) (aList[3]) (aList[(ar_Size aList) - 1]))\nEnd\n",
+   "label": "sup5.xl.arr.from",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := ExcelArrayFromFile \"NVFProbe\\sup5\\none\" 0 0 0\nSetFunctionValue (ar_Size aList)\nEnd\n",
+   "label": "sup5.xl.arr.missing",
+   "field": "value"
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aIn := ar_Construct \"array\"\nar_Append aIn (sv_Construct \"{%qname%q:%qJoe%q,%qlevel%q:7,%qinv%q:[1,%qtwo%q],%qpos%q:{%qx%q:1.5}}\")\nSetFunctionValue (pWriteFile \"NVFProbe\\sup5\\probe.json\" aIn)\nEnd\n",
+   "label": "sup5.json.write",
+   "field": "value"
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (JSONIsFileValid \"NVFProbe\\sup5\\probe.json\") (JSONIsFileValid \"NVFProbe\\sup5\\none.json\") (JSONIsFileValid \"NVFProbe\\sup5\\book.xls\") (JSONIsFileValid \"..\\NVFProbe\\probe.json\"))\nEnd\n",
+   "label": "sup5.json.valid",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := JSONGetValue \"NVFProbe\\sup5\\probe.json\" \"name\" 0\nlet fA := ar_Size aList\nif fA > 0\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nelse\nSetFunctionValue (sv_Construct \"%g\" fA)\nendif\nEnd\n",
+   "label": "sup5.json.name",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := JSONGetValue \"NVFProbe\\sup5\\probe.json\" \"level\" 0\nlet fA := ar_Size aList\nif fA > 0\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nelse\nSetFunctionValue (sv_Construct \"%g\" fA)\nendif\nEnd\n",
+   "label": "sup5.json.level",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := JSONGetValue \"NVFProbe\\sup5\\probe.json\" \"inv\" 1\nlet fA := ar_Size aList\nif fA > 0\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nelse\nSetFunctionValue (sv_Construct \"%g\" fA)\nendif\nEnd\n",
+   "label": "sup5.json.inv",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := JSONGetValue \"NVFProbe\\sup5\\probe.json\" \"pos\" 0\nSetFunctionValue (sv_Construct \"%g %g\" (ar_Size aList) (aList[\"x\"]))\nEnd\n",
+   "label": "sup5.json.pos",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := JSONGetValue \"NVFProbe\\sup5\\probe.json\" \"pos.x\" 0\nlet fA := ar_Size aList\nif fA > 0\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nelse\nSetFunctionValue (sv_Construct \"%g\" fA)\nendif\nEnd\n",
+   "label": "sup5.json.path",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := JSONGetValue \"NVFProbe\\sup5\\probe.json\" \"nope\" 0\nSetFunctionValue (ar_Size aList)\nEnd\n",
+   "label": "sup5.json.missing",
+   "field": "value"
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g %g\" (GetFileSize \"NVFProbe\\sup5\\probe.json\") (GetFileSize \"NVFProbe\\sup5\\none.txt\"))\nEnd\n",
+   "label": "sup5.file.size",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := GetFileTime \"NVFProbe\\sup5\\probe.json\" 2\nlet fA := ar_Size aList\nSetFunctionValue (sv_Construct \"%g|%g|%g\" fA (aList[0]) (aList[1]))\nEnd\n",
+   "label": "sup5.file.time",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := GetFileTime \"NVFProbe\\sup5\\none.txt\" 2\nSetFunctionValue (ar_Size aList)\nEnd\n",
+   "label": "sup5.file.time.missing",
+   "field": "value"
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet sText := GetFileTimeSTR \"NVFProbe\\sup5\\probe.json\" 2 0\nSetFunctionValue (sv_Construct \"%g %g [%z]\" (sv_Length sText) (sv_Find \"/\" sText) (GetFileTimeSTR \"NVFProbe\\sup5\\none.txt\" 2 0))\nEnd\n",
+   "label": "sup5.file.timestr",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nDumpLoadOrder\nlet aList := pReadFile \"SUPNVSE.log\"\nlet fA := ar_Size aList\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nEnd\n",
+   "label": "sup5.dump.lo",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nCaptureScreenshotAlt \"NVFProbe\" \"shot\" 0 100 0 50 4 1 0\nSetFunctionValue 1\nEnd\n",
+   "label": "sup5.shot.take",
+   "field": "value"
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetFileSize \"Data\\textures\\SUPScreenshots\\NVFProbe\\shot.png\")\nEnd\n",
+   "label": "sup5.shot.size",
+   "field": "value"
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g %g %g\" (DeleteScreenshot \"NVFProbe\" \"shot.png\") (DeleteScreenshot \"NVFProbe\" \"shot.png\") (DeleteScreenshot \"..\\..\" \"shot.png\"))\nEnd\n",
+   "label": "sup5.shot.delete",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nTextToQRCode \"NVFProbe\\sup5\\qr\" \"I love bacon\" 0\nSetFunctionValue 1\nEnd\n",
+   "label": "sup5.qr.make",
+   "field": "value"
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g %g\" (GetFileSize \"NVFProbe\\sup5\\qr.png\") (GetFileSize \"Data\\NVFProbe\\sup5\\qr.png\"))\nEnd\n",
+   "label": "sup5.qr.where",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (IsProgramRunning \"nvf_no_such_program.exe\")\nEnd\n",
+   "label": "sup5.nothing.program",
+   "field": "value"
+  }
+ ]
+}

@@ -268,7 +268,8 @@ fn result(value: Option<&str>) -> Vec<Subrecord> {
 }
 
 fn info(l: L) -> Vec<u8> {
-    let mut s = vec![sub(b"DATA", vec![l.ty, l.next, l.flags as u8, (l.flags >> 8) as u8]), sub(b"QSTI", u32b(l.quest))];
+    // `LineB01` and so on, for scripts (the dialogue edits' tests).
+    let mut s = vec![sub(b"EDID", z(&format!("Line{:X}", l.id))), sub(b"DATA", vec![l.ty, l.next, l.flags as u8, (l.flags >> 8) as u8]), sub(b"QSTI", u32b(l.quest))];
     s.extend(l.add.iter().map(|t| sub(b"NAME", u32b(*t))));
     for (number, text, emotion) in &l.responses {
         let trdt = [u32b(*emotion), u32b(50), vec![0; 4], vec![*number, 0, 0, 0], u32b(0), vec![0; 4]].concat();
@@ -814,7 +815,11 @@ struct Fixture {
 }
 
 fn fixture() -> Fixture {
-    let plugins = vec![Plugin::parse(&plugin_bytes(), "Talk.esm".into()).unwrap()];
+    fixture_bytes(&plugin_bytes())
+}
+
+fn fixture_bytes(bytes: &[u8]) -> Fixture {
+    let plugins = vec![Plugin::parse(bytes, "Talk.esm".into()).unwrap()];
     let lo = LoadOrder::new(&plugins).unwrap();
     let schema = Schema::load_dir(concat!(env!("CARGO_MANIFEST_DIR"), "/../../schemas/fnv")).unwrap();
     let p = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../schemas/script/functions.json");
@@ -1099,8 +1104,8 @@ fn a_lines_choices_are_offered_and_nothing_else_and_a_topic_without_a_line_is_hi
     // T_HIDDEN's only line fails its condition; the top-level topics are not listed.
     assert_eq!(offered(&g), vec![T_ASK, T_BYE]);
     let c = g.dialogue_choices().to_vec();
-    assert_eq!((c[0].info, c[0].prompt, c[0].chars, g.choice_text(&c[0])), (FormId(B_ASK), true, 7, "Tell me"));
-    assert_eq!((c[1].info, c[1].prompt, c[1].goodbye, g.choice_text(&c[1])), (FormId(C_BYE), false, true, "Bye"));
+    assert_eq!((c[0].info, c[0].prompt, c[0].chars, &*g.choice_text(&c[0])), (FormId(B_ASK), true, 7, "Tell me"));
+    assert_eq!((c[1].info, c[1].prompt, c[1].goodbye, &*g.choice_text(&c[1])), (FormId(C_BYE), false, true, "Bye"));
     assert!(g.events.iter().any(|e| matches!(&e.kind, EventKind::ChoicesOffered { choices, .. } if choices.len() == 2)));
     // Choosing while the actor speaks, or an entry that is not there, is refused.
     assert!(g.choose(5).is_err());
@@ -1135,7 +1140,7 @@ fn a_dim_players_choice_shows_the_topics_dumb_response() {
     g.start_dialogue(actor(), None).unwrap();
     listen(&mut g);
     let c = g.dialogue_choices().to_vec();
-    assert_eq!((c[0].topic, c[0].dumb, g.choice_text(&c[0])), (FormId(T_ASK), false, "Tell me"));
+    assert_eq!((c[0].topic, c[0].dumb, &*g.choice_text(&c[0])), (FormId(T_ASK), false, "Tell me"));
     let dim = fnv_game::dialogue::Choice { dumb: true, ..c[0].clone() };
     assert_eq!(g.choice_text(&dim), "Me ask");
     // A topic without one keeps its text whatever the flag.
@@ -1828,10 +1833,11 @@ fn random_lines_form_a_stack_from_which_one_is_picked() {
 
 #[test]
 fn run_immediately_runs_both_results_when_the_line_is_picked() {
-    let f = fixture();
+    let f = ordered_fixture(E_NOW, None);
     let mut g = at_topic_list(&f);
+    set_global(&mut g, G_OUT, 0.0);
     assert_eq!(pick(&mut g, T_TOP2), FormId(E_NOW));
-    assert_eq!(out(&g), 21.0);
+    assert_eq!(out(&g), 12.0);
     set_global(&mut g, G_OUT, 0.0);
     listen(&mut g);
     assert_eq!(out(&g), 0.0);
@@ -2572,4 +2578,338 @@ fn a_view_of_the_conversation_hears_before_its_result_scripts_run() {
     let heard = listen_in(&mut g);
     g.dialogue_transition();
     assert!(heard.lock().unwrap().is_empty());
+}
+
+/// Authored results append digits: 0 -> 1 -> 12 proves order and counts executions.
+fn ordered_fixture(line: u32, begin: Option<Vec<Subrecord>>) -> Fixture {
+    let digit = |n: &str| unit(0, &set(var(b'G', 1), ex(&[var(b'G', 1), a("10"), a("*"), a(n), a("+")])), &[], &[G_OUT]);
+    let extra = topic(0x980, "OrderTopic", "Order", topic_type::TOPIC, 0, 50.0, vec![L {
+        id: 0xF80, quest: QA, begin_raw: Some(begin.unwrap_or_else(|| digit("1"))), end_raw: Some(digit("2")), ..L::default()
+    }]);
+    let mut f = fixture_bytes(&[plugin_bytes(), top(b"DIAL", &extra)].concat());
+    let scripts = f.data.infos[&FormId(0xF80)].clone();
+    let def = f.data.infos.get_mut(&FormId(line)).unwrap();
+    def.flags |= info_flag::RUN_IMMEDIATELY;
+    def.begin = scripts.begin;
+    def.end = scripts.end;
+    f
+}
+
+fn finish_speech(g: &mut Game) {
+    for _ in 0..20_000 {
+        if g.speech.is_empty() {
+            return;
+        }
+        g.tick();
+    }
+    panic!("speech never ended");
+}
+
+#[test]
+fn immediate_actor_conversation_results_run_in_order_once() {
+    let mut f = ordered_fixture(K_OPEN, None);
+    // End this authored exchange after its opener.
+    f.data.infos.get_mut(&FormId(K_OPEN)).unwrap().goodbye = true;
+    for interrupt in [false, true] {
+        let mut g = game(&f);
+        call(&mut g, 0x1056, NPC1_REF, &[ArgValue::Value(Value::Ref(NPC2_REF)), ArgValue::Value(Value::Ref(T_ARGUE))]);
+        assert_eq!(out(&g), 12.0);
+        assert!(g.speech[0].end_ran && g.speech[0].conversation.is_some());
+        if interrupt {
+            g.world.set_enabled(actor(), false).unwrap();
+        }
+        finish_speech(&mut g);
+        assert_eq!(out(&g), 12.0);
+        assert!(g.events.iter().any(|e| matches!(e.kind, EventKind::LineEnded { info, cut, .. } if info == FormId(K_OPEN) && cut == interrupt)));
+    }
+}
+
+#[test]
+fn immediate_say_to_and_hello_results_survive_completion_interruption_and_load() {
+    for hello in [false, true] {
+        let line = if hello { K_HELLO } else { A_FIRST };
+        let f = ordered_fixture(line, None);
+        for interrupt in [false, true] {
+            let mut g = game(&f);
+            let said = if hello { g.say_hello(actor()) } else { g.say(actor(), Some(FormId::PLAYER_REF), FormId(GREETING), true) };
+            assert_eq!(said, Some(FormId(line)));
+            assert_eq!(out(&g), 12.0);
+            assert!(g.speech[0].end_ran);
+            let snap: GameSnapshot = serde_json::from_str(&serde_json::to_string(&g.snapshot()).unwrap()).unwrap();
+            let world = World::restore(&f.forms, &f.refs, &snap.sim).unwrap();
+            let mut h = Game::restore(&f.data, world, g.cfg, &snap).unwrap();
+            assert_eq!(h.speech, g.speech);
+            for game in [&mut g, &mut h] {
+                if interrupt {
+                    game.world.set_enabled(actor(), false).unwrap();
+                }
+                finish_speech(game);
+                assert_eq!(out(game), 12.0);
+                assert!(game.events.iter().any(|e| matches!(e.kind, EventKind::LineEnded { info, cut, .. } if info == FormId(line) && cut == interrupt)));
+                game.frames(3);
+                assert_eq!(out(game), 12.0);
+            }
+        }
+    }
+}
+
+#[test]
+fn immediate_results_do_not_mark_a_replacement_speech() {
+    // The begin script replaces its own line. The original end still runs now, while
+    // the replacement's ordinary end must remain due at completion.
+    let f = ordered_fixture(A_FIRST, Some(say_result(NPC1_REF, T_BYE)));
+    let mut g = game(&f);
+    assert_eq!(g.say(actor(), Some(FormId::PLAYER_REF), FormId(GREETING), true), Some(FormId(A_FIRST)));
+    assert_eq!(out(&g), 2.0);
+    assert_eq!(g.speech.len(), 1);
+    assert_eq!(g.speech[0].info, FormId(C_BYE));
+    assert!(!g.speech[0].end_ran);
+    finish_speech(&mut g);
+    assert_eq!(out(&g), 9.0);
+}
+
+#[test]
+fn immediate_radio_results_run_in_order_at_start_even_if_interrupted() {
+    let mut f = ordered_fixture(E_NOW, None);
+    f.data.infos.get_mut(&FormId(E_NOW)).unwrap().info_type = topic_type::RADIO;
+    for complete in [false, true] {
+        let mut g = game(&f);
+        g.radio_line_begins(actor(), FormId(E_NOW));
+        assert_eq!(out(&g), 12.0);
+        // An interrupted engine broadcast discards on_air without an end call.
+        if complete {
+            g.radio_line_ends(actor(), FormId(E_NOW));
+        }
+        assert_eq!(out(&g), 12.0);
+    }
+    f.data.infos.get_mut(&FormId(E_NOW)).unwrap().flags &= !info_flag::RUN_IMMEDIATELY;
+    let mut g = game(&f);
+    g.radio_line_begins(actor(), FormId(E_NOW));
+    assert_eq!(out(&g), 1.0);
+    g.radio_line_ends(actor(), FormId(E_NOW));
+    assert_eq!(out(&g), 12.0);
+    let mut interrupted = game(&f);
+    interrupted.radio_line_begins(actor(), FormId(E_NOW));
+    assert_eq!(out(&interrupted), 1.0);
+}
+
+#[test]
+fn immediate_goodbye_greeting_marks_its_end_before_a_begin_callback_finishes_it() {
+    let f = ordered_fixture(A_BARK, Some(say_result(NPC1_REF, T_BYE)));
+    let mut g = game(&f);
+    set_global(&mut g, G_GATE, 7.0);
+    assert_eq!(g.start_dialogue(actor(), None).unwrap(), FormId(A_BARK));
+    assert!(g.dialogue.is_none());
+    assert_eq!(out(&g), 2.0, "the greeting ended inside begin; its immediate end runs once");
+    assert_eq!(g.speech[0].info, FormId(C_BYE));
+    assert!(!g.speech[0].end_ran);
+    finish_speech(&mut g);
+    assert_eq!(out(&g), 9.0);
+}
+
+/// Scripts' edits to topics and lines, read by the conversation (SUP batch 2, #1008;
+/// docs/spec-notes/ext-sup2.md): the setters of SUP, JohnnyGuitar, ShowOff and ITR.
+mod edits {
+    use super::*;
+    use fnv_script::vm::XVal;
+
+    fn q(g: &mut Game, body: &str) -> XVal {
+        g.run_query(&format!("Begin Function {{ }}\n{body}\nEnd\n"), Default::default()).unwrap_or_else(|e| panic!("{body}: {e}"))
+    }
+
+    fn n(g: &mut Game, expr: &str) -> f64 {
+        match q(g, &format!("SetFunctionValue ({expr})")) {
+            XVal::Num(x) => x,
+            XVal::Ref(r) => f64::from(r),
+            v => panic!("{expr}: {v:?}"),
+        }
+    }
+
+    fn s(g: &mut Game, expr: &str) -> String {
+        match q(g, &format!("string_var sOut\nlet sOut := {expr}\nSetFunctionValue sOut")) {
+            XVal::Str(s) => s,
+            v => panic!("{expr}: {v:?}"),
+        }
+    }
+
+    /// An array's entries, forms as their IDs in hex and strings as they are.
+    fn entries(g: &mut Game, expr: &str) -> Vec<String> {
+        let at = |i: &str| format!("array_var a\nlet a := {expr}\nSetFunctionValue {i}");
+        let len = match q(g, &at("(ar_Size a)")) {
+            XVal::Num(x) => x as usize,
+            v => panic!("{expr}: {v:?}"),
+        };
+        (0..len)
+            .map(|i| match q(g, &at(&format!("(a[{i}])"))) {
+                XVal::Ref(r) => format!("{r:X}"),
+                XVal::Num(x) => format!("{:X}", x as u32),
+                XVal::Str(s) => s,
+                v => panic!("{expr}[{i}]: {v:?}"),
+            })
+            .collect()
+    }
+
+    fn hex(ids: &[u32]) -> Vec<String> {
+        ids.iter().map(|i| format!("{i:X}")).collect()
+    }
+
+    #[test]
+    fn topic_flags_and_priority_change_the_topic_list() {
+        let f = fixture();
+        let mut g = game(&f);
+        // [documented: TopicSetFlags, TopicSetPriority: set, or read with no value;
+        // observed: setting returns 0].
+        assert_eq!(n(&mut g, "TopicSetFlags TopicDaily"), 2.0);
+        assert_eq!(n(&mut g, "TopicSetPriority TopicSkill"), 10.0);
+        assert_eq!(n(&mut g, "TopicSetPriority TopicSkill 100"), 0.0);
+        assert_eq!(n(&mut g, "TopicSetPriority TopicSkill"), 100.0);
+        assert_eq!(n(&mut g, "TopicSetFlags TopicDaily 0"), 0.0);
+        assert_eq!(n(&mut g, "TopicSetFlags TopicDaily"), 0.0);
+        g.start_dialogue(actor(), Some(FormId(T_LF_PLAIN))).unwrap();
+        listen(&mut g);
+        // Was T_TOP2, T_TOP, T_LF_TO, T_SKILL, GOODBYE: Skill now leads, Daily is no
+        // longer top-level.
+        assert_eq!(offered(&g), vec![T_SKILL, T_TOP2, T_LF_TO, GOODBYE]);
+        // The records are as they were.
+        assert_eq!(f.data.topic_defs[&FormId(T_SKILL)].priority, 10.0);
+    }
+
+    #[test]
+    fn a_lines_choices_and_prompt() {
+        let f = fixture();
+        let mut g = game(&f);
+        g.said.insert((actor(), FormId(A_FIRST)));
+        // [documented: TopicInfoAddChoice, -1 the end and 0 the beginning].
+        q(&mut g, "TopicInfoAddChoice LineA04 TopicAsk -1");
+        q(&mut g, "TopicInfoAddChoice LineA04 TopicNow 0");
+        assert_eq!(entries(&mut g, "TopicInfoGetAllChoices LineA04"), hex(&[T_TOP2, T_ASK]));
+        // Setting returns "" [observed].
+        assert_eq!(s(&mut g, "TopicInfoSetPrompt LineB01 \"Ask away\""), "");
+        assert_eq!(g.start_dialogue(actor(), None), Ok(FormId(A_LATER)));
+        listen(&mut g);
+        // Only the line's own choices, by priority.
+        assert_eq!(offered(&g), vec![T_TOP2, T_ASK]);
+        assert_eq!(g.choice_text(&g.dialogue_choices()[1]), "Ask away");
+        // [documented: TopicInfoReplaceChoice; DialogResponseRelatedGetAll type 1].
+        q(&mut g, "TopicInfoReplaceChoice LineA04 TopicDaily 0");
+        q(&mut g, "TopicInfoReplaceChoice LineA04 TopicDaily 7");
+        assert_eq!(entries(&mut g, "DialogResponseRelatedGetAll LineA04 1"), hex(&[T_TOP, T_ASK]));
+        // A topic already there goes in again; past the end, nowhere [observed].
+        q(&mut g, "TopicInfoAddChoice LineA04 TopicAsk 0");
+        q(&mut g, "TopicInfoAddChoice LineA04 TopicSkill 9");
+        assert_eq!(entries(&mut g, "TopicInfoGetAllChoices LineA04"), hex(&[T_ASK, T_TOP, T_ASK]));
+    }
+
+    #[test]
+    fn a_choices_edited_flags_and_prompt_reach_the_menu() {
+        let f = fixture();
+        // Unedited: LineB01 (TopicAsk) is a plain choice and the generic GOODBYE is offered.
+        let mut g = game(&f);
+        g.said.insert((actor(), FormId(A_FIRST)));
+        q(&mut g, "TopicInfoAddChoice LineA04 TopicAsk -1");
+        assert_eq!(g.start_dialogue(actor(), None), Ok(FormId(A_LATER)));
+        listen(&mut g);
+        let ask = g.dialogue_choices().iter().find(|c| c.topic == FormId(T_ASK)).cloned().expect("TopicAsk offered");
+        assert!(!ask.goodbye && !ask.darkened);
+        // Goodbye (high byte 1), Always Darken (low byte 2) and a prompt set by script
+        // [documented: the TopicInfoSetFlagsHigh and …Low tables; TopicInfoSetPrompt].
+        let mut h = game(&f);
+        h.said.insert((actor(), FormId(A_FIRST)));
+        q(&mut h, "TopicInfoAddChoice LineA04 TopicAsk -1");
+        q(&mut h, "TopicInfoSetFlagsHigh LineB01 1");
+        q(&mut h, "TopicInfoSetFlagsLow LineB01 2");
+        q(&mut h, "TopicInfoSetPrompt LineB01 \"Ask away\"");
+        assert_eq!(h.start_dialogue(actor(), None), Ok(FormId(A_LATER)));
+        listen(&mut h);
+        let ask = h.dialogue_choices().iter().find(|c| c.topic == FormId(T_ASK)).cloned().expect("TopicAsk offered");
+        assert!(ask.goodbye, "the edited Goodbye flag");
+        assert!(ask.darkened, "the edited Always Darken flag");
+        assert!(ask.prompt, "the prompt set by script");
+    }
+
+    #[test]
+    fn related_topics_link_from_and_follow_ups() {
+        let f = fixture();
+        let mut g = game(&f);
+        // Link From (0): the Added topic is offered after the plain line's topic.
+        q(&mut g, "DialogResponseAddRelatedTopic LineF01 TopicLinkPlain 0 0");
+        assert_eq!(entries(&mut g, "DialogResponseRelatedGetAll LineF01 0"), hex(&[T_LF_PLAIN]));
+        g.start_dialogue(actor(), Some(FormId(T_LF_PLAIN))).unwrap();
+        listen(&mut g);
+        assert_eq!(offered(&g), vec![T_TOP2, T_TOP, T_ADDED, T_LF_TO, T_SKILL, GOODBYE]);
+        // Follow Ups (2) take neither a topic nor a line [observed]; the record's own
+        // follow-ups are read.
+        let mut h = game(&f);
+        q(&mut h, "DialogResponseAddRelatedTopic LineA04 TopicAsk 2 -1");
+        q(&mut h, "DialogResponseAddRelatedTopic LineA04 LineB02 2 -1");
+        assert!(entries(&mut h, "DialogResponseRelatedGetAll LineA04 2").is_empty());
+        assert_eq!(entries(&mut h, "DialogResponseRelatedGetAll LineB01 2"), hex(&[B_FOLLOW]));
+    }
+
+    #[test]
+    fn flags_reach_the_say_once_rule() {
+        let f = fixture();
+        let mut g = game(&f);
+        // [documented: the TopicInfoSetFlagsHigh and …Low tables: Say Once is 4 in the
+        // first byte, Say Once a Day 1 in the second].
+        assert_eq!(n(&mut g, "TopicInfoSetFlagsHigh LineA02"), 4.0);
+        assert_eq!(n(&mut g, "TopicInfoSetFlagsLow LineE01"), 1.0);
+        assert_eq!(n(&mut g, "TopicInfoSetFlagsHigh LineA02 0"), 0.0);
+        assert_eq!(n(&mut g, "GetDialogueInfoFlags LineA02"), 0.0);
+        // No longer Say Once: said before, it greets again.
+        g.said.insert((actor(), FormId(A_FIRST)));
+        assert_eq!(g.start_dialogue(actor(), None), Ok(FormId(A_FIRST)));
+        // ITR's setter is the same edit.
+        let mut h = game(&f);
+        assert_eq!(n(&mut h, "SetDialogueInfoFlags LineA04 1"), 1.0);
+        assert_eq!(n(&mut h, "TopicInfoSetFlagsHigh LineA04"), 1.0);
+        assert!(h.dialogue_view().info(&FormId(A_LATER)).unwrap().goodbye);
+    }
+
+    #[test]
+    fn said_once_for_the_session_or_the_save() {
+        let f = fixture();
+        let mut g = game(&f);
+        assert_eq!(n(&mut g, "GetSaidOnce LineA02"), 0.0);
+        // Not saved [documented: TopicInfoSetSaidOnce]: the save's said lines stay as
+        // they are, and the first greeting is held back.
+        assert_eq!(n(&mut g, "TopicInfoSetSaidOnce LineA02 1"), 0.0);
+        assert!(!g.said.iter().any(|&(_, i)| i == FormId(A_FIRST)));
+        assert_eq!(n(&mut g, "GetSaidOnce LineA02"), 1.0);
+        assert_eq!(g.start_dialogue(actor(), None), Ok(FormId(A_LATER)));
+        g.end_dialogue();
+        // A load drops the session value.
+        let session = g.take_session();
+        let mut h = game(&f);
+        h.put_session(session);
+        assert_eq!(n(&mut h, "GetSaidOnce LineA02"), 0.0);
+        // saveBake writes the said lines the save keeps [documented: SetSaidOnce].
+        assert_eq!(n(&mut h, "SetSaidOnce LineA02 1 1"), 0.0);
+        assert!(h.said.contains(&(FormId(0), FormId(A_FIRST))));
+        assert_eq!(n(&mut h, "SetSaidOnce LineA02 0 1"), 0.0);
+        assert_eq!(n(&mut h, "GetSaidOnce LineA02"), 0.0);
+        assert_eq!(n(&mut h, "GetParentTopic LineA02"), f64::from(GREETING));
+        assert_eq!(entries(&mut h, "GetTopicInfo TopicAsk"), hex(&[B_ASK, B_FOLLOW]));
+    }
+
+    #[test]
+    fn response_texts_and_the_session() {
+        let f = fixture();
+        let mut g = game(&f);
+        // [documented: TopicInfoSetNthResponseString, TopicInfoSetResponseStrings].
+        assert_eq!(n(&mut g, "TopicInfoSetNthResponseString LineA04 0 \"Back again\""), 1.0);
+        assert_eq!(n(&mut g, "TopicInfoSetNthResponseString LineA04 1 \"None\""), 0.0);
+        assert_eq!(entries(&mut g, "TopicInfoGetResponseStrings LineA04"), vec!["Back again"]);
+        // Returns 1 and leaves the texts as they are [observed: the installed ShowOff].
+        assert_eq!(n(&mut g, "TopicInfoSetResponseStrings LineA02 (ar_List \"One\", \"Two.\")"), 1.0);
+        assert_eq!(entries(&mut g, "TopicInfoGetResponseStrings LineA02"), vec!["Second.", "First"]);
+        q(&mut g, "TopicSetPriority TopicSkill 100");
+        // The edits ride across a load [documented: "persistent throughout the game
+        // session"].
+        let session = g.take_session();
+        let mut h = game(&f);
+        h.put_session(session);
+        assert_eq!(n(&mut h, "TopicSetPriority TopicSkill"), 100.0);
+        assert_eq!(entries(&mut h, "TopicInfoGetResponseStrings LineA04"), vec!["Back again"]);
+    }
 }

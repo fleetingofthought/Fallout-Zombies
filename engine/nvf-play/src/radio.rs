@@ -273,6 +273,12 @@ impl RadioPlaces {
 }
 
 fn init(mut commands: Commands, d: Res<PlayWorld>) {
+    let d = d.0;
+    crate::start_read::start(&mut commands, "nvf-radio-read", move || read_places(d));
+}
+
+/// [`RadioPlaces`] from the plugins, on its own thread (`crate::start_read`).
+fn read_places(d: crate::PlayData) -> RadioPlaces {
     let t = std::time::Instant::now();
     let forms = RadioForms::build(d.lo, d.schema);
     let (stations, receivers) = radio::placed(d.lo, d.schema, d.index, &forms, d.index.cells.keys().copied());
@@ -296,7 +302,7 @@ fn init(mut commands: Commands, d: Res<PlayWorld>) {
         places.forms.receivers.len(),
         t.elapsed().as_secs_f64() * 1000.0
     );
-    commands.insert_resource(places);
+    places
 }
 
 // ---- the programmes -----------------------------------------------------------------------
@@ -1160,6 +1166,7 @@ fn release_files(real: Res<Time<Real>>, limits: Option<Res<nvf_assets::KeepLimit
 
 impl Plugin for RadioPlugin {
     fn build(&self, app: &mut App) {
+        crate::start_read::add_collect::<RadioPlaces>(app);
         app.init_resource::<Radio>()
             .init_resource::<TableStation>()
             .add_audio_source::<RadioSound>()

@@ -346,6 +346,13 @@ Lab comparator: **keyed** on `grid` for `/cells` (all fields, float tolerance 1e
 - `world check [--world W]` → `fnv.world.check/1`: the observational checks behind
   world.md (cell membership of references, shared LAND edges, normals against heights,
   base object types).
+- `world posed-clutter [--nif-schema D] [--summary]` → `fnv.world.posed_clutter/1`: every
+  placed reference whose model is ragdoll-like (two or more dynamic collision objects or
+  any constraint), or whose model path names a `skeleton`, or which carries `XRGD`, with
+  the branch NVForever takes (posed / refused and why / not posable type / no `XRGD` →
+  held / STAT fixed) and the `XRGD` entry count against the model's bodies; `--summary`
+  leaves out the per-reference rows (game data, not committed). The counts are recorded
+  in docs/spec-notes/dead-on-spawn.md §5.2.
 - `world audio [--cell C [--at x,y,z] [--hour H]]` → `fnv.world.audio/1`: `counts` of
   music types, media sets by type, controllers and acoustic spaces, `music_types` and
   `acoustic_spaces` (each with its reverb environment, ASPC `ANAM`, and interior flag).

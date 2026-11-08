@@ -557,8 +557,7 @@ pub type BakeResult = ((i32, i32), Result<Option<Baked>, String>);
 /// Bake threads of their own, at the lowest thread priority, so generated terrain only
 /// uses cores the frame leaves free. Bakes on Bevy's async compute pool held a frame until
 /// they were all done: Bevy compiles render pipelines on that pool and the render thread
-/// waits for some of them (docs/design/streaming-hitches.md §3) [observed]; FaceGen tints
-/// and actor part reads share it too.
+/// waits for some of them (docs/design/streaming-hitches.md §3) [observed].
 pub struct Baker {
     shared: Arc<BakerShared>,
 }

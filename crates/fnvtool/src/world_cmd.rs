@@ -42,6 +42,7 @@ pub fn run(cmd: WorldCmd) -> anyhow::Result<Value> {
         }
         WorldCmd::Radio { w, functions } => crate::world_radio::run(&w, functions.as_deref()),
         WorldCmd::AltTextures { w, nif_schema, edid } => crate::world_alt_textures::survey(&w, nif_schema.as_deref(), &edid),
+        WorldCmd::PosedClutter { w, nif_schema, summary } => crate::world_posed_clutter::run(&w, nif_schema.as_deref(), summary),
         WorldCmd::Terminals { w, functions } => crate::world_terminals::survey(&w, functions.as_deref()),
         WorldCmd::Hack { data_dir, difficulty, science, seed, pick } => crate::world_terminals::hack(&data_dir, difficulty, science, seed, &pick),
     }

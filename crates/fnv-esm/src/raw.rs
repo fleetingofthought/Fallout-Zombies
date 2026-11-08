@@ -210,16 +210,40 @@ impl Record {
 
     pub fn subrecords(&self) -> Result<Vec<Subrecord>, EsmError> {
         let p = self.payload()?;
-        parse_subrecords(&p).map_err(|(pos, msg)| EsmError::Structure {
+        parse_subrecords(&p).map_err(|(pos, msg)| self.structure_error(pos, msg))
+    }
+
+    /// [`Record::subrecords`] without copying them: `f` gets each one's signature and data,
+    /// in record order, and the result is `Err` exactly when [`Record::subrecords`]'s is (`f`
+    /// has then seen the ones before the bad one).
+    pub fn visit_subrecords(&self, f: impl FnMut(&[u8; 4], &[u8])) -> Result<(), EsmError> {
+        let p = self.payload()?;
+        visit_subrecords(&p, f).map_err(|(pos, msg)| self.structure_error(pos, msg))
+    }
+
+    fn structure_error(&self, pos: usize, msg: String) -> EsmError {
+        EsmError::Structure {
             offset: self.offset,
             msg: format!("record {} {:08X}: subrecord at payload+{pos}: {msg}", self.sig_str(), self.header.form_id),
-        })
+        }
     }
 }
 
 /// Parse a record payload into subrecords, resolving XXXX size extensions.
 pub fn parse_subrecords(p: &[u8]) -> Result<Vec<Subrecord>, (usize, String)> {
     let mut out = Vec::new();
+    visit_sized(p, |sig, data, extended| out.push(Subrecord { sig: *sig, data: data.to_vec(), extended }))?;
+    Ok(out)
+}
+
+/// Walk a record payload's subrecords without copying them: `f` gets each one's signature
+/// and data, by the rules and with the errors of [`parse_subrecords`].
+pub fn visit_subrecords(p: &[u8], mut f: impl FnMut(&[u8; 4], &[u8])) -> Result<(), (usize, String)> {
+    visit_sized(p, |sig, data, _| f(sig, data))
+}
+
+/// The walk itself; `f`'s last argument is [`Subrecord::extended`].
+fn visit_sized(p: &[u8], mut f: impl FnMut(&[u8; 4], &[u8], bool)) -> Result<(), (usize, String)> {
     let mut c = Cursor::new(p);
     let mut pending_size: Option<u32> = None;
     while !c.is_empty() {
@@ -243,12 +267,12 @@ pub fn parse_subrecords(p: &[u8]) -> Result<Vec<Subrecord>, (usize, String)> {
             None => (size16 as usize, false),
         };
         let data = c.bytes(size).map_err(|e| (at, format!("{} data: {e}", tag_str(&sig))))?;
-        out.push(Subrecord { sig, data: data.to_vec(), extended });
+        f(&sig, data, extended);
     }
     if pending_size.is_some() {
         return Err((p.len(), "XXXX at end of record".into()));
     }
-    Ok(out)
+    Ok(())
 }
 
 /// Serialize subrecords back to a payload (inverse of `parse_subrecords`).

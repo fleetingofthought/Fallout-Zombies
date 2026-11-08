@@ -401,7 +401,8 @@ fn update(
             }
         }
         let next = show.shots.get(show.next).copied().filter(|_| stop.is_none());
-        match next.and_then(|s| rt.game.data.camera_shots.get(&s).map(|d| (s, d.clone()))) {
+        // A shot a script changed (SetCameraShot…, `nvse_jg5`) plays as changed.
+        match next.and_then(|s| fnv_game::nvse_jg5::camera_shot(&rt.game, s).map(|d| (s, d.clone()))) {
             Some((s, def)) => {
                 show.next += 1;
                 let model = def.model.as_deref().filter(|_| !def.has(FIRST_PERSON_CAMERA)).and_then(|m| models.camera_model(&format!("meshes\\{m}")));

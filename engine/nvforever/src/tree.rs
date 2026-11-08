@@ -25,9 +25,12 @@ pub type BillboardMaterial = ExtendedMaterial<StandardMaterial, TreeBillboards>;
 
 const SHADER: &str = "embedded://nvforever/tree.wesl";
 
-/// Wind direction in game space (degrees from +x towards +y). The records give none
-/// [observed: WTHR DATA has a wind speed but no direction], so it is fixed [chosen].
-const WIND_DIRECTION_DEG: f32 = 30.0;
+/// Wind direction in game space (degrees from +x towards +y): where the wind blows to.
+/// The records give none [observed: WTHR DATA has a wind speed but no direction], so it
+/// is fixed: 120°, north-north-west (330° clockwise from north), where the original's
+/// tumbleweeds rolled around Goodsprings [observed: o27_tumble 2026-11-06, 308–357°;
+/// docs/spec-notes/wind.md]. Was 30° [chosen] until then.
+const WIND_DIRECTION_DEG: f32 = 120.0;
 
 /// The `TreeWind` uniform of tree.wesl.
 #[derive(Clone, Copy, Debug, Default, ShaderType, Reflect)]

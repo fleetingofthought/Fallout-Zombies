@@ -55,18 +55,16 @@ impl<'a> LoadOrderIndex<'a> {
                     .par_iter()
                     .filter_map(|r| {
                         let form = lo.to_global(pi, r.header.form_id)?;
-                        let subs = r.subrecords().ok()?;
                         let mut d = Def { plugin: pi, sig: r.header.sig, edid: None, script: None, base: None };
-                        for s in &subs {
-                            match &s.sig {
-                                b"EDID" if d.edid.is_none() => d.edid = Some(fnv_util::text::decode_z(&s.data)),
-                                b"SCRI" if d.script.is_none() => d.script = formid(&s.data).and_then(|l| lo.to_global(pi, l)),
-                                b"NAME" if d.base.is_none() && matches!(&r.header.sig, b"REFR" | b"ACHR" | b"ACRE") => {
-                                    d.base = formid(&s.data).and_then(|l| lo.to_global(pi, l))
-                                }
-                                _ => {}
+                        r.visit_subrecords(|sig, data| match sig {
+                            b"EDID" if d.edid.is_none() => d.edid = Some(fnv_util::text::decode_z(data)),
+                            b"SCRI" if d.script.is_none() => d.script = formid(data).and_then(|l| lo.to_global(pi, l)),
+                            b"NAME" if d.base.is_none() && matches!(&r.header.sig, b"REFR" | b"ACHR" | b"ACRE") => {
+                                d.base = formid(data).and_then(|l| lo.to_global(pi, l))
                             }
-                        }
+                            _ => {}
+                        })
+                        .ok()?;
                         Some((form, d))
                     })
                     .collect::<Vec<_>>()

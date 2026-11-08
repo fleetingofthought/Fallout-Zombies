@@ -44,7 +44,7 @@
 //! - [`UNDERCOAT_LIGHT`], last, only if the far edges stay wrong.
 
 use super::frame::{scanline_column, Ctx, Kit};
-use super::{Frame, PipBoy, PipBoyScreen, CANVAS};
+use super::{PipBoy, PipBoyScreen, CANVAS};
 use crate::interface::{at, pipboy_rgb, tint, AMBER_RGB};
 use crate::terminal::screen::{lifted, scanline_column as baked_column, scanline_pixels};
 use bevy::image::CompressedImageFormatSupport;
@@ -208,11 +208,12 @@ pub struct ScreenFx {
     rgb: [u8; 3],
     /// The beam's first sweep since the treatment came on was logged.
     swept: bool,
+    announced: bool,
 }
 
 impl Default for ScreenFx {
     fn default() -> Self {
-        ScreenFx { scanlines: None, beam: None, kept: 1.0, baked: false, rgb: AMBER_RGB, swept: false }
+        ScreenFx { scanlines: None, beam: None, kept: 1.0, baked: false, rgb: AMBER_RGB, swept: false, announced: false }
     }
 }
 
@@ -298,7 +299,16 @@ const BEAM: GlobalZIndex = GlobalZIndex(9);
 
 /// The treatment shows with the device's frame, not in the screen menu.
 pub fn wanted(pip: &PipBoy) -> bool {
-    pip.shown() && pip.frame == Frame::Device
+    pip.on_arm()
+}
+
+fn announce(fx: &mut ScreenFx, pip: &PipBoy) {
+    if pip.warming.is_none() && !fx.announced {
+        fx.announced = true;
+        let kept = fx.kept;
+        let shown = undercoat(kept).to_srgba().to_u8_array();
+        info!("pipboy: screen treatment on (scanlines {}, keeping {kept:.2} of the light; undercoat ({}, {}, {}))", if fx.scanlines.is_some() { "baked" } else { "none" }, shown[0], shown[1], shown[2]);
+    }
 }
 
 /// Keep the layers: the picture under the pages and the scanlines over them, while the
@@ -324,6 +334,7 @@ pub fn draw(
     if want == !layers.is_empty() {
         if want {
             apply_colour(&mut fx, pipboy_rgb(), &mut pictures, &mut beams);
+            announce(&mut fx, &pip);
         }
         return;
     }
@@ -331,7 +342,8 @@ pub fn draw(
         for e in &layers {
             commands.entity(e).despawn();
         }
-        info!("pipboy: screen treatment off");
+        if fx.announced { info!("pipboy: screen treatment off"); }
+        fx.announced = false;
         return;
     }
     let mut c = Ctx::new(&mut kit, data.as_deref(), &mut images, formats.as_deref());
@@ -374,8 +386,7 @@ pub fn draw(
         ));
     }
     fx.swept = false;
-    let shown = undercoat(kept).to_srgba().to_u8_array();
-    info!("pipboy: screen treatment on (scanlines {}, keeping {kept:.2} of the light; undercoat ({}, {}, {}))", if fx.scanlines.is_some() { "baked" } else { "none" }, shown[0], shown[1], shown[2]);
+    announce(&mut fx, &pip);
 }
 
 /// Move the beam: shown and travelling for [`BEAM_TRAVEL`] of every [`BEAM_PERIOD`] on the
@@ -383,7 +394,7 @@ pub fn draw(
 /// runs on, so on resume it jumps to where the clock says (or hides): a wall-clock effect
 /// held in the picture, not a phase kept across the pause [design]. Logged once each time
 /// the treatment comes on, on the first sweep.
-pub fn sweep(time: Res<Time<Real>>, paused: Res<crate::pause::Paused>, mut fx: ResMut<ScreenFx>, mut beams: Query<(&mut Node, &mut Visibility), With<ScreenFxBeam>>) {
+pub fn sweep(time: Res<Time<Real>>, paused: Res<crate::pause::Paused>, pip: Res<PipBoy>, mut fx: ResMut<ScreenFx>, mut beams: Query<(&mut Node, &mut Visibility), With<ScreenFxBeam>>) {
     // Laid out in the Pip-Boy's screen texture, at its size whatever the UI scale (#1631).
     let _canvas = crate::interface::original_units();
     if paused.0 {
@@ -395,7 +406,7 @@ pub fn sweep(time: Res<Time<Real>>, paused: Res<crate::pause::Paused>, mut fx: R
             Some(top) => {
                 node.top = crate::interface::u(top);
                 *visibility = Visibility::Inherited;
-                if !fx.swept {
+                if !fx.swept && pip.warming.is_none() {
                     fx.swept = true;
                     info!("pipboy: the beam sweeps the screen ({BEAM_TRAVEL} s, every {BEAM_PERIOD} s)");
                 }
@@ -407,7 +418,7 @@ pub fn sweep(time: Res<Time<Real>>, paused: Res<crate::pause::Paused>, mut fx: R
 
 #[cfg(test)]
 mod tests {
-    use super::super::{Page, PageBody, PipBoyRoot, Phase};
+    use super::super::{Frame, Page, PageBody, PipBoyRoot, Phase};
     use super::*;
 
     /// The band of the file as pipboy.md §3 describes it: white at the top, 0.8 at the foot.
@@ -610,5 +621,30 @@ mod tests {
         assert!(!wanted(&PipBoy { frame: Frame::Screen, phase: Phase::Up, ..default() }));
         assert!(!wanted(&PipBoy { frame: Frame::Device, phase: Phase::Down, ..default() }));
         assert!(wanted(&PipBoy { frame: Frame::Device, phase: Phase::Raising, ..default() }));
+    }
+
+    #[test]
+    fn hidden_layers_are_announced_on_the_real_open_and_a_screen_only_warm_has_none() {
+        let mut app = app(Frame::Device);
+        app.world_mut().resource_mut::<PipBoy>().warming = Some(super::super::Warming {
+            since: std::time::Instant::now(), frames: 0, asked_at: 0,
+            covered: false, device: true, saved_frame: Frame::Device, saved_page: None, drawn: false,
+        });
+        app.update();
+        let hidden = layers(&mut app);
+        assert!(!hidden.is_empty());
+        assert!(!app.world().resource::<ScreenFx>().announced);
+        app.world_mut().resource_mut::<PipBoy>().warming = None;
+        app.update();
+        assert_eq!(layers(&mut app), hidden);
+        assert!(app.world().resource::<ScreenFx>().announced);
+        let mut pip = app.world_mut().resource_mut::<PipBoy>();
+        pip.warming = Some(super::super::Warming {
+            since: std::time::Instant::now(), frames: 0, asked_at: 0,
+            covered: true, device: false, saved_frame: Frame::Device, saved_page: None, drawn: false,
+        });
+        app.update();
+        assert!(layers(&mut app).is_empty());
+        assert!(!app.world().resource::<ScreenFx>().announced);
     }
 }

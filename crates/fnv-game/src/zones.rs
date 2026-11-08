@@ -95,7 +95,8 @@ impl<'a> Game<'a> {
     pub(crate) fn fix_cell_levels(&mut self, cell: FormId) {
         let player_level = self.list_player_level();
         let placed = self.world.placed;
-        let mut zones: Vec<FormId> = placed.cell_zone(cell).into_iter().collect();
+        // A script's zone for the cell or its worldspace first (`nvse_jg5::cell_zone`).
+        let mut zones: Vec<FormId> = crate::nvse_jg5::cell_zone(self, cell).into_iter().collect();
         let refs: Vec<FormId> = placed.by_cell.get(&cell).cloned().unwrap_or_default();
         for &r in &refs {
             zones.extend(placed.get(r).and_then(|p| p.encounter_zone));

@@ -283,6 +283,9 @@ PARAM_FIXES = {
     # crafting messages"; the table gives the argument a type but no name, which the
     # compiler does not count].
     "ToggleCraftingMessages": [{"name": "enable", "type": "int", "kind": "int"}],
+    # [documented: DisableAlt's example "TerminalRef.DisableAlt" passes nothing; the table
+    # writes the optional mark as "Optional = Optional", which the parser does not read].
+    "DisableAlt": [{"name": "FadeOut", "type": "Int", "kind": "int", "optional": True}],
     "AddConditionFormTwo": [{"name": "FormTwoEntity", "type": "ref", "kind": "reference"},
                             {"name": "First", "type": "int", "kind": "int"},
                             {"name": "Condition", "type": "int", "kind": "int",
@@ -297,6 +300,9 @@ NAME_FIXES = {
     "GetConditionFormOneFloat": "GetConditionFormOneFloat",
     "SetConditionFormOneFloat": "SetConditionFormOneFloat",
     "SetConditionFormOneForm": "SetConditionFormOneForm",
+    # The template's name has a space for the underscore, so only "Matrix" was kept
+    # [documented: the page's title and its link, Matrix_ApplyOperationWithScalar].
+    "Matrix ApplyOperationWithScalar": "Matrix_ApplyOperationWithScalar",
 }
 
 

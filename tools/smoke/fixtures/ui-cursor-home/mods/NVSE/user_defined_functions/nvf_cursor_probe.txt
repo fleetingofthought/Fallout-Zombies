@@ -1,0 +1,10 @@
+Begin Function { }
+if (GetSessionTime > 8)
+  PrintC "nvf cursor active %z", (GetActiveUIComponentFullName)
+  PrintC "nvf cursor types %g %g %g", (GetUIElementType "HUDMainMenu/NVFCursorProbe/Explicit"), (GetUIElementType), (GetUIElementType "Missing/Tile")
+  DumpTileInfo 1 "HUDMainMenu/NVFCursorProbe/Explicit"
+  DumpTileInfo 1
+  DumpTileInfo 1 "Missing/Tile"
+  RemoveTileScript "HUDMainMenu/NVFCursorProbe/_probe"
+endif
+End

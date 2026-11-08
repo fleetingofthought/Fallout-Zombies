@@ -242,6 +242,17 @@ type Followed<'w> = (Entity, &'w ActorRig, &'w mut Dressed, Option<&'w mut Blend
 /// of part preparation, as `readahead::PREPARE_BUDGET` bounds the read-ahead's].
 pub const REDRESS_PER_FRAME: usize = 4;
 
+/// Whether `worn` with `weapon` dresses the body as `dressed_worn` with `dressed_weapon`
+/// did. A weapon changes the body when it has "Hide Backpack" or armour addons of its own
+/// (WEAP BIPL: a hand-to-hand weapon's hand model), so one taken up, put away or swapped
+/// for a weapon that differs in either dresses the body again (`Resolver::resolve_wearing`):
+/// an NPC that loses its power fist gets its bare hand back, and one given brass knuckles
+/// their hand.
+fn same_worn(actors: &fnv_actor::ActorForms, worn: &[FormId], weapon: Option<FormId>, dressed_worn: &[FormId], dressed_weapon: Option<FormId>) -> bool {
+    let body = |w: Option<FormId>| w.and_then(|w| actors.weapons.get(&w)).map_or((false, &[][..]), |w| (w.hide_backpack, w.addons.as_slice()));
+    worn.len() == dressed_worn.len() && worn.iter().all(|w| dressed_worn.contains(w)) && body(weapon) == body(dressed_weapon)
+}
+
 #[allow(clippy::too_many_arguments)]
 fn follow_inventory(
     mut commands: Commands,
@@ -262,10 +273,7 @@ fn follow_inventory(
         let Some(equipment) = Equipment::of(&world, Some(&sim.world), rig.reference) else { continue };
         let Equipment { ref worn, weapon, weapon_mods: mods } = equipment;
         let dressed = &mut *dressed;
-        // A weapon with "Hide Backpack" taken up or put away dresses the body again
-        // (`Resolver::resolve_wearing`).
-        let hides = |w: Option<FormId>| w.and_then(|w| world.actors.weapons.get(&w)).is_some_and(|w| w.hide_backpack);
-        let same_worn = worn.len() == dressed.worn.len() && worn.iter().all(|w| dressed.worn.contains(w)) && hides(weapon) == hides(dressed.weapon);
+        let same_worn = same_worn(&world.actors, worn, weapon, &dressed.worn, dressed.weapon);
         let same_weapon = weapon == dressed.weapon && mods == dressed.weapon_mods;
         if same_worn && same_weapon {
             continue;
@@ -484,7 +492,7 @@ pub(crate) mod tests {
             explosion_damage: 0.0, skill: None, embedded: false, non_playable: false, not_for_npcs: false,
             first_person: None, first_person_model: None, mod_models: Default::default(),
             mod_first_person: Default::default(), mod_first_person_models: Default::default(),
-            held_world_model: None, grip: None, hide_backpack: true,
+            held_world_model: None, grip: None, hide_backpack: true, addons: Vec::new(),
         });
         actors
     }
@@ -541,6 +549,30 @@ pub(crate) mod tests {
         inv.add_extra(WEAPON, 1, Extra { mods: 5, ..Default::default() });
         inv.set_equipped(WEAPON);
         inv
+    }
+
+    #[test]
+    fn a_weapon_with_its_own_hand_model_dresses_the_body_again() {
+        // #1783: the power fist's BIPL hand comes off with the fist and goes on with it.
+        let mut actors = forms();
+        let fist = FormId(10);
+        let mut w = actors.weapons[&WEAPON].clone();
+        w.hide_backpack = false;
+        let plain = w.clone();
+        w.addons = vec![FormId(11)];
+        actors.weapons.insert(fist, w);
+        let other = FormId(12);
+        actors.weapons.insert(other, plain);
+        let worn = [ARMOUR];
+        // Fist → none, and back.
+        assert!(!same_worn(&actors, &worn, None, &worn, Some(fist)));
+        assert!(!same_worn(&actors, &worn, Some(fist), &worn, None));
+        // Fist → a weapon without addons, and back.
+        assert!(!same_worn(&actors, &worn, Some(other), &worn, Some(fist)));
+        assert!(!same_worn(&actors, &worn, Some(fist), &worn, Some(other)));
+        // Neither changes the body: the held weapon alone is swapped.
+        assert!(same_worn(&actors, &worn, Some(other), &worn, None));
+        assert!(same_worn(&actors, &worn, Some(fist), &worn, Some(fist)));
     }
 
     #[test]

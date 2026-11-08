@@ -57,6 +57,13 @@ all of them; each start, including the restart that loads a save, sets the liste
 switches to their stored values, so the INI wins over the command line. Unattended runs
 (test aids) neither read nor write the INI of the player's own home.
 
+One more `[Settings]` line is read at start only and never written: `cpu-cache-placement`,
+`auto` (the default) or `off`. On a processor whose L3 cache is split into domains of
+different sizes (dual-CCD X3D Ryzens), `auto` runs the game on the largest one; every
+other machine is left as it is; `off` turns it off. `--cpu-cache-placement auto|off`
+wins over it for one run. The rules and measurements: frame-rate-audit.md §6
+(`engine/nvforever/src/cpu_placement.rs`, #1842).
+
 The player's keys are kept there too, under `[Controls]` (`nvf_play::bindings`): one line
 per control by the game's control name, the key and mouse button by name
 (`Forward=W`, `Block=Left Alt, Right Mouse`, `Auto Move=None`), plus `Always Run By

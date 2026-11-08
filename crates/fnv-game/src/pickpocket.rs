@@ -19,14 +19,19 @@
 //!   and turns on the player as for a seen theft; it will not be pickpocketed again.
 //! - **Planted explosives** ([`Game::plant_explosive`]): a grenade or mine placed in an
 //!   actor's inventory goes live; GetPlantedExplosive is 1 after
-//!   `fProjectileInventoryGrenadeFreakoutTime`, and after
-//!   `fProjectileInventoryGrenadeTimer` it explodes, "always killing it regardless of its
-//!   HP" [documented: GECK wiki Projectile notes].
+//!   `fProjectileInventoryGrenadeFreakoutTime` (the victim panics: `Game::panic_idle`
+//!   in `crate::idles`), and after `fProjectileInventoryGrenadeTimer` it explodes,
+//!   "always killing it regardless of its HP" [documented: GECK wiki Projectile notes],
+//!   when its explosion hurts that kind of victim ([`Game::explosive_harms`]). Not on a
+//!   child or an essential actor (it stays an ordinary item). Judged as a kill seen by
+//!   whoever detected the player while it was live, credited to the weapon the player
+//!   holds (docs/spec-notes/pickpocket.md §5).
 
 use crate::crime::{Kind, Note, Ownership};
 use crate::functions::{actor, base_of};
 use crate::game::Game;
 use fnv_sim::FormId;
+use serde::{Deserialize, Serialize};
 
 /// The pickpocket settings, with the wiki's defaults (FalloutNV.esm sets all but the two
 /// bases and the bounds to these values [observed]).
@@ -102,21 +107,44 @@ pub enum Refusal {
     CaughtBefore,
 }
 
+/// What the engine knows of a planted explosive's blast: its explosion's damage (EXPL
+/// Damage), the weapon's damage type (WEAP DNAM Resist, as an actor value code; `None`
+/// for None and Damage Resistance) and the explosion's object effect (EXPL EITM).
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
+pub struct Explosive {
+    pub damage: f64,
+    pub resist: Option<u16>,
+    pub enchantment: Option<FormId>,
+}
+
 /// A live explosive placed in an actor's inventory.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Planted {
     pub victim: FormId,
     pub item: FormId,
     /// Game time (seconds) it was placed.
     pub at: f64,
+    pub blast: Explosive,
+    /// Who detected the player while it was live (crime witnesses, taken at each tick).
+    pub seen_by: Vec<FormId>,
 }
 
 /// What [`Game::tick_planted`] found due: the victim and the explosive item, for the
-/// engine to set off its explosion where the victim stands.
+/// engine to set off its explosion where the victim stands, and whether it killed.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Blast {
     pub victim: FormId,
     pub item: FormId,
+    pub killed: bool,
+}
+
+/// Why a placed explosive did not go live ([`Game::plant_explosive`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NotLive {
+    /// The victim's race has the Child flag.
+    Child,
+    /// The victim is essential.
+    Essential,
 }
 
 /// The pickpocket state the game keeps for the session (who caught the player is the
@@ -125,6 +153,12 @@ pub struct Blast {
 pub struct State {
     pub rules: Option<Rules>,
     pub planted: Vec<Planted>,
+    /// While a planted explosive's kill is judged: those who saw the player while it was
+    /// live, witnesses besides those who see the player now (`Game::crime_witnesses`).
+    pub blast_witnesses: Vec<FormId>,
+    /// ShowOff's SetPlayerCanPickpocketEquippedItems: the player may take equipped items
+    /// too (none from a child) [documented: Get/SetPlayerCanPickpocketEquippedItems].
+    pub worn_items: bool,
 }
 
 impl Game<'_> {
@@ -174,6 +208,13 @@ impl Game<'_> {
         rules.chance(thief, target, value)
     }
 
+    /// Whether the pickpocket menu lists `victim`'s equipped items: SetPlayerCanPickpocket-
+    /// EquippedItems 1, and the victim is no child ("Child actors still cannot have their
+    /// equipped items stolen" [documented: SetPlayerCanPickpocketEquippedItems]).
+    pub fn pickpocket_worn(&self, victim: FormId) -> bool {
+        self.pickpocket.worn_items && !self.actor_race(victim).is_some_and(|race| self.data.child_races.contains(&race))
+    }
+
     /// The rules as read from the load order.
     pub fn pickpocket_settings(&mut self) -> Rules {
         self.pickpocket_rules()
@@ -212,11 +253,22 @@ impl Game<'_> {
         turned
     }
 
-    /// The player placed `item` in `victim`'s pocket: a live explosive when it is one
-    /// (`live`: the engine knows the weapons' projectiles), else nothing happens.
-    pub fn plant_explosive(&mut self, victim: FormId, item: FormId) {
+    /// The player placed `item` in `victim`'s pocket, a live explosive (the engine knows
+    /// the weapons' projectiles; `blast` its explosion): it goes live, one per call. Not
+    /// on a child or an essential actor: it stays an ordinary item there [documented:
+    /// Fallout 3 puts the explosive in a child's inventory with no explosion (Fallout
+    /// Wiki, Fallout 3 Pickpocket); hypothesis: the same in New Vegas, and for essential
+    /// actors (observer-checks.md)].
+    pub fn plant_explosive(&mut self, victim: FormId, item: FormId, blast: Explosive) -> Result<(), NotLive> {
+        if self.actor_race(victim).is_some_and(|race| self.data.child_races.contains(&race)) {
+            return Err(NotLive::Child);
+        }
+        if actor::essential(self, victim) {
+            return Err(NotLive::Essential);
+        }
         let at = self.time;
-        self.pickpocket.planted.push(Planted { victim, item, at });
+        self.pickpocket.planted.push(Planted { victim, item, at, blast, seen_by: Vec::new() });
+        Ok(())
     }
 
     /// GetPlantedExplosive: a live explosive was planted on `r` at least
@@ -227,15 +279,64 @@ impl Game<'_> {
         self.pickpocket.planted.iter().any(|p| p.victim == r && now - p.at >= rules.freakout_time)
     }
 
-    /// The planted explosives whose time is up: each victim dies (killed by the player)
-    /// and loses the explosive, and one more Pants Exploded; the engine sets off the
-    /// explosions. A victim that died or left before is let off [hypothesis].
+    /// Whether `blast` hurts `victim`'s kind, so that it kills it when it goes off in its
+    /// pocket ("instantly killing them if it's a damaging type", owner 2026-11-05)
+    /// [hypothesis, observer-checks.md]: never an actor that takes no damage
+    /// ([`Game::is_immune`]); when the explosion's object effect has effects that lower
+    /// Health, those effects decide, by their conditions on the victim (the Pulse
+    /// Grenade's EMP: 200 Health on robots, 80 on power armour wearers [observed:
+    /// FalloutNV.esm ENCH 0x0003A36B]; the explosion's own 10 points do not count then);
+    /// otherwise the explosion's damage above 0, of a type the victim does not wholly
+    /// resist (its value of the weapon's resistance below 100).
+    pub fn explosive_harms(&mut self, victim: FormId, blast: &Explosive) -> bool {
+        if self.is_immune(victim) {
+            return false;
+        }
+        let data = self.data;
+        let health: Vec<&crate::data::EffectItem> = blast
+            .enchantment
+            .and_then(|e| data.effect_items.get(&e))
+            .into_iter()
+            .flatten()
+            .filter(|ei| {
+                let Some(m) = data.magic_effects.get(&ei.effect) else { return false };
+                let harmful = m.has(crate::data::MagicEffectDef::DETRIMENTAL) || m.has(crate::data::MagicEffectDef::HOSTILE);
+                harmful && ei.magnitude > 0 && ei.actor_value.or(m.actor_value) == Some(crate::actor_values::HEALTH)
+            })
+            .collect();
+        if !health.is_empty() {
+            return health.into_iter().any(|ei| ei.conditions.is_empty() || self.conditions_pass(&ei.conditions, Some(victim), Some(FormId::PLAYER_REF), "planted explosive effect"));
+        }
+        let resisted = blast.resist.is_some_and(|code| actor::actor_value(self, victim, code).is_ok_and(|v| v >= 100.0));
+        blast.damage > 0.0 && !resisted
+    }
+
+    /// The planted explosives whose time is up: each victim loses the explosive, one more
+    /// Pants Exploded, and the engine sets off the explosions. A victim its explosion
+    /// hurts ([`Game::explosive_harms`]) dies, killed by the player with the weapon the
+    /// player holds (the kill counts for that weapon's challenges [documented: Fallout
+    /// Wiki, New Vegas Pickpocket]). The kill is judged with those who detected the
+    /// player while the explosive was live as witnesses, besides those who see the player
+    /// now: a player hidden from the plant to the blast is seen by nobody, so no one turns
+    /// hostile and no infamy is gained [documented: same page; hypothesis: taking the
+    /// witnesses at each tick]. What the victim's own OnDeath does (Caesar's, Lucius's and
+    /// Crocker's set quest stages that make enemies or give infamy) happens whoever saw
+    /// [observed: FalloutNV.esm]. A victim that died or left before is let off
+    /// [hypothesis].
     pub fn tick_planted(&mut self) -> Vec<Blast> {
         if self.pickpocket.planted.is_empty() {
             return Vec::new();
         }
         let rules = self.pickpocket_rules();
         let now = self.time;
+        let seeing = self.crime_witnesses();
+        for p in &mut self.pickpocket.planted {
+            for &w in &seeing {
+                if !p.seen_by.contains(&w) {
+                    p.seen_by.push(w);
+                }
+            }
+        }
         let (due, keep): (Vec<Planted>, Vec<Planted>) = std::mem::take(&mut self.pickpocket.planted).into_iter().partition(|p| now - p.at >= rules.grenade_timer);
         self.pickpocket.planted = keep;
         let mut out = Vec::new();
@@ -244,9 +345,16 @@ impl Game<'_> {
                 continue;
             }
             let _ = self.world.remove_item(p.victim, p.item, 1);
-            self.kill(p.victim, Some(FormId::PLAYER_REF));
             self.count_stat(crate::misc_stats::PANTS_EXPLODED, 1.0);
-            out.push(Blast { victim: p.victim, item: p.item });
+            let killed = self.explosive_harms(p.victim, &p.blast);
+            if killed {
+                let weapon = crate::functions::equipped_weapon_of(self, FormId::PLAYER_REF);
+                self.extra.entry(p.victim).or_default().last_hit = Some(crate::game::LastHit { attacker: Some(FormId::PLAYER_REF), weapon, location: -1, critical: false });
+                self.pickpocket.blast_witnesses = p.seen_by;
+                self.kill(p.victim, Some(FormId::PLAYER_REF));
+                self.pickpocket.blast_witnesses.clear();
+            }
+            out.push(Blast { victim: p.victim, item: p.item, killed });
         }
         out
     }

@@ -310,6 +310,7 @@ fn objects(archive: &std::path::Path, schema: &Schema, filter: Option<&str>) -> 
                 "mass": f(c.mass),
                 "friction": f(c.friction),
                 "restitution": f(c.restitution),
+                "wind": c.wind,
                 "shapes": leaves,
                 "hull_points": hull,
                 "mesh_vertices": verts,

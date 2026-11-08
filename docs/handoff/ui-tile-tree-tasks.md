@@ -808,4 +808,34 @@ owner to add to its pull request or issue (owner, 2026-10-29).
       captured numbers: barter-menu.md §8. Smoke: `tiles-container`,
       `tiles-container-quantity`, `container-default-drawing`. **Left**: the comparison with
       the original's shots (parts b to g of the capture retaken), DAM/DPS's fade, then the
-      barter menu on the same pieces.
+      barter comparison (candidate below) and the tag-skill list on the same pieces.
+
+    - **T15, barter built as a candidate** 2026-11-06 (issue #1468), behind
+      `[UI] TileMenus=BarterMenu`, hand-built drawing still the default [design:
+      `tiles/barter_menu.rs`, barter-menu.md section 9]. A first refactor commit shares
+      row identity, measuring, counts, scroll, guards and marks through `tiles/item_menu.rs`
+      with the container; its existing tests stay in place. Barter adds prices, caps,
+      flow direction, offered squares and Accept/Exit, with all commands and sounds
+      still the model's. Its quantity prompt follows automatically, or stays hand-built
+      when its file is missing or short. Strings are audited in section 9: settings,
+      record text, numbers or our own words. The container numbers reused for barter
+      and root arrow direction were checked against a capture of the original at 1280 x 720
+      (barter-menu.md section 9). Synthetic tests cover the adapter and a model sale. Smoke
+      `tiles-barter`, `tiles-barter-quantity`, `barter-default-drawing` includes 1280x720 shots.
+
+    - **T15, tag-skill candidate built** 2026-11-06 (issue #1519), behind
+      `[UI] TileMenus=CharGenMenu` [design: `tiles/tag_menu.rs`, chargen.md §3.1].
+      The preceding behavior-preserving refactor shares the trait menu's readiness,
+      three lifetimes, frame order, hand-over, list scroll/input, logging and test aids in
+      `tiles/selection_menu.rs`; trait snapshot wording remains separate. Tag rows use
+      `CGM_SelectItemTemplate` and the existing open sheet, with variable totals and locked
+      AddTagSkills tags. SpecialSheet remains hand-built. Title/counter use the project's
+      own words, AVIF supplies names/descriptions/icons, and the sheet supplies values.
+      A measured text scroll reaches long descriptions without adding a visible bar.
+      Uncaptured numbers and behavior follow TraitMenu as hypotheses. All 22 existing
+      trait tests compile; added tests cover tag rules, fallback, input, lifetimes and text.
+      Smoke: `tiles-tag-menu`, `tiles-tag-pointer-done`, `tiles-tag-default-drawing`,
+      `tiles-tag-missing-file`, `tiles-tag-cut-file`, `tiles-tag-stage-handover`,
+      `tiles-tag-add-skills`, `tiles-tag-special-fallback`, `tiles-tag-long-description`,
+      `tiles-tag-falls-back-open`. Compared with a capture of the original's tag menu at
+      1280 x 720 (chargen.md §3.1).

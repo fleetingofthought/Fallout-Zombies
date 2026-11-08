@@ -174,6 +174,20 @@ pub struct Stats {
     /// Colliders by rapier shape type name (`"cuboid"`, `"heightfield"`, ...).
     pub colliders: BTreeMap<String, usize>,
     pub steps: u64,
+    /// The solver's load (#1798): bodies awake, contact pairs touching, their manifolds
+    /// and contact points the solver works on, and the joints.
+    pub bodies_awake: usize,
+    pub contact_pairs: usize,
+    pub manifolds: usize,
+    pub solver_contacts: usize,
+    pub joints: usize,
+    /// rapier's stage timers summed over every step so far, microseconds (all 0 without
+    /// the `solver-timers` feature): the solver's serial set-up (velocity assembly), its
+    /// solve (velocity resolution: the constraint iterations and writeback), collision
+    /// detection, island construction, CCD, the whole rapier step. Not serialized (timings
+    /// differ run to run).
+    #[serde(skip)]
+    pub solver_us: [u64; 6],
 }
 
 /// State of one body, for readback (e.g. dynamic clutter positions).
@@ -207,6 +221,8 @@ struct PreparedObject {
     material: Material,
     /// Body pose in the world, rapier units.
     pose: Pose,
+    /// It responds to the weather's wind (`CollisionObject::wind`).
+    wind: bool,
     leaves: Vec<Leaf>,
     /// Contact shell times the reference's scale, game units.
     shell: f32,
@@ -264,6 +280,7 @@ impl PreparedRef {
                 motion: o.motion,
                 material: Material { friction: o.friction, restitution: o.restitution, mass: o.mass, code: o.material },
                 pose: body_pose,
+                wind: o.wind,
                 leaves,
                 shell: o.shell * pose.scale,
             });
@@ -383,6 +400,8 @@ pub struct PhysWorld {
     /// fixed bodies like the static ones and so cannot be told apart by body type. A door's
     /// moving parts are keyframed; its static frame is not.
     pub(crate) keyframed: BTreeMap<u32, Vec<RigidBodyHandle>>,
+    /// The dynamic bodies of each reference that respond to the wind ([`PhysWorld::blow`]).
+    pub(crate) wind: BTreeMap<u32, Vec<RigidBodyHandle>>,
     /// Actor hit volumes by reference FormID (`crate::actors`).
     pub(crate) actors: BTreeMap<u32, crate::actors::ActorBody>,
     /// Ragdolls by actor reference FormID, and the ragdoll body each of their rigid
@@ -423,6 +442,8 @@ pub struct PhysWorld {
     /// Standalone hit-volume colliders written since the last refresh or step: (collider,
     /// actor body, pose on the body), placed by `flush_hit_volumes`.
     pub(crate) hitvol_pending: Vec<(ColliderHandle, RigidBodyHandle, Pose)>,
+    /// [`Stats::solver_us`], milliseconds.
+    pub(crate) solver_ms: [f64; 6],
 }
 
 impl PhysWorld {
@@ -439,6 +460,8 @@ impl PhysWorld {
         // `clutter_on_the_terrain_shell_falls_asleep`]. Why is not known; a prediction
         // distance of the default plus the skin rests them (asleep within 2 s).
         w.integration_parameters.normalized_prediction_distance += TERRAIN_SHELL * k;
+        #[cfg(feature = "solver-timers")]
+        w.physics_pipeline.counters.enable();
         PhysWorld {
             params,
             w,
@@ -446,6 +469,7 @@ impl PhysWorld {
             terrain: BTreeMap::new(),
             refs: BTreeMap::new(),
             keyframed: BTreeMap::new(),
+            wind: BTreeMap::new(),
             actors: BTreeMap::new(),
             ragdolls: BTreeMap::new(),
             ragdoll_of: HashMap::new(),
@@ -463,6 +487,7 @@ impl PhysWorld {
             grip: None,
             standalone_hit_volumes: true,
             hitvol_pending: Vec::new(),
+            solver_ms: [0.0; 6],
         }
     }
 
@@ -520,9 +545,15 @@ impl PhysWorld {
                 Motion::Static | Motion::Keyframed => RigidBodyBuilder::fixed(),
                 Motion::Dynamic => RigidBodyBuilder::dynamic().sleeping(p.asleep),
             };
+            // A body that responds to the wind starts awake, so the wind takes it on from
+            // where it was placed until it comes to rest (`blow`) [hypothesis: the
+            // original's tumbleweeds near the player were rolling when a game was
+            // loaded and came to rest within 15 s, o27_tumble, docs/spec-notes/wind.md].
+            let blown = o.wind && o.motion == Motion::Dynamic;
+            let builder = if blown { builder.sleeping(false) } else { builder };
             // A dynamic body that has not moved yet would keep the clutter touching it
             // awake (a cleaner bottle on a container's lid): asleep too.
-            let hold = p.asleep && o.motion == Motion::Dynamic;
+            let hold = p.asleep && o.motion == Motion::Dynamic && !blown;
             let builder = if hold { builder.sleeping(true) } else { builder };
             let body = self.insert_body(builder.pose(o.pose).user_data(owner.encode()));
             // Kept with the reference at once, so a caller that catches a panic part way
@@ -530,6 +561,9 @@ impl PhysWorld {
             self.refs.entry(p.form_id).or_default().push(body);
             if o.motion == Motion::Keyframed {
                 self.keyframed.entry(p.form_id).or_default().push(body);
+            }
+            if blown {
+                self.wind.entry(p.form_id).or_default().push(body);
             }
             report.colliders += self.attach(body, owner, &o.material, o.leaves, o.shell);
             if o.motion == Motion::Dynamic {
@@ -618,6 +652,7 @@ impl PhysWorld {
     fn remove_bodies(&mut self, form_id: u32) -> bool {
         let Some(bodies) = self.refs.remove(&form_id) else { return false };
         self.keyframed.remove(&form_id);
+        self.wind.remove(&form_id);
         for b in bodies {
             self.remove_body(b);
         }
@@ -715,6 +750,33 @@ impl PhysWorld {
             b.apply_impulse(dir * (dv * m), true);
             // A query before the next step must not lose the wake-up (`update_queries`).
             self.struck.push(h);
+            n += 1;
+        }
+        n
+    }
+
+    /// The references with bodies that respond to the wind, and the centre of mass of
+    /// their first such body (game units).
+    pub fn wind_refs(&self) -> Vec<(u32, [f32; 3])> {
+        self.wind.iter().filter_map(|(&id, b)| Some((id, arr3(self.w.bodies.get(*b.first()?)?.center_of_mass() / self.k)))).collect()
+    }
+
+    /// Blow reference `form_id`'s bodies that respond to the wind for `dt` seconds: each
+    /// awake one's horizontal velocity is drawn towards `wind` (game units a second,
+    /// horizontal) by at most `accel` × `dt` (game units a second squared), so a slope it
+    /// cannot climb or something it lodges against stops it, and once it has come to rest
+    /// and fallen asleep the wind leaves it there [hypothesis: the original's tumbleweeds,
+    /// docs/spec-notes/wind.md]. A body asleep is not woken. Returns how many it blew.
+    pub fn blow(&mut self, form_id: u32, wind: [f32; 2], accel: f32, dt: f32) -> usize {
+        let k = self.k;
+        let Some(bodies) = self.wind.get(&form_id) else { return 0 };
+        let mut n = 0;
+        for &b in bodies {
+            let Some(body) = self.w.bodies.get_mut(b).filter(|x| x.is_dynamic() && !x.is_sleeping()) else { continue };
+            let v = body.linvel();
+            let want = Vector::new(wind[0] * k, wind[1] * k, v.z);
+            let dv = (want - v).clamp_length_max((accel * dt).max(0.0) * k);
+            body.set_linvel(v + Vector::new(dv.x, dv.y, 0.0), false);
             n += 1;
         }
         n
@@ -856,6 +918,10 @@ impl PhysWorld {
         {
             let _span = tracing::info_span!("phys::rapier_step").entered();
             self.step_world();
+            let c = &self.w.physics_pipeline.counters;
+            for (a, t) in self.solver_ms.iter_mut().zip([c.solver.velocity_assembly_time, c.solver.velocity_resolution_time, c.stages.collision_detection_time, c.stages.island_construction_time, c.stages.ccd_time, c.step_time]) {
+                *a += t.time_ms();
+            }
         }
         // Diagnostics: marks the step's own detection took, with no refresh between.
         if self.dirty {
@@ -1014,6 +1080,16 @@ impl PhysWorld {
         for (_, c) in self.w.colliders.iter() {
             *s.colliders.entry(shape_name(c.shape().shape_type())).or_default() += 1;
         }
+        s.bodies_awake = self.w.islands.num_active_bodies();
+        for pair in self.w.narrow_phase.contact_pairs().filter(|p| p.has_any_active_contact()) {
+            s.contact_pairs += 1;
+            for m in pair.solver_manifolds().iter().filter(|m| !m.data.solver_contacts.is_empty()) {
+                s.manifolds += 1;
+                s.solver_contacts += m.data.solver_contacts.len();
+            }
+        }
+        s.joints = self.w.impulse_joints.len();
+        s.solver_us = self.solver_ms.map(|v| (v * 1000.0) as u64);
         s
     }
 
@@ -1044,6 +1120,7 @@ impl PhysWorld {
             terrain: self.terrain.clone(),
             refs: self.refs.clone(),
             keyframed: self.keyframed.clone(),
+            wind: self.wind.clone(),
             actors: self.actors.clone(),
             ragdolls: self.ragdolls.clone(),
             ragdoll_of: self.ragdoll_of.clone(),
@@ -1061,6 +1138,7 @@ impl PhysWorld {
             grip: self.grip.clone(),
             standalone_hit_volumes: self.standalone_hit_volumes,
             hitvol_pending: self.hitvol_pending.clone(),
+            solver_ms: self.solver_ms,
         }
     }
 

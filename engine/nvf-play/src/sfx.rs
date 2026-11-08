@@ -970,14 +970,15 @@ pub(crate) fn prefetch(sfx: &mut Sfx, vfs: &Arc<fnv_vfs::Vfs>, path: &str, name:
         return;
     }
     let (vfs, owned) = (vfs.clone(), path.to_string());
-    // On the I/O pool, not the compute pool, which reads cells, models and actors on its
-    // few threads [engineering choice; hypothesis: a sound asked for while a cell streams
-    // in waits behind those reads, the smoke runs of 2026-11-03 had starts up to about
-    // 100 frames late on the compute pool]. Bevy's `AssetServer` loads on the I/O pool
+    // On the I/O pool, away from the reads of cells, models and actors, which were on the
+    // async compute pool then and have their own pool now (`nvf_assets::read_pool`)
+    // [engineering choice; hypothesis: a sound asked for while a cell streams in waits
+    // behind those reads, the smoke runs of 2026-11-03 had starts up to about 100 frames
+    // late on the compute pool]. Bevy's `AssetServer` loads on the I/O pool
     // too, but this engine loads only its embedded shaders through it, at start-up (the
     // `RenderStartup` systems, e.g. engine/nvforever/src/post.rs `init_pipelines`, and
     // the materials' shaders when their plugins are built, grass.rs, tree.rs, sky.rs);
-    // the game's files are read by nvf-assets on the async compute pool and added to
+    // the game's files are read by nvf-assets on its read pool and added to
     // `Assets` directly (nvf-assets/src/model.rs, actor.rs) [design]. During play the
     // I/O pool holds this module's decodes and its folder index only.
     let task = IoTaskPool::get_or_init(TaskPool::default).spawn(async move { decode_file(&vfs, &owned) });

@@ -1,0 +1,622 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o28_creature_sounds",
+ "title": "Issue #989: when the original plays creature sounds that no clip key plays (Securitron siren type 21; Idle and Attack without keys). JIP IsSoundPlaying of the creature's sounds every sample, spawned creatures on the Searchlight Airport runway (save nvfairport)",
+ "save": "nvfairport",
+ "defaults": {
+  "fields": "fight",
+  "every": 5,
+  "depth": 1,
+  "settle_frames": 120,
+  "max_actors": 3,
+  "events": "fight",
+  "do_first": [
+   [
+    "player.MoveTo {0} 851 228 40",
+    "0x0013DA13"
+   ],
+   {
+    "frames": 120
+   }
+  ],
+  "extra_header": [
+   [
+    "s1",
+    "num",
+    "player.GetAV Variable01"
+   ],
+   [
+    "s2",
+    "num",
+    "player.GetAV Variable02"
+   ],
+   [
+    "s3",
+    "num",
+    "player.GetAV Variable03"
+   ],
+   [
+    "dist",
+    "num",
+    "player.GetAV Variable06"
+   ],
+   [
+    "c_combat",
+    "num",
+    "player.GetAV Variable07"
+   ],
+   [
+    "c_proc",
+    "num",
+    "player.GetAV Variable08"
+   ],
+   [
+    "s1_any",
+    "num",
+    "player.GetAV Variable09"
+   ]
+  ]
+ },
+ "sessions": [
+  {
+   "name": "securitron",
+   "note": "VStreetSecuritron (Cops sound template) 600 units off, quiet for 150 samples, then StartCombat player. s1 siren NPCSecuritronSiren (type 21), s2 NPCSecuritronForward, s3 NPCSecuritronConsciousLP",
+   "console_first": [
+    "CloseAllMenus",
+    "tgm"
+   ],
+   "hours": 0.4,
+   "timed": [
+    {
+     "after": 1,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.Disable",
+       "    rA.MarkForDelete",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "player.SetAV Variable01 0",
+       "player.SetAV Variable02 0",
+       "player.SetAV Variable03 0",
+       "player.SetAV Variable06 0",
+       "player.SetAV Variable07 0",
+       "player.SetAV Variable08 0",
+       "player.SetAV Variable09 0"
+      ]
+     }
+    },
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "names": [
+       "0x00112643"
+      ],
+      "lines": [
+       "let rA := player.PlaceAtMe {0} 1 600 0"
+      ]
+     }
+    },
+    {
+     "after": 150,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      rA.SetAV Aggression 2",
+       "      rA.StartCombat player",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rA",
+       "ref rC",
+       "float fV"
+      ],
+      "names": [
+       "0x001567F8",
+       "0x00161EB9",
+       "0x0014D3F4"
+      ],
+      "lines": [
+       "let rC := 0",
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      let rC := rA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "if rC",
+       "  let fV := IsSoundPlaying {0} rC",
+       "  player.SetAV Variable01 fV",
+       "  let fV := IsSoundPlaying {1} rC",
+       "  player.SetAV Variable02 fV",
+       "  let fV := IsSoundPlaying {2} rC",
+       "  player.SetAV Variable03 fV",
+       "  let fV := player.GetDistance rC",
+       "  player.SetAV Variable06 fV",
+       "  let fV := rC.IsInCombat",
+       "  player.SetAV Variable07 fV",
+       "  let fV := rC.GetCurrentAIProcedure",
+       "  player.SetAV Variable08 fV",
+       "endif",
+       "let fV := IsSoundPlaying {0}",
+       "player.SetAV Variable09 fV"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "securitron_army",
+   "note": "VStreetSecuritronMk2 (Army template), same",
+   "hours": 0.3,
+   "timed": [
+    {
+     "after": 1,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.Disable",
+       "    rA.MarkForDelete",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "player.SetAV Variable01 0",
+       "player.SetAV Variable02 0",
+       "player.SetAV Variable03 0",
+       "player.SetAV Variable06 0",
+       "player.SetAV Variable07 0",
+       "player.SetAV Variable08 0",
+       "player.SetAV Variable09 0"
+      ]
+     }
+    },
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "names": [
+       "0x001787EC"
+      ],
+      "lines": [
+       "let rA := player.PlaceAtMe {0} 1 600 0"
+      ]
+     }
+    },
+    {
+     "after": 150,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      rA.SetAV Aggression 2",
+       "      rA.StartCombat player",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rA",
+       "ref rC",
+       "float fV"
+      ],
+      "names": [
+       "0x001567F8",
+       "0x00161EB9",
+       "0x0014D3F4"
+      ],
+      "lines": [
+       "let rC := 0",
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      let rC := rA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "if rC",
+       "  let fV := IsSoundPlaying {0} rC",
+       "  player.SetAV Variable01 fV",
+       "  let fV := IsSoundPlaying {1} rC",
+       "  player.SetAV Variable02 fV",
+       "  let fV := IsSoundPlaying {2} rC",
+       "  player.SetAV Variable03 fV",
+       "  let fV := player.GetDistance rC",
+       "  player.SetAV Variable06 fV",
+       "  let fV := rC.IsInCombat",
+       "  player.SetAV Variable07 fV",
+       "  let fV := rC.GetCurrentAIProcedure",
+       "  player.SetAV Variable08 fV",
+       "endif",
+       "let fV := IsSoundPlaying {0}",
+       "player.SetAV Variable09 fV"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "molerat",
+   "note": "CrMoleRatDomesticated 700 off, Aggression 0, idling 700 samples, then StartCombat player. s1 Idle NPCMoleRatIdle, s2 Aware NPCMoleRatMtFwdVox (s3 repeats s1)",
+   "hours": 0.9,
+   "timed": [
+    {
+     "after": 1,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.Disable",
+       "    rA.MarkForDelete",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "player.SetAV Variable01 0",
+       "player.SetAV Variable02 0",
+       "player.SetAV Variable03 0",
+       "player.SetAV Variable06 0",
+       "player.SetAV Variable07 0",
+       "player.SetAV Variable08 0",
+       "player.SetAV Variable09 0"
+      ]
+     }
+    },
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "names": [
+       "0x0015A942"
+      ],
+      "lines": [
+       "let rA := player.PlaceAtMe {0} 1 700 0",
+       "rA.SetAV Aggression 0",
+       "rA.SetAV Confidence 4"
+      ]
+     }
+    },
+    {
+     "after": 700,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      rA.SetAV Aggression 2",
+       "      rA.StartCombat player",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rA",
+       "ref rC",
+       "float fV"
+      ],
+      "names": [
+       "0x000C051D",
+       "0x00163469",
+       "0x000C051D"
+      ],
+      "lines": [
+       "let rC := 0",
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      let rC := rA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "if rC",
+       "  let fV := IsSoundPlaying {0} rC",
+       "  player.SetAV Variable01 fV",
+       "  let fV := IsSoundPlaying {1} rC",
+       "  player.SetAV Variable02 fV",
+       "  let fV := IsSoundPlaying {2} rC",
+       "  player.SetAV Variable03 fV",
+       "  let fV := player.GetDistance rC",
+       "  player.SetAV Variable06 fV",
+       "  let fV := rC.IsInCombat",
+       "  player.SetAV Variable07 fV",
+       "  let fV := rC.GetCurrentAIProcedure",
+       "  player.SetAV Variable08 fV",
+       "endif",
+       "let fV := IsSoundPlaying {0}",
+       "player.SetAV Variable09 fV"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "giantrat",
+   "note": "NVCrGiantRat 700 off, Aggression 0, idling, then StartCombat at 600. s1 Idle NPCMoleRatIdle, s2 Aux1 NPCGiantRatHiss (s3 repeats s1)",
+   "hours": 0.8,
+   "timed": [
+    {
+     "after": 1,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.Disable",
+       "    rA.MarkForDelete",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "player.SetAV Variable01 0",
+       "player.SetAV Variable02 0",
+       "player.SetAV Variable03 0",
+       "player.SetAV Variable06 0",
+       "player.SetAV Variable07 0",
+       "player.SetAV Variable08 0",
+       "player.SetAV Variable09 0"
+      ]
+     }
+    },
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "names": [
+       "0x000E8E95"
+      ],
+      "lines": [
+       "let rA := player.PlaceAtMe {0} 1 700 0",
+       "rA.SetAV Aggression 0",
+       "rA.SetAV Confidence 4"
+      ]
+     }
+    },
+    {
+     "after": 600,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      rA.SetAV Aggression 2",
+       "      rA.StartCombat player",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rA",
+       "ref rC",
+       "float fV"
+      ],
+      "names": [
+       "0x000C051D",
+       "0x00146712",
+       "0x000C051D"
+      ],
+      "lines": [
+       "let rC := 0",
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      let rC := rA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "if rC",
+       "  let fV := IsSoundPlaying {0} rC",
+       "  player.SetAV Variable01 fV",
+       "  let fV := IsSoundPlaying {1} rC",
+       "  player.SetAV Variable02 fV",
+       "  let fV := IsSoundPlaying {2} rC",
+       "  player.SetAV Variable03 fV",
+       "  let fV := player.GetDistance rC",
+       "  player.SetAV Variable06 fV",
+       "  let fV := rC.IsInCombat",
+       "  player.SetAV Variable07 fV",
+       "  let fV := rC.GetCurrentAIProcedure",
+       "  player.SetAV Variable08 fV",
+       "endif",
+       "let fV := IsSoundPlaying {0}",
+       "player.SetAV Variable09 fV"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "lakelurk",
+   "note": "CrLakelurkKingCG (LakelurkKing template) 700 off, Aggression 0 for 300 samples, then StartCombat player. s1 Attack NPCMirelurkKingAttack, s2 Idle NPCMirelurkKingIdleFeeding, s3 Aware NPCMirelurkKingEquip",
+   "hours": 0.8,
+   "timed": [
+    {
+     "after": 1,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.Disable",
+       "    rA.MarkForDelete",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "player.SetAV Variable01 0",
+       "player.SetAV Variable02 0",
+       "player.SetAV Variable03 0",
+       "player.SetAV Variable06 0",
+       "player.SetAV Variable07 0",
+       "player.SetAV Variable08 0",
+       "player.SetAV Variable09 0"
+      ]
+     }
+    },
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "names": [
+       "0x00145EDA"
+      ],
+      "lines": [
+       "let rA := player.PlaceAtMe {0} 1 700 0",
+       "rA.SetAV Aggression 0",
+       "rA.SetAV Confidence 4"
+      ]
+     }
+    },
+    {
+     "after": 300,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      rA.SetAV Aggression 2",
+       "      rA.StartCombat player",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rA",
+       "ref rC",
+       "float fV"
+      ],
+      "names": [
+       "0x000C4722",
+       "0x000C5B7F",
+       "0x0007E701"
+      ],
+      "lines": [
+       "let rC := 0",
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDisabled == 0",
+       "      let rC := rA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "if rC",
+       "  let fV := IsSoundPlaying {0} rC",
+       "  player.SetAV Variable01 fV",
+       "  let fV := IsSoundPlaying {1} rC",
+       "  player.SetAV Variable02 fV",
+       "  let fV := IsSoundPlaying {2} rC",
+       "  player.SetAV Variable03 fV",
+       "  let fV := player.GetDistance rC",
+       "  player.SetAV Variable06 fV",
+       "  let fV := rC.IsInCombat",
+       "  player.SetAV Variable07 fV",
+       "  let fV := rC.GetCurrentAIProcedure",
+       "  player.SetAV Variable08 fV",
+       "endif",
+       "let fV := IsSoundPlaying {0}",
+       "player.SetAV Variable09 fV"
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

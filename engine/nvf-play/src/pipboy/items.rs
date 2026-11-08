@@ -640,6 +640,7 @@ mod tests {
             price: None,
             bartered: false,
             mods: 0,
+            mods_value: 0,
             folder: None,
             reference: None,
         };

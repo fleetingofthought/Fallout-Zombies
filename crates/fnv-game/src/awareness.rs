@@ -565,6 +565,15 @@ pub(crate) fn position(g: &Game, r: FormId) -> Option<[f32; 3]> {
     g.world.peek(r).map(|s| s.pos).or_else(|| g.world.placed.get(r).map(|p| p.pos))
 }
 
+/// What [`Game::kin`] reads of one actor (kept by `detection::Round::kin`).
+#[derive(Debug, Clone)]
+pub(crate) struct KinFacts {
+    base: Option<FormId>,
+    factions: Vec<FormId>,
+    /// One of its factions names reactions (not only utility factions).
+    fights: bool,
+}
+
 impl Game<'_> {
     fn awareness_timers(&mut self) -> Timers {
         match self.awareness.timers {
@@ -645,17 +654,30 @@ impl Game<'_> {
     }
 
     fn hostile_to_now(&mut self, actor: FormId, other: FormId) -> bool {
+        // What the rule reads that is looked up with `&mut`: both actors' Aggression (the
+        // rule asks it of `actor`, and of `other` when it asks how `other` stands towards
+        // the player), and in a round their kinship facts, kept for it.
+        let (of_actor, of_other) = (self.aggression_kept(actor), self.aggression_kept(other));
+        self.keep_kin_facts(actor);
+        self.keep_kin_facts(other);
+        let aggression = |r: FormId| (r == actor).then_some(of_actor).or((r == other).then_some(of_other));
+        self.hostility(actor, other, &aggression).unwrap_or(false)
+    }
+
+    /// The rule of [`Game::hostile_to`], read-only: `aggression` gives an actor's
+    /// Aggression; `None` when it gives none for an actor the rule asks about.
+    fn hostility(&self, actor: FormId, other: FormId, aggression: &dyn Fn(FormId) -> Option<i64>) -> Option<bool> {
         if actor == other || actor == FormId::PLAYER_REF || !self.world.is_enabled(actor).unwrap_or(false) {
-            return false;
+            return Some(false);
         }
         let out = |g: &Game, r: FormId| g.extra.get(&r).is_some_and(|e| e.dead || e.out_cold() || e.restrained);
         // A knocked-down player stays a target (unconscious.md §5.4) [design].
         let player_down = other == FormId::PLAYER_REF && self.extra.get(&other).is_some_and(|e| e.knocked_out.is_some() && !e.unconscious && !e.restrained);
         if out(self, actor) || (out(self, other) && !player_down) || self.is_dead(other) {
-            return false;
+            return Some(false);
         }
         if self.awareness.forced.contains(&(actor, other)) || self.provocations.holds(actor, other) {
-            return true;
+            return Some(true);
         }
         // The player's teammates "act and react as if in the player faction for the
         // purposes of combat. Other actors will treat the actor as if he were in the
@@ -666,51 +688,51 @@ impl Game<'_> {
         // Boone's for the Legion] (`crate::followers`).
         let (mate, other_mate) = (self.is_teammate(actor), self.is_teammate(other));
         if mate && (other_mate || other == FormId::PLAYER_REF) {
-            return false;
+            return Some(false);
         }
         if other_mate {
-            return self.hostile_to(actor, FormId::PLAYER_REF);
+            return self.hostility(actor, FormId::PLAYER_REF, aggression);
         }
         // A companion set passive on the wheel (`FollowerSwitchAggressive` 0) leaves alone
         // whoever does not fight the player's side, its own enmities too; a grudge (a hit)
         // counted above [hypothesis: the wheel's Passive "follows your lead",
         // docs/spec-notes/companion-wheel.md §4].
         if mate && self.is_passive_teammate(actor) {
-            return self.fights_the_players_side(other);
+            return Some(self.fights_the_players_side(other));
         }
-        if mate && self.hostile_to(other, FormId::PLAYER_REF) {
-            return true;
+        if mate && self.hostility(other, FormId::PLAYER_REF, aggression)? {
+            return Some(true);
         }
         if other == FormId::PLAYER_REF {
             if self.extra.get(&actor).is_some_and(|e| e.teammate) {
-                return false;
+                return Some(false);
             }
             // The player's crimes (`crate::crime`).
             if self.crime_enemy(actor) {
-                return true;
+                return Some(true);
             }
         } else {
             if !self.world.is_enabled(other).unwrap_or(false) {
-                return false;
+                return Some(false);
             }
-            if self.kin(actor, other) {
-                return false;
+            if self.kin_in_round(actor, other) {
+                return Some(false);
             }
             // "Defensive Combat": "The actor will not attack an NPC or creature, unless he
             // is attacked first" [documented: GECK wiki Packages, Flags tab]; being
             // attacked is a grudge, which counts above.
             if self.package_has(actor, flags::DEFENSIVE_COMBAT) {
-                return false;
+                return Some(false);
             }
         }
-        let relation = faction_relation(self, actor, other);
-        let aggression = actor_value(self, actor, AGGRESSION).unwrap_or(0.0) as i64;
-        match aggression {
+        let relation = self.relation_in_round(actor, other);
+        let aggression = aggression(actor)?;
+        Some(match aggression {
             a if a >= 3 => true,
             2 => relation != 2 && relation != 3,
             1 => relation == 1,
             _ => false,
-        }
+        })
     }
 
     /// Whether `actor`'s current package keeps it out of Alert: the package flag "No
@@ -928,19 +950,116 @@ impl Game<'_> {
         if a == b || a == FormId::PLAYER_REF || b == FormId::PLAYER_REF {
             return false;
         }
-        if faction_relation(self, a, b) == 1 || faction_relation(self, b, a) == 1 {
+        self.kin_with(a, b, &self.kin_facts(a), &self.kin_facts(b))
+    }
+
+    /// [`Game::kin`] from the facts a detection round keeps while it keeps its hostility
+    /// (`detection::Round::kin`, [`Game::keep_kin_facts`]); worked out here without them.
+    fn kin_in_round(&self, a: FormId, b: FormId) -> bool {
+        if a == b || a == FormId::PLAYER_REF || b == FormId::PLAYER_REF {
             return false;
         }
-        // Placed or created at run time (PlaceAtMe).
-        let base = |r: FormId| crate::functions::base_of(self, r);
-        if base(a).is_some() && base(a) == base(b) {
+        let kept = self.detection_round.as_ref().filter(|r| r.hostile.is_some()).map(|r| (r.kin.get(&a), r.kin.get(&b)));
+        match kept {
+            Some((Some(fa), Some(fb))) => self.kin_with(a, b, fa, fb),
+            _ => self.kin(a, b),
+        }
+    }
+
+    /// `faction_relation(a, b)` from the factions a detection round keeps with its
+    /// hostility (`detection::Round::kin`), without the kept relations' lock: a round's
+    /// relations are new, so on its threads each pair's first ask took the lock to write
+    /// and they waited on each other (#1799). Worked out as `faction_relation` does
+    /// otherwise.
+    fn relation_in_round(&self, a: FormId, b: FormId) -> i64 {
+        let kept = self.detection_round.as_ref().filter(|r| r.hostile.is_some()).map(|r| (r.kin.get(&a), r.kin.get(&b)));
+        match kept {
+            Some((Some(fa), Some(fb))) => crate::functions::actor::factions_between(self, &fa.factions, b, &fb.factions),
+            _ => faction_relation(self, a, b),
+        }
+    }
+
+    /// Keep `r`'s kinship facts for the rest of a detection round's hostility (the
+    /// player's too: its factions serve the relations, `Game::relation_in_round`).
+    fn keep_kin_facts(&mut self, r: FormId) {
+        let wanted = self.detection_round.as_ref().is_some_and(|round| round.hostile.is_some() && !round.kin.contains_key(&r));
+        if wanted {
+            let f = self.kin_facts(r);
+            if let Some(round) = self.detection_round.as_mut() {
+                round.kin.insert(r, f);
+            }
+        }
+    }
+
+    /// Before a round's pairs: each of `actors`' Aggression and kinship facts kept, so
+    /// that [`Game::round_hostility`] can work out who would attack whom among them
+    /// without `&mut`, on other threads (#1799).
+    pub fn prepare_round_hostility(&mut self, actors: &[FormId]) {
+        if self.detection_round.as_ref().is_none_or(|r| r.hostile.is_none()) {
+            return;
+        }
+        for &a in actors {
+            self.aggression_kept(a);
+            self.keep_kin_facts(a);
+        }
+    }
+
+    /// [`Game::hostile_to`]`(actor, other)` as the round would work it out, read-only
+    /// (for threads): `None` outside a round's hostility, or when it lacks a fact
+    /// ([`Game::prepare_round_hostility`]). Nothing a round's pairs do changes what it
+    /// reads, so it is what the pair would get when it is asked.
+    pub fn round_hostility(&self, actor: FormId, other: FormId) -> Option<bool> {
+        let round = self.detection_round.as_ref()?;
+        let kept = round.hostile.as_ref()?;
+        if let Some(&h) = kept.get(&(actor, other)) {
+            return Some(h);
+        }
+        self.hostility(actor, other, &|r| round.aggression.get(&r).copied())
+    }
+
+    /// Keep answers of [`Game::round_hostility`] for the rest of the round's hostility.
+    pub fn keep_round_hostility(&mut self, answers: impl IntoIterator<Item = ((FormId, FormId), bool)>) {
+        if let Some(kept) = self.detection_round.as_mut().and_then(|r| r.hostile.as_mut()) {
+            kept.extend(answers);
+        }
+    }
+
+    /// What [`Game::kin`] reads of one actor: its base (placed or created at run time,
+    /// PlaceAtMe), its factions, and whether one of them names reactions.
+    fn kin_facts(&self, r: FormId) -> KinFacts {
+        let factions = factions_of(self, r);
+        let fights = factions.iter().any(|f| self.faction_names_reactions(f));
+        KinFacts { base: crate::functions::base_of(self, r), factions, fights }
+    }
+
+    fn faction_names_reactions(&self, f: &FormId) -> bool {
+        self.data.faction_reactions.get(f).is_some_and(|v| !v.is_empty())
+    }
+
+    fn kin_with(&self, a: FormId, b: FormId, fa: &KinFacts, fb: &KinFacts) -> bool {
+        if self.relation_in_round(a, b) == 1 || self.relation_in_round(b, a) == 1 {
+            return false;
+        }
+        if fa.base.is_some() && fa.base == fb.base {
             return true;
         }
-        let names = |f: &FormId| self.data.faction_reactions.get(f).is_some_and(|v| !v.is_empty());
-        let (mine, theirs) = (factions_of(self, a), factions_of(self, b));
-        let shared: Vec<&FormId> = mine.iter().filter(|f| theirs.contains(f)).collect();
-        let fighting_faction = |fs: &[FormId]| fs.iter().any(names);
-        shared.iter().any(|f| names(f)) || (!shared.is_empty() && (!fighting_faction(&mine) || !fighting_faction(&theirs)))
+        let mut shared = fa.factions.iter().filter(|f| fb.factions.contains(f)).peekable();
+        let any_shared = shared.peek().is_some();
+        shared.any(|f| self.faction_names_reactions(f)) || (any_shared && (!fa.fights || !fb.fights))
+    }
+
+    /// `actor`'s Aggression, kept for the rest of a detection round's hostility
+    /// (`detection::Round::aggression`).
+    fn aggression_kept(&mut self, actor: FormId) -> i64 {
+        let keep = self.detection_round.as_ref().is_some_and(|r| r.hostile.is_some());
+        if let Some(&a) = self.detection_round.as_ref().filter(|_| keep).and_then(|r| r.aggression.get(&actor)) {
+            return a;
+        }
+        let a = actor_value(self, actor, AGGRESSION).unwrap_or(0.0) as i64;
+        if let Some(round) = self.detection_round.as_mut().filter(|_| keep) {
+            round.aggression.insert(actor, a);
+        }
+        a
     }
 }
 

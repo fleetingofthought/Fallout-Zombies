@@ -430,6 +430,16 @@ impl Gen<'_> {
         matches!(u.origin.as_str(), "NVSE" | "FOSE1") && !formatted && u.params.get(k).is_some_and(|p| p.kind == "string" && p.wiki_type.as_deref().is_some_and(|t| t.eq_ignore_ascii_case("string")))
     }
 
+    /// An extender function without an opcode whose parameter `k` the catalogue gives as
+    /// an axis (`kind: "axis"`): `X`, `Y` or `Z` there is the axis even when a record of
+    /// the load order has that editor ID [observed: sup3, `SetTFCAngle Z 45` read back 45
+    /// in the original with OldWorldBlues.esm and LonesomeRoad.esm loaded, each with a
+    /// reference named `Z`].
+    fn axis_param(&self, f: &XFn, k: usize) -> bool {
+        let FuncId::Name(n) = &f.func else { return false };
+        f.opcode.is_none() && self.table.unnumbered.get(&n.to_ascii_lowercase()).and_then(|u| u.params.get(k)).is_some_and(|p| p.kind == "axis" || p.wiki_type.as_deref().is_some_and(axis_letters))
+    }
+
     /// The function's parameter `k` takes a form, or is named for a global (the base
     /// game's GetGlobalValue included).
     fn form_param(&self, f: &XFn, k: usize) -> bool {
@@ -491,7 +501,11 @@ impl Gen<'_> {
                     }
                 }
             }
-            let enc = f.opcode.map(|o| self.table.param_enc(o, args.len())).unwrap_or(ParamEnc::Value);
+            let enc = match f.opcode {
+                Some(o) => self.table.param_enc(o, args.len()),
+                None if self.axis_param(f, args.len()) => ParamEnc::Axis,
+                None => ParamEnc::Value,
+            };
             let min = if f.aware {
                 ARG_OVERRIDE
             } else if self.co {
@@ -558,6 +572,12 @@ impl Gen<'_> {
         }
         self.xexpr(p, min)
     }
+}
+
+/// A wiki type of axis letters, `X/Z` or `X/Y/Z` (SetTFCAngle's page types its axis
+/// `X/Z`, which the catalogue does not take for an axis).
+fn axis_letters(t: &str) -> bool {
+    t.len() >= 3 && t.split('/').all(|c| matches!(c.trim(), "X" | "Y" | "Z" | "x" | "y" | "z"))
 }
 
 fn val_expr(v: Val) -> XExpr {

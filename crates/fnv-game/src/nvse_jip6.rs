@@ -136,9 +136,12 @@ fn set_stage_trait(s: &mut DestructionStage, t: i64, v: f64) {
     let byte = (0.0..=255.0).contains(&v).then_some(v as u8);
     let int = (f64::from(i32::MIN)..=f64::from(i32::MAX)).contains(&v).then_some(v as i32);
     match t {
+        // The health percentage takes any whole number: it wraps as an unsigned 32-bit
+        // value and is kept modulo 101 (150 reads 49, 1000 reads 91, -1 reads 67)
+        // [observed: jip6 dest.settrait.1.0.*, jip6b dest.hp.*].
         0 => {
-            if let Some(p) = byte.filter(|&p| p <= 100) {
-                s.health_percent = p;
+            if let Some(i) = int {
+                s.health_percent = (i as u32 % 101) as u8;
             }
         }
         1 => {
@@ -211,7 +214,12 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
                 match name {
                     "setnthdestructionstagedebris" => s.debris = new_form,
                     "setnthdestructionstageexplosion" => s.explosion = new_form,
-                    "setnthdestructionstagereplacement" => s.model = Some(path).filter(|p| !p.is_empty()),
+                    "setnthdestructionstagereplacement" => {
+                        s.model = Some(path).filter(|p| !p.is_empty());
+                        // the replacement setter alone returns 1 [observed: jip6 dest.setrepl;
+                        // the other stage setters 0, jip6b dest.setexpl.result]
+                        return Some(Ok(XVal::Num(1.0)));
+                    }
                     _ => set_stage_trait(s, t, v),
                 }
             }
@@ -225,14 +233,21 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             let (i, health, stage) = (num(args, 1, -1.0), num(args, 2, 0.0), num(args, 3, 0.0));
             let ok = i.is_finite() && i >= 0.0 && health.is_finite() && stage.is_finite();
             let i = i as i64;
-            let d = form(args, 0).map(|f| base(g, f)).and_then(|b| g.destruction_mut(b));
-            match d.filter(|_| ok) {
+            // A form without destruction data gets it (not VATS targetable) with the new
+            // stage [observed: jip6b dest.add.none]. The result is the stage's index; an
+            // index past the end adds nothing and gives -1 [observed: jip6 dest.add.*,
+            // jip6b dest.add.end, dest.add.0].
+            let b = form(args, 0).map(|f| base(g, f));
+            if let Some(b) = b.filter(|&b| ok && g.destruction(b).is_none()) {
+                g.other.jip6.destruction.insert(b, DestructionDef::default());
+            }
+            let d = b.and_then(|b| g.destruction_mut(b));
+            match d.filter(|d| ok && i as usize <= d.stages.len()) {
                 Some(d) => {
                     let s = DestructionStage { health_percent: health.clamp(0.0, 100.0) as u8, damage_stage: stage.clamp(0.0, 255.0) as u8, ..DestructionStage::default() };
-                    let at = (i as usize).min(d.stages.len());
-                    d.stages.insert(at, s);
+                    d.stages.insert(i as usize, s);
                     renumber(d);
-                    XVal::Num(d.stages.len() as f64)
+                    XVal::Num(i as f64)
                 }
                 None => XVal::Num(-1.0),
             }
@@ -242,10 +257,11 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             let i = usize::try_from(num(args, 1, -1.0) as i64).ok();
             let d = form(args, 0).map(|f| base(g, f)).and_then(|b| g.destruction_mut(b));
             match (d, i) {
+                // the removed stage's index [observed: jip6 dest.remove.1, dest.remove.last]
                 (Some(d), Some(i)) if i < d.stages.len() => {
                     d.stages.remove(i);
                     renumber(d);
-                    XVal::Num(d.stages.len() as f64)
+                    XVal::Num(i as f64)
                 }
                 _ => XVal::Num(-1.0),
             }
@@ -271,8 +287,9 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // set [hypothesis].
         "setcreaturedamage" => {
             let v = num(args, 0, f64::NAN).trunc();
-            if let Some(c) = of_sig(g, form(args, 1).or(subject).map(|f| base(g, f)), b"CREA").filter(|_| (f64::from(i16::MIN)..=f64::from(i16::MAX)).contains(&v)) {
-                g.field_overrides.insert((c, "DATA/damage".into()), XVal::Num(v));
+            // held to 0-65535 [observed: jip6 cr.setdamage.*, jip6b cr.dmg.*]
+            if let Some(c) = of_sig(g, form(args, 1).or(subject).map(|f| base(g, f)), b"CREA").filter(|_| !v.is_nan()) {
+                g.field_overrides.insert((c, "DATA/damage".into()), XVal::Num(v.clamp(0.0, 65535.0)));
             }
             zero
         }
@@ -298,7 +315,8 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         "creaturehasmodel" => {
             let p = text(args, 0);
             let c = of_sig(g, form(args, 1).or(subject).map(|f| base(g, f)), b"CREA");
-            yes(c.is_some_and(|c| g.creature_models(c).iter().any(|(m, _)| m.eq_ignore_ascii_case(&p))))
+            // a model turned off is not had [observed: jip6 cr.toggle.off, jip6b cr.toggle.offagain]
+            yes(c.is_some_and(|c| g.creature_models(c).iter().any(|(m, on)| *on && m.eq_ignore_ascii_case(&p))))
         }
         "getcreaturemodels" => {
             let c = of_sig(g, form(args, 0).or(subject).map(|f| base(g, f)), b"CREA");
@@ -309,12 +327,21 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         "togglecreaturemodel" => {
             let (p, on) = (text(args, 0), num(args, 1, 0.0) != 0.0);
             let Some(c) = of_sig(g, form(args, 2).or(subject).map(|f| base(g, f)), b"CREA") else { return Some(Ok(zero)) };
+            // 1 when the model's state changed; turning on a path not in the list adds it
+            // [observed: jip6 cr.toggle.*, jip6b cr.toggle.add, cr.toggle.offagain]
             let mut list = g.creature_models(c);
-            let found = list.iter_mut().find(|(m, _)| m.eq_ignore_ascii_case(&p)).map(|m| m.1 = on).is_some();
-            if found {
+            let changed = match list.iter_mut().find(|(m, _)| m.eq_ignore_ascii_case(&p)) {
+                Some(m) => std::mem::replace(&mut m.1, on) != on,
+                None if on && !p.is_empty() => {
+                    list.push((p, true));
+                    true
+                }
+                None => false,
+            };
+            if changed {
                 g.other.jip6.creature_models.insert(c, list);
             }
-            yes(found)
+            yes(changed)
         }
         // ---- messages [documented: the pages; flags 1 Is Message Box, 2 Auto-display].
         "getmessageflags" => XVal::Num(of_sig(g, form(args, 0), b"MESG").map_or(0, |m| g.message_flags(m)) as f64),
@@ -349,9 +376,11 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             }
             zero
         }
+        // the state before the call, 1 shown [observed: jip6 msg.crafting, jip6b msg.crafting.twice]
         "togglecraftingmessages" => {
+            let was = g.crafting_messages_shown();
             g.other.jip6.crafting_messages_off = num(args, 0, 1.0) == 0.0;
-            zero
+            yes(was)
         }
         _ => return None,
     };

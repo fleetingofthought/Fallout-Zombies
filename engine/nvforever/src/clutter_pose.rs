@@ -30,7 +30,7 @@ use fnv_nif::scene::Decoded;
 use fnv_nif::NifFile;
 use nvf_assets::data::GameData;
 use nvf_assets::model::ModelNode;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, LazyLock, Mutex};
 
 /// The nodes a file's collision objects hang on, in body order.
@@ -39,7 +39,7 @@ type BodyNodes = Arc<Vec<Option<String>>>;
 /// [`BodyNodes`] by archive path (`None`: no collision).
 static BODIES: LazyLock<Mutex<HashMap<String, Option<BodyNodes>>>> = LazyLock::new(Default::default);
 
-pub use fnv_world::xrgd::{posable, stored};
+pub use fnv_world::xrgd::{matching, posable, stored};
 
 /// The nodes the collision objects of the file at `path` hang on, in body order. A file
 /// that breaks the reader (a panic, caught) counts as one without collision.
@@ -65,20 +65,20 @@ pub fn body_nodes(data: &GameData, path: &str) -> Option<BodyNodes> {
 }
 
 /// Every node's transform from the model's root (game space, the root's own left out)
-/// with the bodies' nodes put where `bones` says (module notes); `None` when the entries
-/// do not match the bodies one for one, a body's node is missing, an entry is not
-/// finite or a node's parent does not come before it (a broken record or model).
-pub fn pose(nodes: &[ModelNode], bodies: &[Option<String>], bones: &[Bone]) -> Option<Vec<Affine3A>> {
-    if bodies.len() != bones.len() || bones.is_empty() {
-        return None;
-    }
+/// with the bodies' nodes put where `bones` says (module notes); `Err` with the reason
+/// when the entries do not match the bodies (`xrgd::matching`), a body's node is missing,
+/// an entry is not finite or a node's parent does not come before it (a broken record or
+/// model).
+pub fn pose(nodes: &[ModelNode], bodies: &[Option<String>], bones: &[Bone]) -> Result<Vec<Affine3A>, &'static str> {
+    let n = matching(bones.len(), bodies.len())?;
+    let bones = &bones[..n];
     if !bones.iter().all(|b| b.position.iter().chain(&b.angles).all(|v| v.is_finite())) {
-        return None;
+        return Err("an entry is not finite");
     }
     let mut local: Vec<Affine3A> = nodes.iter().map(|n| n.local).collect();
     for (body, bone) in bodies.iter().zip(bones) {
-        let name = body.as_deref()?;
-        let i = nodes.iter().position(|n| n.name.as_deref().is_some_and(|m| m.eq_ignore_ascii_case(name)))?;
+        let name = body.as_deref().ok_or("a body's node is unnamed")?;
+        let i = nodes.iter().position(|n| n.name.as_deref().is_some_and(|m| m.eq_ignore_ascii_case(name))).ok_or("a body's node is not in the model")?;
         let scale = Vec3::new(local[i].matrix3.x_axis.length(), local[i].matrix3.y_axis.length(), local[i].matrix3.z_axis.length());
         let r: Mat3 = authored_pose::rotation(bone.angles);
         local[i] = Affine3A::from_mat3_translation(r * Mat3::from_diagonal(scale), Vec3::from(bone.position));
@@ -87,12 +87,27 @@ pub fn pose(nodes: &[ModelNode], bodies: &[Option<String>], bones: &[Bone]) -> O
     let mut world: Vec<Affine3A> = Vec::with_capacity(nodes.len());
     for (i, n) in nodes.iter().enumerate() {
         let parent = match n.parent {
-            Some(p) => *world.get(p)?,
+            Some(p) => *world.get(p).ok_or("a node's parent comes after it")?,
             None => Affine3A::IDENTITY,
         };
         world.push(parent * local[i]);
     }
-    Some(world)
+    Ok(world)
+}
+
+/// Once per model, log why a reference's `XRGD` does not pose it (issue #1400). `why` is
+/// [`matching`]'s count reason or [`pose`]'s model reason.
+pub fn log_refused(path: &str, why: &str, bones: &[Bone], bodies: &[Option<String>]) {
+    static TOLD: LazyLock<Mutex<HashSet<String>>> = LazyLock::new(Default::default);
+    let key = fnv_vfs::normalize(path);
+    if TOLD.lock().ok().map(|mut s| s.insert(key)).unwrap_or(false) {
+        let count = |n: usize, one: &str, many: &str| format!("{n} {}", if n == 1 { one } else { many });
+        bevy::log::warn!(
+            "clutter pose: {path}: its XRGD does not fit ({why}; {}, {}); left in the file's pose",
+            count(bones.len(), "entry", "entries"),
+            count(bodies.len(), "body", "bodies"),
+        );
+    }
 }
 
 #[cfg(test)]
@@ -117,11 +132,37 @@ mod tests {
         assert!((Vec3::from(at(2)) - Vec3::new(0.0, 45.0, 0.0)).length() < 1e-4, "{:?}", at(2));
         // The ribs keep their place under the torso.
         assert!((Vec3::from(at(1)) - Vec3::new(0.0, 10.0, 0.0)).length() < 1e-4, "{:?}", at(1));
-        assert!(pose(&nodes, &bodies, &bones[..1]).is_none(), "one entry per body");
-        assert!(pose(&nodes, &[Some("Torso".into()), Some("Tail".into())], &bones).is_none(), "a body's node must exist");
+        assert!(pose(&nodes, &bodies, &bones[..1]).is_err(), "fewer entries than bodies");
+        assert!(pose(&nodes, &[Some("Torso".into()), Some("Tail".into())], &bones).is_err(), "a body's node must exist");
         let nan = [bones[0], Bone { position: [f32::NAN, 0.0, 0.0], ..bones[1] }];
-        assert!(pose(&nodes, &bodies, &nan).is_none(), "entries must be finite");
+        assert_eq!(pose(&nodes, &bodies, &nan).unwrap_err(), "an entry is not finite");
         let looped = vec![node("Torso", Some(1), Vec3::ZERO), node("Head", Some(0), Vec3::ZERO)];
-        assert!(pose(&looped, &bodies, &bones).is_none(), "a parent after its child");
+        assert_eq!(pose(&looped, &bodies, &bones).unwrap_err(), "a node's parent comes after it");
+    }
+
+    #[test]
+    fn a_skeleton_part_poses_from_the_first_entries() {
+        // A torso (five bodies: Torso, Head, RightUpArm, RightForeArm, RightHand) copied
+        // with the whole clothed skeleton's 15-entry XRGD poses from the first five
+        // entries; the ten extra entries are ignored (issue #1400).
+        let nodes = vec![
+            node("Torso", None, Vec3::ZERO),
+            node("Head", Some(0), Vec3::new(45.0, 0.0, 0.0)),
+            node("RightUpArm", Some(0), Vec3::new(40.0, -11.0, -2.0)),
+            node("RightForeArm", Some(2), Vec3::new(23.0, 0.0, 0.0)),
+            node("RightHand", Some(3), Vec3::new(18.0, 0.0, 0.0)),
+        ];
+        let bodies: Vec<Option<String>> = ["Torso", "Head", "RightUpArm", "RightForeArm", "RightHand"].iter().map(|n| Some(n.to_string())).collect();
+        let mut bones: Vec<Bone> = [0.0, 45.0, 40.0, 23.0, 18.0].iter().map(|&x| Bone { position: [x, 0.0, 0.0], angles: [0.0; 3] }).collect();
+        while bones.len() < 15 {
+            bones.push(Bone { position: [999.0; 3], angles: [0.0; 3] });
+        }
+        let w = pose(&nodes, &bodies, &bones).unwrap();
+        // The hand sits at the end of its chain (Torso 0 → RightUpArm 40 → RightForeArm
+        // 23 → RightHand 18): the first five entries posed it, the extras did not interfere.
+        let hand = Vec3::from(w[4].translation);
+        assert!((hand.x - 81.0).abs() < 1e-3, "{hand:?}");
+        // One body cannot stand for several entries.
+        assert_eq!(pose(&nodes, &bodies[..1], &bones).unwrap_err(), "one body, but more XRGD entries than it can hold");
     }
 }

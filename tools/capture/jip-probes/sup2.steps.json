@@ -1,0 +1,237 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "sup2",
+ "title": "sup2, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nSetFunctionValue (TopicSetFlags rTopic)\nEnd\n",
+   "label": "sup2.topic.flags",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"C8\"\nSetFunctionValue (TopicSetFlags rTopic)\nEnd\n",
+   "label": "sup2.topic.flags.greeting",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nlet fSave := TopicSetFlags rTopic\nlet fRes := TopicSetFlags rTopic 3\nlet sText := sv_Construct \"%g %g %g\" fSave fRes (TopicSetFlags rTopic)\nTopicSetFlags rTopic fSave\nSetFunctionValue (sv_Construct \"%z %g\" sText (TopicSetFlags rTopic))\nEnd\n",
+   "label": "sup2.topic.flags.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nlet fSave := TopicSetFlags rTopic\nlet fRes := TopicSetFlags rTopic 511\nlet sText := sv_Construct \"%g %g %g\" fSave fRes (TopicSetFlags rTopic)\nTopicSetFlags rTopic fSave\nSetFunctionValue (sv_Construct \"%z %g\" sText (TopicSetFlags rTopic))\nEnd\n",
+   "label": "sup2.topic.flags.wide",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nSetFunctionValue (TopicSetPriority rTopic)\nEnd\n",
+   "label": "sup2.topic.priority",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nlet fSave := TopicSetPriority rTopic\nlet fRes := TopicSetPriority rTopic 75.5\nlet sText := sv_Construct \"%g %g %g\" fSave fRes (TopicSetPriority rTopic)\nTopicSetPriority rTopic fSave\nSetFunctionValue (sv_Construct \"%z %g\" sText (TopicSetPriority rTopic))\nEnd\n",
+   "label": "sup2.topic.priority.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nSetFunctionValue (TopicInfoSetFlagsHigh rObj)\nEnd\n",
+   "label": "sup2.info.high.greet",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nSetFunctionValue (TopicInfoSetFlagsLow rObj)\nEnd\n",
+   "label": "sup2.info.low.greet",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nSetFunctionValue (TopicInfoSetFlagsHigh rObj)\nEnd\n",
+   "label": "sup2.info.high.bye",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nSetFunctionValue (TopicInfoSetFlagsLow rObj)\nEnd\n",
+   "label": "sup2.info.low.bye",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nSetFunctionValue (GetDialogueInfoFlags rObj)\nEnd\n",
+   "label": "sup2.info.itr.greet",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet fSave := TopicInfoSetFlagsHigh rObj\nlet fRes := TopicInfoSetFlagsHigh rObj 5\nlet sText := sv_Construct \"%g %g %g %g\" fSave fRes (TopicInfoSetFlagsHigh rObj) (GetDialogueInfoFlags rObj)\nTopicInfoSetFlagsHigh rObj fSave\nSetFunctionValue (sv_Construct \"%z %g\" sText (GetDialogueInfoFlags rObj))\nEnd\n",
+   "label": "sup2.info.high.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet fSave := TopicInfoSetFlagsLow rObj\nlet fRes := TopicInfoSetFlagsLow rObj 1\nlet sText := sv_Construct \"%g %g %g %g\" fSave fRes (TopicInfoSetFlagsHigh rObj) (GetDialogueInfoFlags rObj)\nTopicInfoSetFlagsLow rObj fSave\nSetFunctionValue (sv_Construct \"%z %g\" sText (GetDialogueInfoFlags rObj))\nEnd\n",
+   "label": "sup2.info.low.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet fSave := TopicInfoSetFlagsHigh rObj\nlet fRes := TopicInfoSetFlagsHigh rObj 511\nlet sText := sv_Construct \"%g %g %g\" fRes (TopicInfoSetFlagsLow rObj) (GetDialogueInfoFlags rObj)\nTopicInfoSetFlagsHigh rObj fSave\nSetFunctionValue (sv_Construct \"%z %g\" sText (GetDialogueInfoFlags rObj))\nEnd\n",
+   "label": "sup2.info.high.wide",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet fSave := GetDialogueInfoFlags rObj\nlet fRes := SetDialogueInfoFlags rObj 260\nlet sText := sv_Construct \"%g %g %g\" fRes (TopicInfoSetFlagsHigh rObj) (TopicInfoSetFlagsLow rObj)\nSetDialogueInfoFlags rObj fSave\nSetFunctionValue (sv_Construct \"%z %g\" sText (GetDialogueInfoFlags rObj))\nEnd\n",
+   "label": "sup2.info.itr.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet sText := TopicInfoSetPrompt rObj \"My custom prompt\"\nlet sSave := TopicInfoSetPrompt rObj \"\"\nSetFunctionValue (sv_Construct \"%z|%z\" sText sSave)\nEnd\n",
+   "label": "sup2.prompt.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet sText := TopicInfoSetPrompt rObj\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.prompt.get",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nSetFunctionValue (TopicInfoGetChoiceCount rObj)\nEnd\n",
+   "label": "sup2.choices.count",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nTopicInfoAddChoice rObj rTopic -1\nlet aList := TopicInfoGetAllChoices rObj\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.choices.add.end",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nTopicInfoAddChoice rObj rTopic 0\nlet aList := TopicInfoGetAllChoices rObj\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.choices.add.again",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"C8\"\nTopicInfoAddChoice rObj rTopic 3\nlet aList := TopicInfoGetAllChoices rObj\nlet rOther := aList[3]\nSetFunctionValue (sv_Construct \"%g %z\" (ar_Size aList) (GetFormIDString rOther))\nEnd\n",
+   "label": "sup2.choices.add.middle",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"D4\"\nTopicInfoAddChoice rObj rTopic 99\nlet aList := TopicInfoGetAllChoices rObj\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.choices.add.past",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"C8\"\nTopicInfoReplaceChoice rObj rTopic 1\nlet aList := TopicInfoGetAllChoices rObj\nlet rOther := aList[1]\nSetFunctionValue (sv_Construct \"%g %z\" (ar_Size aList) (GetFormIDString rOther))\nEnd\n",
+   "label": "sup2.choices.replace",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"C8\"\nTopicInfoReplaceChoice rObj rTopic 99\nlet aList := TopicInfoGetAllChoices rObj\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.choices.replace.past",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"D4\"\nSetFunctionValue (TopicInfoHasChoice rObj rTopic)\nEnd\n",
+   "label": "sup2.choices.has",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet aList := DialogResponseRelatedGetAll rObj 0\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.related.get.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet aList := DialogResponseRelatedGetAll rObj 1\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.related.get.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet aList := DialogResponseRelatedGetAll rObj 2\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.related.get.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet aList := DialogResponseRelatedGetAll rObj\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.related.get.notype",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nDialogResponseAddRelatedTopic rObj rTopic 0 0\nlet aList := DialogResponseRelatedGetAll rObj 0\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.related.add.linkfrom",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nDialogResponseAddRelatedTopic rObj rTopic 1 0\nlet aList := DialogResponseRelatedGetAll rObj 1\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.related.add.choices",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nDialogResponseAddRelatedTopic rObj rTopic 2 -1\nlet aList := DialogResponseRelatedGetAll rObj 2\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.related.add.followtopic",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nDialogResponseAddRelatedTopic rObj rTopic 2 -1\nlet aList := DialogResponseRelatedGetAll rObj 2\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.related.add.followinfo",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nSetFunctionValue (sv_Construct \"%g %g\" (GetSaidOnce rObj) (GetSaidOnce rOther))\nEnd\n",
+   "label": "sup2.said.get",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet fRes := TopicInfoSetSaidOnce rObj 1\nlet sText := sv_Construct \"%g %g %g\" fRes (GetSaidOnce rObj) (TopicInfoSetSaidOnce rObj)\nlet fRes := TopicInfoSetSaidOnce rObj 0\nSetFunctionValue (sv_Construct \"%z %g %g\" sText fRes (GetSaidOnce rObj))\nEnd\n",
+   "label": "sup2.said.sup",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet fRes := SetSaidOnce rObj 1 0\nlet sText := sv_Construct \"%g %g\" fRes (GetSaidOnce rObj)\nlet fRes := SetSaidOnce rObj 0 0\nSetFunctionValue (sv_Construct \"%z %g %g\" sText fRes (GetSaidOnce rObj))\nEnd\n",
+   "label": "sup2.said.jg",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nSetFunctionValue (GetFormIDString (GetParentTopic rObj))\nEnd\n",
+   "label": "sup2.parent",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104E7E\"\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"1055D2\"\nlet aList := GetTopicInfo rTopic\nlet fRes := ar_Size aList\nlet sText := sv_Construct \"%g\" fRes\nif fRes > 0\nlet rOther := aList[0]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nlet rOther := aList[fRes - 1]\nlet sText := sv_Construct \"%z %z\" sText (GetFormIDString rOther)\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "sup2.topicinfo",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rTopic := GetFormFromMod \"FalloutNV.esm\" \"C8\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"104C66\"\nSetFunctionValue (ar_Size (GetTopicInfo rTopic rOther))\nEnd\n",
+   "label": "sup2.topicinfo.quest",
+   "field": "value"
+  },
+  {
+   "query": "ref rObj\nref rOther\nref rTopic\nfloat fRes\nfloat fSave\nstring_var sText\nstring_var sSave\narray_var aList\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15CB5B\"\nlet aList := TopicInfoGetResponseStrings rObj\nlet sSave := aList[0]\nlet fRes := TopicInfoSetNthResponseString rObj 0 \"Changed\"\nlet aList := TopicInfoGetResponseStrings rObj\nlet sText := aList[0]\nlet sText := sv_Construct \"%g %z %g\" fRes sText (TopicInfoSetNthResponseString rObj 1 \"None\")\nlet aList := ar_List \"First\", \"Second\"\nlet fRes := TopicInfoSetResponseStrings rObj aList\nlet aList := TopicInfoGetResponseStrings rObj\nlet sText := sv_Construct \"%z|%g %g\" sText fRes (ar_Size aList)\nlet sText := sv_Construct \"%z %z\" sText (aList[0])\nTopicInfoSetNthResponseString rObj 0 sSave\nlet aList := TopicInfoGetResponseStrings rObj\nlet sSave := aList[0]\nSetFunctionValue (sv_Construct \"%z|%z\" sText sSave)\nEnd\n",
+   "label": "sup2.responses",
+   "field": "value",
+   "text": true
+  }
+ ]
+}

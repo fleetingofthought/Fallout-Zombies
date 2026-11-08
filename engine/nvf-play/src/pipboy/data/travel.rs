@@ -1,7 +1,8 @@
 //! Fast travel from the World Map (docs/spec-notes/fast-travel.md).
 //!
-//! - A click on a marker of the World Map (or the test aid's `travel=`) is a
-//!   [`FastTravelAsk`]; [`answer`] tries the refusals (§2, [`refusal`]) and puts up the
+//! - A click on a marker of the World Map, or the controller's A on one (or the test
+//!   aid's `travel=`) is a [`FastTravelAsk`]; [`answer`] tries the refusals (§2,
+//!   [`refusal`]) and puts up the
 //!   question box ([`Popup`]): "Do you want to travel to …?" with Yes and No, or the
 //!   refusal's text with OK. The DATA page draws the box over the map and takes its keys
 //!   and clicks (`super::take_input`); Yes is a [`FastTravelGo`].
@@ -25,8 +26,8 @@ use bevy::prelude::*;
 use fnv_sim::settings::Setting;
 use fnv_sim::FormId;
 
-/// A click on a map marker of the World Map (or the test aid's `travel=`): ask to go
-/// there.
+/// A click on a map marker of the World Map, or the controller's A on one (or the test
+/// aid's `travel=`): ask to go there.
 #[derive(Message, Clone, Copy, Debug, PartialEq)]
 pub struct FastTravelAsk(pub u32);
 

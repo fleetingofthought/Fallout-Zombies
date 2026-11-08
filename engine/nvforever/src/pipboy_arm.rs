@@ -48,10 +48,11 @@ use crate::stealth_field::StealthField;
 use bevy::mesh::skinning::{SkinnedMesh, SkinnedMeshInverseBindposes};
 use bevy::mesh::VertexAttributeValues;
 use bevy::prelude::*;
+use bevy::ecs::system::SystemParam;
 use bevy::window::PrimaryWindow;
 use nvf_assets::nif_material::{Falloff, NifMaterial};
 use nvf_play::pipboy::device_screen::{GLARE_LINEAR_SCALE, SCREEN_TINT};
-use nvf_play::pipboy::{AidTarget, Page, PipBoy, PipBoyAid, PipBoyInput, PipBoyScreen, CANVAS, TARGET};
+use nvf_play::pipboy::{AidTarget, Frame, Page, Phase, PipBoy, PipBoyAid, PipBoyInput, PipBoyScreen, Warming, CANVAS, TARGET};
 use nvf_play::PlayerCamera;
 use std::sync::Arc;
 
@@ -108,8 +109,168 @@ pub struct PipBoyArmPlugin;
 
 impl Plugin for PipBoyArmPlugin {
     fn build(&self, app: &mut App) {
+        crate::pipboy_ready::setup(app);
         app.init_resource::<crate::pipboy_controls::ControlAngles>()
-            .add_systems(Update, (follow_pointer.in_set(nvf_play::pipboy::PointerSet).before(nvf_play::pipboy::flat_pointer), (show_screen, crate::pipboy_controls::turn_controls).chain().after(follow_pointer).after(nvf_play::player::BodySet).before(nvf_play::PlaySet::Ui)));
+            .add_systems(Update, (follow_pointer.in_set(nvf_play::pipboy::PointerSet).before(nvf_play::pipboy::flat_pointer), (show_screen, crate::pipboy_controls::turn_controls.run_if(|pip: Res<PipBoy>| pip.warming.is_none())).chain().after(follow_pointer).after(nvf_play::player::BodySet).before(nvf_play::PlaySet::Ui)))
+            .add_systems(Update, measure_raise.in_set(nvf_play::pipboy::WarmSet))
+            .add_systems(Update, requeue_raise.after(show_screen).before(nvf_play::PlaySet::Ui));
+        if std::env::var_os("NVF_PLAY_TEST_NO_PIPBOY_WARM").is_none() {
+            app.add_systems(Update, warm_up.in_set(nvf_play::pipboy::WarmSet).before(measure_raise));
+        } else {
+            info!("test aid NVF_PLAY_TEST_NO_PIPBOY_WARM: hidden warm-up disabled");
+        }
+    }
+}
+
+/// [design: this file] A render-frame floor covers extraction and the second skin variant.
+const WARM_FRAMES: u32 = 4;
+const START_WARM_CAP_SECS: f64 = 0.25;
+/// [design: this file] Allow cold preparation, but bound a failed shader/upload or lost rig.
+const FIRST_RAISE_CAP_SECS: f64 = 3.0;
+
+#[derive(Default)]
+struct WarmState {
+    root: Option<Entity>,
+    start_done: bool,
+    teardown: bool,
+    first_open_done: bool,
+    raise_released: bool,
+}
+
+#[derive(SystemParam)]
+struct WarmUp<'w, 's> {
+    pip: ResMut<'w, PipBoy>,
+    loading: ResMut<'w, nvf_play::loading::Loading>,
+    gate: Res<'w, crate::pipeline_gate::PipelineGate>,
+    render: Res<'w, crate::pipboy_ready::PipBoyReady>,
+    body: Res<'w, PlayerBody>,
+    screen: Option<Res<'w, PipBoyScreen>>,
+    cams: Query<'w, 's, &'static Camera>,
+    use_pipboy: Res<'w, nvf_play::pipboy::UsePipBoy>,
+    sim: Option<Res<'w, nvf_play::sim::SimState>>,
+    state: Local<'s, WarmState>,
+}
+
+/// [design: this file, player_body.rs] Only the renderer borrows the rig: no menu or POV change.
+fn warm_up(params: WarmUp) {
+    let WarmUp { mut pip, mut loading, gate, render, body, screen, cams, use_pipboy, sim, mut state } = params;
+    if pip.phase != Phase::Raising {
+        state.raise_released = false;
+    }
+    let root = body.first_person_root();
+    if root != state.root {
+        state.root = root;
+        state.first_open_done = false;
+        pip.invalidate_warm();
+    }
+    // [design: this file] One full body/UI pass restores bones, culling and materials;
+    // camera_on has already switched off before the cover may fall.
+    if state.teardown {
+        let off = screen.as_ref().is_none_or(|s| cams.get(s.camera).map_or(true, |c| !c.is_active));
+        if off {
+            state.teardown = false;
+            info!("pipboy: warm-up teardown complete (screen camera off)");
+        } else if pip.phase != Phase::Down && !loading.starting() {
+            // [design: this file] A new real opening owns the camera after cancellation.
+            state.teardown = false;
+        }
+    }
+    loading.pipboy_warming = state.teardown;
+    if let Some(w) = pip.warming.as_mut().filter(|w| w.device && !w.drawn) {
+        w.frames = gate.frames();
+    }
+    if let Some(w) = &pip.warming {
+        let elapsed = w.since.elapsed().as_secs_f64();
+        let posed = screen.as_ref().is_some_and(|s| cams.get(s.camera).is_ok_and(|c| c.is_active) && (!w.device || w.drawn));
+        let own = render.status();
+        // [design: #1803] The start already waits for compilation. Only get the
+        // real draws submitted here; a cold in-play raise also waits for their PSOs.
+        let submitted = !w.device || if w.covered { own.submitted() } else { own.complete() };
+        let ready = submitted && posed && gate.frames().wrapping_sub(w.frames) >= WARM_FRAMES;
+        // [design: this file] Closing a held raise cancels without playing the lowering clip.
+        let cancelled = !w.covered && pip.phase != Phase::Raising;
+        let capped = elapsed >= if w.covered { START_WARM_CAP_SECS } else { FIRST_RAISE_CAP_SECS };
+        if ready || capped || cancelled {
+            let w = pip.warming.take().expect("warming");
+            let asked = gate.asked().saturating_sub(w.asked_at);
+            let ms = elapsed * 1000.0;
+            info!("pipboy: warm-up asked {asked} pipelines, ready after {ms:.0} ms (covered={}, capped={}, cancelled={cancelled})", w.covered, !ready && !cancelled);
+            info!("pipboy: own rig pipelines {:?}; submitted={}, prepared={}, bound={}, shapes={}", own.pipelines, own.queued, own.prepared, own.bound, own.shapes);
+            if !w.covered {
+                state.raise_released = !cancelled;
+                if capped && !ready && !cancelled {
+                    warn!("pipboy: first raise cap reached after {ms:.0} ms; raising with incomplete readiness");
+                }
+                info!("pipboy: first raise held {ms:.0} ms for {asked} pipelines");
+            }
+            if !cancelled {
+                pip.warmed |= w.device && own.submitted();
+                state.first_open_done |= !w.covered && w.device && own.complete();
+            } else {
+                pip.phase = Phase::Down;
+                pip.clip_time = 0.0;
+            }
+            if w.covered {
+                pip.frame = w.saved_frame;
+            }
+            if let Some((page, stats_tab)) = w.saved_page {
+                pip.page = page;
+                pip.tabs[Page::Stats.index()] = stats_tab;
+            }
+            if w.covered || cancelled {
+                state.teardown = true;
+            }
+        }
+        loading.pipboy_warming = pip.warming.is_some() || state.teardown;
+        return;
+    }
+    let covered = loading.starting() && !loading.world_held() && !state.start_done && root.is_some();
+    // [design: #1803] Teardown removes the hidden rig from retained phases. Verify
+    // the first real submission too, even when its pipelines were warmed at start.
+    let cold = !state.raise_released && root.is_some() && pip.phase == Phase::Raising && pip.frame == Frame::Device && (!pip.warmed || !state.first_open_done);
+    if state.teardown || screen.is_none() || (!covered && !cold) {
+        return;
+    }
+    let device = use_pipboy.on && sim.as_deref().is_some_and(nvf_play::pipboy::wears_pipboy);
+    let saved_frame = pip.frame;
+    // [design: pipboy/items.rs::draw] ITEMS needs an open inventory. STATS can draw
+    // a complete page without opening a menu; restore the player's choice afterwards.
+    let saved_page = covered.then_some((pip.page, pip.tabs[Page::Stats.index()]));
+    if covered {
+        pip.frame = if device { Frame::Device } else { Frame::Screen };
+        pip.page = Page::Stats;
+        pip.tabs[Page::Stats.index()] = 0;
+        state.start_done = true;
+    } else {
+        pip.clip_time = 0.0;
+    }
+    pip.warming = Some(Warming { since: std::time::Instant::now(), frames: gate.frames(), asked_at: gate.asked(), covered, device, saved_frame, saved_page, drawn: false });
+    loading.pipboy_warming = covered;
+    info!("pipboy: warm-up start (covered={covered}, device={device}, asked={}, frame={})", gate.asked(), gate.frames());
+}
+
+/// [design: #1803] A ready PSO is not a retained phase entry. Showing the rig again
+/// must refresh the main bins with its current mesh slabs and material bindings.
+fn requeue_raise(pip: Res<PipBoy>, mut meshes: Query<&mut Mesh3d, With<crate::pipboy_ready::PipBoyShape>>) {
+    if pip.warming.is_none() && pip.on_arm() && pip.phase == Phase::Raising {
+        for mut mesh in &mut meshes {
+            mesh.set_changed();
+        }
+    }
+}
+
+/// [design: this file] Count the visible raise after the hidden hold, also with the aid off.
+fn measure_raise(pip: Res<PipBoy>, gate: Res<crate::pipeline_gate::PipelineGate>, mut began: Local<Option<u32>>) {
+    if pip.warming.is_some() {
+        *began = None;
+    } else if pip.phase == Phase::Raising && began.is_none() {
+        *began = Some(gate.asked());
+    } else if pip.phase == Phase::Up {
+        if let Some(n) = began.take() {
+            info!("pipboy: up: {} pipelines asked since the raise began", gate.asked().saturating_sub(n));
+        }
+    } else if pip.phase == Phase::Down {
+        *began = None;
     }
 }
 
@@ -124,6 +285,7 @@ pub(crate) struct Swapped {
     warned: bool,
     /// The buttons last logged as lit.
     lit: Option<String>,
+    reported: bool,
 }
 
 /// A material copied from a shape's own, and what it was made from: a rig rebuilt on other
@@ -195,7 +357,8 @@ fn menus_material(own: &NifMaterial, image: Handle<Image>) -> NifMaterial {
 /// Put the copies on the screen and the glare while the menus are on the model (`on`), and
 /// give the shapes their own materials back otherwise, or when the rig was rebuilt. A copy
 /// is made once for each source, and no shared source material is touched.
-fn wear_materials(on: bool, image: &Handle<Image>, parts: &mut Query<(Entity, &PipBoyPart, &mut MeshMaterial3d<NifMaterial>)>, field: &mut StealthField, materials: &mut Assets<NifMaterial>, swapped: &mut Swapped) {
+/// Returns whether an existing copy changed source [design: this file, #1803].
+fn wear_materials(on: bool, announce: bool, image: &Handle<Image>, parts: &mut Query<(Entity, &PipBoyPart, &mut MeshMaterial3d<NifMaterial>)>, field: &mut StealthField, materials: &mut Assets<NifMaterial>, swapped: &mut Swapped) -> bool {
     let find = |parts: &Query<(Entity, &PipBoyPart, &mut MeshMaterial3d<NifMaterial>)>, part: PipBoyPart| parts.iter().find(|(_, p, _)| **p == part).map(|(e, _, m)| (e, m.0.clone()));
     let model_screen = find(parts, PipBoyPart::Screen);
     let model_glare = find(parts, PipBoyPart::Glare);
@@ -212,21 +375,22 @@ fn wear_materials(on: bool, image: &Handle<Image>, parts: &mut Query<(Entity, &P
         }
     }
     if !on {
-        return;
+        swapped.reported = false;
+        return false;
     }
+    let before = [&swapped.menus, &swapped.glass].map(|c| c.as_ref().map(|c| c.source.id()));
     if let (None, Some((e, mut own))) = (&swapped.screen, model_screen) {
         // Under a Stealth Boy the screen wears the field's see-through copy: take the real
         // material back, so neither the menus nor the screen afterwards refract.
         if let Some(original) = field.take_original(e, &own, materials) {
             own = original;
-            info!("pipboy: the menus are on the screen drawn plain under the Stealth Boy");
+            if announce { info!("pipboy: the menus are on the screen drawn plain under the Stealth Boy"); }
         }
         let menus = copy_of(&mut swapped.menus, &own, Some(image), materials, |source| menus_material(source, image.clone()));
         if let Ok((_, _, mut m)) = parts.get_mut(e) {
             m.0 = menus;
         }
         swapped.screen = Some((e, own));
-        info!("pipboy: the menus are on the model's screen");
     }
     // The image replaced while the menus are up takes effect at once.
     if let Some((e, own)) = swapped.screen.clone() {
@@ -240,20 +404,26 @@ fn wear_materials(on: bool, image: &Handle<Image>, parts: &mut Query<(Entity, &P
     if let (None, Some((e, mut own))) = (&swapped.glare, model_glare) {
         if let Some(original) = field.take_original(e, &own, materials) {
             own = original;
-            info!("pipboy: the glare is drawn plain under the Stealth Boy");
+            if announce { info!("pipboy: the glare is drawn plain under the Stealth Boy"); }
         }
         let glass = copy_of(&mut swapped.glass, &own, None, materials, glare_material);
         if let Ok((_, _, mut m)) = parts.get_mut(e) {
             m.0 = glass;
         }
         swapped.glare = Some((e, own));
-        info!("pipboy: the glare is over the menus");
     }
+    if announce && !swapped.reported {
+        if swapped.screen.is_some() { info!("pipboy: the menus are on the model's screen"); }
+        if swapped.glare.is_some() { info!("pipboy: the glare is over the menus"); }
+        swapped.reported = true;
+    }
+    let after = [&swapped.menus, &swapped.glass].map(|c| c.as_ref().map(|c| c.source.id()));
+    before.into_iter().zip(after).any(|(before, after)| before.is_some() && before != after)
 }
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn show_screen(
-    pip: Res<PipBoy>,
+    mut pip: ResMut<PipBoy>,
     screen: Option<ResMut<PipBoyScreen>>,
     body: Res<PlayerBody>,
     mut field: ResMut<StealthField>,
@@ -263,10 +433,13 @@ pub(crate) fn show_screen(
     mut swapped: Local<Swapped>,
 ) {
     let Some(mut screen) = screen else { return };
-    let shown = pip.on_arm() && body.first_person_drawn();
+    let shown = pip.on_arm() && (body.first_person_drawn() || (pip.warming.is_some() && body.first_person_root().is_some()));
     let model_has_screen = parts.iter().any(|(_, p, _)| *p == PipBoyPart::Screen);
     screen.on_model = shown && model_has_screen;
-    wear_materials(screen.on_model, &screen.image, &mut parts, &mut field, &mut materials, &mut swapped);
+    // [design: this file] Compare Copied.source after resolving any Stealth Boy copy.
+    if wear_materials(screen.on_model, pip.warming.is_none(), &screen.image, &mut parts, &mut field, &mut materials, &mut swapped) {
+        pip.invalidate_warm();
+    }
     // Said once each time the Pip-Boy comes up when the menus have nowhere to show, so a
     // player's log says why the arm came up blank or not at all (#1330).
     if !pip.on_arm() {
@@ -304,7 +477,7 @@ pub(crate) fn show_screen(
     }
     // Said on each change, from the glows' visibility as set here (what is drawn from it is
     // for a shot to show). Nothing while no glow is on.
-    if lit.contains(&true) {
+    if pip.warming.is_none() && lit.contains(&true) {
         let names = Page::ALL.into_iter().filter(|p| lit[p.index()]).map(|p| p.title()).collect::<Vec<_>>().join(", ");
         if swapped.lit.as_deref() != Some(names.as_str()) {
             info!("pipboy: buttons lit: {names}");
@@ -496,6 +669,73 @@ fn follow_pointer(
 mod tests {
     use super::*;
 
+    fn capped_warm_app(covered: bool, device: bool) -> App {
+        let mut app = App::new();
+        app.init_resource::<PlayerBody>()
+            .init_resource::<nvf_play::loading::Loading>()
+            .init_resource::<crate::pipeline_gate::PipelineGate>()
+            .init_resource::<crate::pipboy_ready::PipBoyReady>()
+            .init_resource::<nvf_play::pipboy::UsePipBoy>()
+            .add_systems(Update, warm_up);
+        let camera = app.world_mut().spawn(Camera::default()).id();
+        app.insert_resource(PipBoyScreen { image: Handle::default(), camera, on_model: false, pointer: None, scale: 1.0 });
+        let mut pip = PipBoy::default();
+        pip.phase = if covered { Phase::Down } else { Phase::Raising };
+        pip.frame = if device { Frame::Device } else { Frame::Screen };
+        pip.warming = Some(Warming {
+            since: std::time::Instant::now() - std::time::Duration::from_secs(4),
+            frames: 0, asked_at: 0, covered, device, saved_frame: Frame::Device, saved_page: None, drawn: false,
+        });
+        app.insert_resource(pip);
+        app
+    }
+
+    #[test]
+    fn a_cold_raise_releases_at_the_cap_even_without_a_rig_and_does_not_hold_again() {
+        let mut app = capped_warm_app(false, true);
+        app.update();
+        let pip = app.world().resource::<PipBoy>();
+        assert!(pip.warming.is_none() && !pip.warmed);
+        assert_eq!((pip.phase, pip.clip_time), (Phase::Raising, 0.0));
+        app.update();
+        assert!(app.world().resource::<PipBoy>().warming.is_none());
+    }
+
+    #[test]
+    fn a_cold_raise_can_cancel_before_the_cap() {
+        let mut app = capped_warm_app(false, true);
+        app.world_mut().resource_mut::<PipBoy>().warming.as_mut().unwrap().since = std::time::Instant::now();
+        app.update();
+        assert!(app.world().resource::<PipBoy>().warming.is_some());
+        app.world_mut().resource_mut::<PipBoy>().lower();
+        app.update();
+        let pip = app.world().resource::<PipBoy>();
+        assert!(pip.warming.is_none());
+        assert_eq!(pip.phase, Phase::Down);
+    }
+
+    #[test]
+    fn screen_only_warm_keeps_a_later_device_cold_and_waits_for_camera_teardown() {
+        let mut app = capped_warm_app(true, false);
+        {
+            let mut pip = app.world_mut().resource_mut::<PipBoy>();
+            pip.page = Page::Stats;
+            pip.warming.as_mut().unwrap().saved_page = Some((Page::Items, 3));
+        }
+        app.update();
+        let pip = app.world().resource::<PipBoy>();
+        assert!(pip.warming.is_none() && !pip.warmed);
+        assert_eq!(pip.frame, Frame::Device);
+        assert_eq!((pip.page, pip.tabs[Page::Stats.index()]), (Page::Items, 3));
+        assert!(app.world().resource::<nvf_play::loading::Loading>().pipboy_warming);
+        app.update();
+        assert!(app.world().resource::<nvf_play::loading::Loading>().pipboy_warming);
+        let camera = app.world().resource::<PipBoyScreen>().camera;
+        app.world_mut().get_mut::<Camera>(camera).unwrap().is_active = false;
+        app.update();
+        assert!(!app.world().resource::<nvf_play::loading::Loading>().pipboy_warming);
+    }
+
     #[test]
     fn the_parts_are_known_by_their_shapes() {
         assert_eq!(part("pipboyscreen:0"), Some(PipBoyPart::Screen));
@@ -569,12 +809,19 @@ mod tests {
     #[derive(Resource)]
     struct On(bool, Handle<Image>);
 
+    #[derive(Resource)]
+    struct Announce(bool);
+
+    #[derive(Resource, Default)]
+    struct Reported(bool);
+
     fn material_app() -> App {
         let mut app = App::new();
-        app.init_resource::<StealthField>().init_resource::<Assets<NifMaterial>>().insert_resource(On(false, Handle::default())).add_systems(
+        app.init_resource::<StealthField>().init_resource::<Assets<NifMaterial>>().init_resource::<Reported>().insert_resource(Announce(true)).insert_resource(On(false, Handle::default())).add_systems(
             Update,
-            |on: Res<On>, mut parts: Query<(Entity, &PipBoyPart, &mut MeshMaterial3d<NifMaterial>)>, mut field: ResMut<StealthField>, mut materials: ResMut<Assets<NifMaterial>>, mut swapped: Local<Swapped>| {
-                wear_materials(on.0, &on.1, &mut parts, &mut field, &mut materials, &mut swapped);
+            |on: Res<On>, announce: Res<Announce>, mut reported: ResMut<Reported>, mut parts: Query<(Entity, &PipBoyPart, &mut MeshMaterial3d<NifMaterial>)>, mut field: ResMut<StealthField>, mut materials: ResMut<Assets<NifMaterial>>, mut swapped: Local<Swapped>| {
+                wear_materials(on.0, announce.0, &on.1, &mut parts, &mut field, &mut materials, &mut swapped);
+                reported.0 = swapped.reported;
             },
         );
         app
@@ -600,6 +847,27 @@ mod tests {
 
     fn glare_worn(app: &App, e: Entity) -> bool {
         app.world().resource::<Assets<NifMaterial>>().get(&worn(app, e)).is_some_and(|m| m.extension.add_linear)
+    }
+
+    #[test]
+    fn hidden_swaps_are_silent_and_teardown_keeps_the_same_copies_for_the_real_open() {
+        let mut app = material_app();
+        let ((screen, own_screen), (glare, own_glare)) = rig(&mut app);
+        app.insert_resource(On(true, Handle::default())).insert_resource(Announce(false));
+        app.update();
+        let copies = (worn(&app, screen), worn(&app, glare));
+        assert!(!app.world().resource::<Reported>().0);
+        // A cold hold can finish without taking the copies off.
+        app.insert_resource(Announce(true));
+        app.update();
+        assert!(app.world().resource::<Reported>().0);
+        assert_eq!((worn(&app, screen), worn(&app, glare)), copies);
+        app.insert_resource(On(false, Handle::default()));
+        app.update();
+        assert_eq!((worn(&app, screen), worn(&app, glare)), (own_screen, own_glare));
+        app.insert_resource(On(true, Handle::default()));
+        app.update();
+        assert_eq!((worn(&app, screen), worn(&app, glare)), copies);
     }
 
     fn worn_material(app: &App, e: Entity) -> NifMaterial {

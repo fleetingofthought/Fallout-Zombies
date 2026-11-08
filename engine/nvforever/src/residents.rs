@@ -1958,6 +1958,16 @@ impl Core {
         // [design: owner 2026-10-31].
         self.breaking = self.posed.iter().copied().filter(|id| !held.contains(id) && self.ai.agents.get(&FormId(*id)).is_some_and(|a| a.activity == Activity::Travelling)).collect();
         held.extend(self.posed.iter().copied());
+        // The victim of a planted explosive stands where it is from its panic to the blast
+        // (`GetPlantedExplosive`; docs/spec-notes/pickpocket.md §5) [hypothesis: the issue
+        // reads "slows or stops"; stopping is the plainer of the two].
+        let panicking: Vec<u32> = if game.pickpocket.planted.is_empty() {
+            Vec::new()
+        } else {
+            let actors: Vec<FormId> = self.list.iter().map(|r| r.actor).collect();
+            actors.into_iter().filter(|&a| game.has_planted_explosive(a)).map(|a| a.0).collect()
+        };
+        held.extend(panicking.iter().copied());
         self.prepare(game, restored);
         // A menu, a conversation or a loading screen holds the game: nobody moves.
         self.held_now = game.menu.is_some() || game.loading || game.dialogue.is_some();
@@ -2120,6 +2130,13 @@ impl Core {
                 let was = stop_body(Some(&mut *p), id);
                 if was > 0.0 {
                     info!("ai [{}] {} {id:08X}: its character stops while an idle holds it (was walking at {was:.0} units/s)", self.clock_text, game.data.name(FormId(id)));
+                }
+            }
+            // Nor one panicking with a live explosive in its pocket.
+            for &id in panicking.iter().filter(|id| !self.carried.contains_key(id)) {
+                let was = stop_body(Some(&mut *p), id);
+                if was > 0.0 {
+                    info!("ai [{}] {} {id:08X}: its character stops: a live explosive in its pocket (was walking at {was:.0} units/s)", self.clock_text, game.data.name(FormId(id)));
                 }
             }
         }

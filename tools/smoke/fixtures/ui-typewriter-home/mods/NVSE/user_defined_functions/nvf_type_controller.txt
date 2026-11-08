@@ -1,0 +1,34 @@
+float phase
+float now
+Begin Function { }
+let phase := GetUIFloat "HUDMainMenu/NVFTypewriter/_phase"
+let now := GetSessionTime
+if phase == 0 && now > 3
+  PrintC "nvf type middle %g", (GetUIFloat "HUDMainMenu/NVFTypewriter/_TA0")
+  PrintC "nvf type zero %g", (GetUIFloat "HUDMainMenu/NVFTypewriter/_calls")
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_flag" 1
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_phase" 1
+elseif phase == 1 && now > 4
+  PrintC "nvf type active %g", ((GetUIFloat "HUDMainMenu/NVFTypewriter/_calls") > 0)
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_flag" 0
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_before" (GetUIFloat "HUDMainMenu/NVFTypewriter/_calls")
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_phase" 2
+elseif phase == 2 && now > 5
+  PrintC "nvf type suppressed %g", ((GetUIFloat "HUDMainMenu/NVFTypewriter/_calls") == (GetUIFloat "HUDMainMenu/NVFTypewriter/_before"))
+  SetTileScript "HUDMainMenu/NVFTypewriter/_flag" (CompileScript "nvf_type_replacement.txt")
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_flag" 1
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_phase" 3
+elseif phase == 3 && now > 6
+  PrintC "nvf type replaced %g %g", ((GetUIFloat "HUDMainMenu/NVFTypewriter/_calls") == (GetUIFloat "HUDMainMenu/NVFTypewriter/_before")), ((GetUIFloat "HUDMainMenu/NVFTypewriter/_replacements") > 0)
+  RemoveTileScript "HUDMainMenu/NVFTypewriter/_flag"
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_phase" 4
+elseif phase == 4 && now > 7
+  ; Allow this frame's already-dispatched callback to finish before sampling.
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_removed" (GetUIFloat "HUDMainMenu/NVFTypewriter/_replacements")
+  SetUIFloat "HUDMainMenu/NVFTypewriter/_phase" 5
+elseif phase == 5 && now > 8.5
+  PrintC "nvf type removed %g", ((GetUIFloat "HUDMainMenu/NVFTypewriter/_replacements") == (GetUIFloat "HUDMainMenu/NVFTypewriter/_removed"))
+  PrintC "nvf type final %g %z", (GetUIFloat "HUDMainMenu/NVFTypewriter/_TA0"), (GetUIString "HUDMainMenu/NVFTypewriter/_TS0")
+  RemoveTileScript "HUDMainMenu/NVFTypewriter/_controller"
+endif
+End

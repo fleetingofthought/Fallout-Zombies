@@ -6,8 +6,9 @@ maps from forms to values). Task J2 of [jip-tasks.md](../handoff/jip-tasks.md); 
 for J5.
 
 Wiki statements are `[documented: <page>]` (private export `C:\fnv-private\geckwiki\`, in
-our own words). The concept pages *Auxiliary Variables*, *RefMap Array* and
-*Template:ModIndexOverride* are **not in the export** [observed]. So the name rules below
+our own words). The concept pages *Auxiliary Variables* and *RefMap Array* are **not in
+the export** [observed]; *Template:ModIndexOverride* is (`Templates.xml`, exported
+2026-11-08). So the name rules below
 come from the game: `[observed: jip-stores/<id>]`, runtime-compiled probes on the player
 (`tools/capture/jip_probes.py --set jip-stores`, JIP 57.30, 2026-10-26, 32 rows, the 17
 documented values all match; golden private).
@@ -51,11 +52,17 @@ Observed rules:
   aux.class.nvfP = bits 0+2, aux.class.tnvfP = bits 1+3]. A leading `_` (`_nvfP`,
   `*_nvfP`) changed nothing here [observed: aux.class.unvfP, aux.class.tunvfP].
   Private/public was not separable from a runtime-compiled script: each variable showed
-  in both its private and its public class. [hypothesis: private means "owned by the
-  calling script's mod", and a runtime-compiled script belongs to no plugin; the missing
-  ModIndexOverride template probably explains it.] **Owner review:** export *Auxiliary
-  Variables*, *RefMap Array* and *Template:ModIndexOverride*, or a GECK-compiled probe
-  from a plugin, settles the private/public rule.
+  in both its private and its public class.
+  **A private variable belongs to the mod index of the plugin whose script made it.** A
+  patch plugin (ESM or ESP) whose script works on the same variable takes the variable
+  over with its own mod index, and the original plugin's scripts can no longer reach it
+  [documented: Template:ModIndexOverride]. Erasing private variables removes only those of
+  the calling mod; erasing public ones removes them all [documented:
+  AuxiliaryVariableEraseAll]. That fits the runtime-compiled probes: such a script belongs
+  to no plugin, so nothing set it apart [hypothesis: a script with no plugin sees every
+  variable as its own]. Still open: what makes a variable public rather than private (the
+  name rule); the *Auxiliary Variables* page or a GECK-compiled probe from a plugin
+  settles it.
 - Temporary means not written to the save [documented by the class names; persistence
   not probed: it needs a save and a reload].
 

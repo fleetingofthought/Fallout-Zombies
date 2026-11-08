@@ -53,7 +53,7 @@ Each is also listed in the module notes of `detection.rs`.
 | Reach | fSneakMaxDistance, × fSneakExteriorDistanceMult outside | [documented] |
 | Line of sight | a ray through the collision world from the detector's eyes to the target's chest (¾ of its eye height), and when that is blocked one to its eyes (§7); for the player's GetLineOfSight from the camera; world shapes block it; actors and their capsules do not (the ray goes on past them), nor do the transparent layers, invisible walls, clutter, small debris and shell casings (docs/design/alert.md §7). Where either end is out of the loaded collision (3 × 3 cells around the player), only the landscape blocks it (§7) | [engineering choice]; the layers: [hypothesis] |
 | Field of view | 95° either side of where the actor's body faces, horizontally; for the player, of where the camera looks | [documented: GECK wiki GetLineOfSight]; using it for detection: [hypothesis] |
-| Light at the target, 0–100 | 100 × (luminance of the ambient colour + the sunlight's × daylight outdoors, or the cell's directional light indoors + each point or spot light that reaches the target × (1 − (d/r)²)), capped at 100. Outdoors the sunlight counts only when a ray from the target's chest towards the sun meets nothing within 8,192 units (§8). While the Pip-Boy light is on, the game's PipboyLight640 counts as a light at the player's chest (§9) | [hypothesis] |
+| Light at the target, 0–100 | outdoors 100 × the brightest channel of the weather's sunlight colour ÷ 255, its times of day blended on the stored bytes, day and night alike (the ambient is not counted); indoors the brightest channel of the cell's ambient colour; plus each point or spot light that reaches the target, its brightest channel × (1 − (d/r)²); capped at 100. Outdoors the sunlight counts only when a ray from the target's chest towards the sun meets nothing within 8,192 units (§8); a shaded target gets the weather's ambient instead. While the Pip-Boy light is on, the game's PipboyLight640 counts as a light at the player's chest (§9) | the sun and ambient terms: [observed: fitted to the original, below]; the lamps, the shade and the Pip-Boy light: [hypothesis] |
 | Moving, running | from the distance moved since the last measurement: moving above 10 units/s; actors run above 215 units/s; the player runs when moving without holding Walk, sneaking or not | [engineering choice]; sneak-running counts as running: [hypothesis] |
 | Sneaking | the player's sneak toggle; actors never sneak (Always Sneak packages are not acted on) | — |
 | Action sound | the player's shots since the last measurement, at the weapon's VNAM sound level (100 / 50 / 10) | [documented] |
@@ -78,21 +78,65 @@ mode, standing at the `coc Goodsprings` spot or the interiors' `coc` spots; weat
 | Goodsprings outdoors | 21:00 | 73.5 rising to 82.35 |
 | Prospector Saloon, Doc Mitchell's house | 12:00 and 00:00 | 100 |
 
-So outdoors the value is capped at 100 all day, sits at one night level (82.35) and dips
-under it at dusk and dawn; indoors both rooms read 100 at both hours, whatever their
-lamps. Ours is lower indoors and at night (the table's formula); not fitted yet: the next
-step of #970 is to log ours at the same spots and hours.
+More readings (campaign o27_light, `nvfairport` save, 2026-11-06, the same `coc Goodsprings`
+spot with `ForceWeather <w> 1`, and the interiors' `coc` spots) [observed]:
+
+| Where | Weather | 12:00 | 00:00 |
+|---|---|---|---|
+| Goodsprings outdoors | NVWastelandClear | 100 | 82.35 |
+| Goodsprings outdoors | NVWastelandHazy | 99.22 (253/255) | 64.31 (164/255) |
+| Goodsprings outdoors | HVDustStorm | 0 | 0 |
+| Goodsprings cave (SLGoodspringsCaveINT) | — | 36.08 (92/255) | 36.08 |
+| Abandoned shack (GSAbandonedShack) | — | 99.30 | 99.30 |
+
+**The fit (#970).** Every outdoor reading is 100 × the brightest channel of the weather's
+sunlight colour (WTHR NAM0) ÷ 255 [observed: the readings against FalloutNV.esm]:
+NVWastelandClear's day sunlight (255, 227, 170) gives 100 and its night sunlight (166, 191,
+210) 210/255 = 82.35; NVWastelandHazy's (253, 244, 225) and (62, 92, 164) give 99.22 and
+64.31; HVDustStorm's sunlight is black at every time and reads 0, though its night ambient
+is (94, 94, 174). The ambient is not in it: NVWastelandClear's night ambient (172, 170, 215)
+would give 84.3. The dusk dip of o11_light fits the same rule with the sunset and night
+colours mixed on their bytes: the brightest channel of the mix of (255, 173, 83) and (166,
+191, 210) is lowest, 187 or 73.4, about four fifths of the way, where 73.5 was read at
+21:00. Indoors the cave reads the brightest channel of its cell's ambient (73, 92, 83),
+92/255; its directional light (9, 7, 6) is not added. The shack (ambient (46, 41, 27),
+directional (101, 99, 58)) and the two Goodsprings rooms of o11 read 99–100, so their lamps
+must make up the rest [hypothesis: the point lights are added]. NVForever measures it so
+since 2026-11-06 (engine/nvforever/src/detection.rs `light_at`): no daylight factor, and
+the lights' brightest channel instead of their luminance.
+
+A lamp's share [observed: job o29_light, 2026-11-08, `nvfairport`]: in SLGoodspringsCave
+INT (ambient alone 36.08), the player moved by `MoveTo` to set offsets in x and y from one
+RedLight (0x0015319B, radius 384, colour (255, 57, 47); the next lamp 511 units off) read
+100 out to 192 units, about 95–97 at 256, 67–70 at 320 (one 97 on the -x side, where the
+floor was 80 units lower), and the ambient 36.08 at 384 and 512 (one 67.6 at +384, the
+same as the read before it, perhaps not yet refreshed). So a lamp's share ends at its
+radius. Ours, ambient + 100 × (1 − (d/r)²) on the horizontal offset, gives 91.6 at 256
+and 66.7 at 320: within about 5 [hypothesis: the falloff's exact form; the distance is
+measured from the lamp to the player's position, not the chest].
+
+A shaded spot outdoors is still open: at noon in NVWastelandClear, 14 spots from the
+Goodsprings gas station's SCOLgsGasStation origin out to 800 units (and one 2,800 units
+off) all read 100 [observed, same job], but which of them stood under its canopy is not
+known, so this neither confirms nor rules out shade. Next: a spot whose roof is known
+(an interior-like overhang checked by a frame).
 
 ## 4. `fnvtool actor detect`
 
 ```
-fnvtool actor detect --schema schemas/fnv <Data> FalloutNV.esm --detector SunnyRef [--target player] [--interior] [--light 90] [--dark 10]
+fnvtool actor detect --schema schemas/fnv <Data> FalloutNV.esm --detector SunnyRef [--target player] [--interior] [--light 100] [--dark 82.35]
 ```
 
 For one pair in the authored game, `fnv.actor.detect/1`: the settings, the inputs, and
 for 13 situations (standing, walking, running, lit and dark, sneaking, behind the
 detector, behind a wall, firing) the value and band at 100–5,000 units and the farthest
 distance at which the target is detected and noticed.
+
+The defaults are the original's light at Goodsprings at noon and at midnight (§3); until
+2026-11-06 they were 90 and 10 [design], and the smoke scenario `detection-table` still
+passes those to keep the table below. With the new defaults (2026-11-06) Sunny detects a
+standing player out to 2,690 units lit and 2,500 dark, and one sneaking out to 1,980 and
+1,730 (noticed 2,530 and 2,330): a Mojave night hides the player little.
 
 Sunny Smiles (Perception 5, level 2) against a level-1 player with Sneak 15, outdoors,
 lit 90, dark 10 [observed: 2026-10-11]:
@@ -247,8 +291,9 @@ Silent (100 / 50 / 10), as a shot's.
   move at a fifth]. People keep the boot term.
 - **Sun shade** [hypothesis]: outdoors, the sunlight's share of the light at the target
   counts only when a ray from the target's chest towards the sun (above the horizon)
-  meets nothing solid within 8,192 units [design: the reach]; ambient and point lights
-  are unchanged. Where the target is out of the loaded collision the sun counts.
+  meets nothing solid within 8,192 units [design: the reach]; a shaded target gets the
+  weather's ambient in its place (§3, since 2026-11-06), point lights are unchanged.
+  Where the target is out of the loaded collision the sun counts.
 
 Checks: the `detection summary` line counts events by kind (impacts, projectiles,
 explosions) and the targets measured in shade. Smoke `detection-shade`, `detection-events-levels`.

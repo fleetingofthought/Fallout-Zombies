@@ -217,6 +217,8 @@ pub struct WeaponTraits {
     pub projectile_range: f32,
     pub blast: f32,
     pub flame: bool,
+    /// WMI1-WMI3: the item mod (IMOD) of each mod slot (global FormID; set by the caller).
+    pub mods: [Option<FormId>; 3],
 }
 
 impl Item {
@@ -362,10 +364,9 @@ pub struct BaseForm {
     #[serde(skip)]
     pub prompt: Option<String>,
     /// A talking activator (TACT) without the record header flag "No Voice Filter"
-    /// ([`NO_VOICE_FILTER`]): its lines play through the voice filter (nvf-play
-    /// `voice_filter`) [hypothesis: the flag's name says the filter is the rule for
-    /// talking activators; 2 of FalloutNV.esm's 87 set it, both radios]. Not written to
-    /// JSON.
+    /// ([`NO_VOICE_FILTER`]; 2 of FalloutNV.esm's 87 set it, both radios). Read by
+    /// nothing in the engine: the original does not filter a talking activator's lines
+    /// (nvf-play `voice_filter`; observed 2026-11-06, issue #992). Not written to JSON.
     #[serde(skip)]
     pub voice_filter: bool,
     #[serde(flatten)]
@@ -489,6 +490,23 @@ impl FormStore {
             BaseData::Item(i) => Some(i),
             _ => None,
         }
+    }
+
+    /// The value the attached mods add to a weapon: the IMOD DATA value of each slot whose
+    /// flag (1, 2, 4 for slots 1-3) is in `mods`. Condition does not lower it [observed:
+    /// o26_value, 2026-11-06: a Varmint Rifle (75) with Extended Mags (75), Night Scope
+    /// (125) and Silencer (100) valued 150, 200, 175, 275 and 375 with mods 1, 2, 4, 3 and
+    /// 7 at full condition, and 326, 309 and 349 with all three at 50, 25 and 75 % (26,
+    /// 9 and 49 without), by ShowOff's GetCalculatedItemValue, the value its page says
+    /// the screen shows; docs/spec-notes/weapon-mods.md §6, issue #982].
+    pub fn mods_value(&self, weapon: FormId, mods: u8) -> i32 {
+        let Some(t) = self.item(weapon).and_then(|i| i.weapon_traits.as_ref()) else { return 0 };
+        t.mods
+            .iter()
+            .enumerate()
+            .filter(|(k, _)| mods & (1 << k) != 0)
+            .filter_map(|(_, m)| m.and_then(|m| self.item(m)).and_then(|i| i.value))
+            .sum()
     }
 
     /// How many units a reference of `base` placed in the world stands for: its own count
@@ -707,6 +725,16 @@ fn load_one(lo: &LoadOrder, schema: &Schema, id: FormId, pi: usize, r: &Record, 
                         }
                         None => None,
                     };
+                    for m in t.mods.iter_mut() {
+                        *m = match m.map(|x| global(lo, pi, x.0)) {
+                            Some(Ok(g)) => g,
+                            Some(Err(l)) => {
+                                issues.note("FormID outside master list", || format!("{id} WMI mod 0x{l:08X}"));
+                                None
+                            }
+                            None => None,
+                        };
+                    }
                 }
                 BaseData::Item(i)
             }
@@ -879,6 +907,8 @@ fn item(kind: ItemKind, d: &[Decoded]) -> Option<Item> {
                 ammo: first(d, b"NAM0").and_then(local_fid).map(FormId),
                 max_range: f("max_range"),
                 range_fixed: dn.and_then(|v| v.get("flags2")).is_some_and(|x| has_flag(x, "Range - Fixed")),
+                // File-local here; made global by the caller.
+                mods: [b"WMI1", b"WMI2", b"WMI3"].map(|sig| first(d, sig).and_then(local_fid).map(FormId)),
                 ..Default::default()
             }
         }),

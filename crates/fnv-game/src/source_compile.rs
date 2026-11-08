@@ -23,6 +23,7 @@ use fnv_esm::LoadOrder;
 use fnv_script::compile::{compile, env::LoadOrderIndex, Seed};
 use fnv_script::ir::{Arg, Expr, Stmt, Token};
 use fnv_script::table::CONSOLE_OPCODE_BASE;
+use fnv_script::unit::UnitOwner;
 use fnv_script::{decode, FunctionTable, Program};
 use fnv_sim::extract::Issues;
 use rayon::prelude::*;
@@ -115,32 +116,50 @@ pub fn declares_extender_vars(src: &str) -> bool {
     })
 }
 
-/// Compile from source the units the mode picks, in place. Units whose source does not
-/// compile keep their bytes (noted in `issues`).
-pub(crate) fn apply(lo: &LoadOrder<'_>, table: &FunctionTable, units: &mut [(fnv_sim::FormId, Compiled)], issues: &mut Issues) {
+/// A unit's new bytes, program, undecodable pieces, references and variables.
+type Done = (Vec<u8>, Program, usize, Vec<fnv_script::unit::RefSlot>, Vec<fnv_script::VarDecl>);
+
+/// What [`compile_picked`] made, by the unit's place in the list, in list order.
+pub(crate) struct Recompiled(Vec<(usize, Result<Done, String>)>);
+
+impl Recompiled {
+    /// Nothing to put in.
+    pub(crate) fn none() -> Recompiled {
+        Recompiled(Vec::new())
+    }
+}
+
+/// Compile from source the units the mode picks, changing nothing yet, so the rest of the
+/// build can run meanwhile ([`apply`] puts the results in). The build's other steps read
+/// only what this leaves alone (see [`crate::data::Compiled::new`]).
+pub(crate) fn compile_picked(lo: &LoadOrder<'_>, table: &FunctionTable, units: &[Compiled]) -> Recompiled {
     let m = mode();
     if m == Mode::Never {
-        return;
+        return Recompiled(Vec::new());
     }
+    let clock = std::time::Instant::now();
     let picked: Vec<usize> = (0..units.len())
+        .into_par_iter()
         .filter(|&i| {
-            let c = &units[i].1;
+            let c = &units[i];
             c.unit.has_scda
                 && c.unit.source.is_some()
                 && (m == Mode::Always || calls_unknown(&c.program, table) || c.raw > 0 || declares_extender_vars(c.unit.source.as_deref().unwrap_or("")))
         })
         .collect();
+    tracing::info!("script build: source compile: {} of {} units picked, mode {m:?}", picked.len(), units.len());
     if picked.is_empty() {
-        return;
+        return Recompiled(Vec::new());
     }
-    // Indexing the load order reads every record: done only when a unit needs it.
-    let all: Vec<fnv_script::ScriptUnit> = units.iter().map(|(_, c)| c.unit.clone()).collect();
-    let ix = LoadOrderIndex::build(lo, &all);
-    type Done = (Vec<u8>, Program, usize, Vec<fnv_script::unit::RefSlot>, Vec<fnv_script::VarDecl>);
-    let results: Vec<(usize, Result<Done, String>)> = picked
+    // Indexing the load order reads every record: done only when a unit needs it. The index
+    // reads only the scripts among the units ([`LoadOrderIndex::build`]).
+    let scripts: Vec<fnv_script::ScriptUnit> = units.iter().filter(|c| matches!(c.unit.owner, UnitOwner::Script { .. })).map(|c| c.unit.clone()).collect();
+    let ix = LoadOrderIndex::build(lo, &scripts);
+    tracing::info!("script build: source compile: load order indexed: {:.0} ms", clock.elapsed().as_secs_f64() * 1e3);
+    let results = picked
         .par_iter()
         .map(|&i| {
-            let u = &units[i].1.unit;
+            let u = &units[i].unit;
             let env = ix.env(ix.plugin_index(&u.plugin).unwrap_or(0));
             let c = compile(u.source.as_deref().unwrap_or(""), table, &env, Some(Seed { variables: &u.variables, refs: &u.refs, unknown_calls: true }));
             let first = c.errors().next().map(|e| format!("{}: line {}: {} {}", u.key(), e.line, e.kind, e.detail));
@@ -154,11 +173,18 @@ pub(crate) fn apply(lo: &LoadOrder<'_>, table: &FunctionTable, units: &mut [(fnv
             (i, r)
         })
         .collect();
-    for (i, r) in results {
+    tracing::info!("script build: source compile: done: {:.0} ms", clock.elapsed().as_secs_f64() * 1e3);
+    Recompiled(results)
+}
+
+/// Put [`compile_picked`]'s results in, in place. Units whose source does not compile keep
+/// their bytes (noted in `issues`).
+pub(crate) fn apply(units: &mut [Compiled], recompiled: Recompiled, issues: &mut Issues) {
+    for (i, r) in recompiled.0 {
         match r {
             // The seed keeps every existing index; names the lists lacked come after them.
             Ok((bytes, program, raw, refs, variables)) => {
-                let c = &mut units[i].1;
+                let c = &mut units[i];
                 issues.note("script_compiled_from_source", || c.unit.key());
                 c.unit.bytes = bytes;
                 c.unit.refs = refs;

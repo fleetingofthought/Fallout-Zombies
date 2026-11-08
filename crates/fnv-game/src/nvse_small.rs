@@ -287,7 +287,9 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
             let path = text(args, 0);
             let f = args.get(1).cloned().unwrap_or(XVal::Num(0.0));
             g.small.tile_scripts.retain(|(p, _)| !p.eq_ignore_ascii_case(&path));
-            if !matches!(f, XVal::Num(_) | XVal::Ref(0)) {
+            let callable = !matches!(f, XVal::Num(_) | XVal::Ref(0));
+            tracing::info!("tile script: path={path:?} callable={callable}");
+            if callable {
                 g.small.tile_scripts.push((path, f));
             }
             zero

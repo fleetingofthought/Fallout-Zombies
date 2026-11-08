@@ -25,8 +25,8 @@ tagged `[hypothesis]`. Tests: the unit tests in `nvse_sup1.rs` (the pages' examp
 | TopicInfoGetAllChoices, TopicInfoGetChoiceCount `info`, TopicInfoHasChoice `info topic` | the line's choices (TCLT) [documented] |
 
 Not in this batch: the topic and line setters (TopicSetPriority, TopicSetFlags,
-TopicInfoAddChoice, …ReplaceChoice, …SetFlagsHigh/Low, …SetPrompt, …SetSaidOnce): they
-change what the dialogue engine reads from `GameData`, a design of their own (batch 2).
+TopicInfoAddChoice, …ReplaceChoice, …SetFlagsHigh/Low, …SetPrompt, …SetSaidOnce): built in
+batch 2 (ext-sup2.md), with the dialogue reading the edits.
 GetCalculatedPos and GetCalculatedPosAlt write into script variables. KillAll2 is
 deprecated on its page as not working. The file, INI, Excel, JSON, clipboard, screenshot,
 web and window functions touch the machine outside the game and need a policy first

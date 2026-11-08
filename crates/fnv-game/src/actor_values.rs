@@ -290,10 +290,15 @@ impl<'a> Game<'a> {
         self.skill_formula(skill, attribute, luck)
     }
 
+    /// The player's tag bonus on `skill`: fAVDTagSkillBonus when it is tagged, else 0.
+    pub(crate) fn tag_bonus(&self, skill: u16) -> f64 {
+        if self.player.tag_skills.contains(&skill) { setting(self, "fAVDTagSkillBonus", 15.0) } else { 0.0 }
+    }
+
     fn base_skill(&mut self, r: FormId, skill: u16) -> f64 {
         let i = (skill - BARTER) as usize;
         if r == FormId::PLAYER_REF {
-            let tag = if self.player.tag_skills.contains(&skill) { setting(self, "fAVDTagSkillBonus", 15.0) } else { 0.0 };
+            let tag = self.tag_bonus(skill);
             let spent = self.player.skill_points.get(&skill).copied().unwrap_or(0.0);
             return self.derived_skill(r, skill) + tag + spent;
         }

@@ -1491,8 +1491,6 @@ dependencies = [
 [[package]]
 name = "bevy_render"
 version = "0.20.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c74591faf8ff1b84beb59e93f05b233a03c62d1cbc446874bd2231b72dde184"
 dependencies = [
  "async-channel",
  "bevy_app",
@@ -2968,6 +2966,8 @@ dependencies = [
  "fnv-util",
  "fnv-vfs",
  "fnv-world",
+ "png",
+ "qrcodegen",
  "rand_chacha",
  "rand_core 0.9.5",
  "rayon",
@@ -5364,6 +5364,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d55d956fa96f5ec02be2e13af0e20391a5aa83d6a074e3ad368959d0fab299ea"
 
 [[package]]
+name = "qrcodegen"
+version = "1.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4339fc7a1021c9c1621d87f5e3505f2805c8c105420ba2f2a4df86814590c142"
+
+[[package]]
 name = "quick-xml"
 version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5475,6 +5481,7 @@ dependencies = [
  "simba",
  "static_assertions",
  "thiserror 2.0.21",
+ "web-time",
  "wide",
 ]
 
@@ -6510,7 +6517,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08f4b6d2481c5e266e9def4c10e1680dbdfdd69523ed555a83d6675953a2785e"
 dependencies = [
  "cc",
- "windows-targets 0.52.6",
+ "windows-targets 0.53.5",
 ]
 
 [[package]]

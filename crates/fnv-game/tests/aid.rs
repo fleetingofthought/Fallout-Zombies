@@ -854,3 +854,25 @@ fn a_hardcore_gated_stimpak_applies_only_its_mode() {
     assert!(near(av(&mut g, HEALTH), 76.0), "{}", av(&mut g, HEALTH));
     assert!(!g.effects.iter().any(|e| e.source == FormId(STIM_GATED)));
 }
+
+/// A Stimpak used outside Hardcore, then Hardcore turned on while its held heal's 6 s still
+/// run: the heal takes hold within a condition check and heals only for the time left; turned
+/// on after the 6 s, nothing [observed: o26_stim, 2026-11-06, nvfairport: Hardcore on 2.8 s
+/// after the use, Health rose from 0.9 s later at the Hardcore rate until 5.9 s after the
+/// use, 12 of the 36; on 9.3 s after, it stayed; issue #1743].
+#[test]
+fn a_held_hardcore_heal_takes_hold_for_the_time_left() {
+    let f = fixture();
+    for (on_after, low, high) in [(3 * 60, 11.9, 18.1), (10 * 60, 0.0, 0.01)] {
+        let mut g = game(&f);
+        add_actor_value_damage(&mut g, P, HEALTH, 60.0);
+        g.ingest(P, FormId(STIM_GATED));
+        let at_use = av(&mut g, HEALTH);
+        g.frames(on_after);
+        assert!(near(av(&mut g, HEALTH), at_use));
+        g.player.hardcore = Some(true);
+        g.frames(10 * 60);
+        let gain = av(&mut g, HEALTH) - at_use;
+        assert!(gain >= low && gain <= high, "Hardcore on after {on_after} frames: gained {gain}");
+    }
+}

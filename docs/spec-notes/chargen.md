@@ -98,10 +98,100 @@ the view's height, from the top left of a 1024 × 800 rectangle centred on the s
 - **Opening state**: the skills the player has tagged (the psych test's three)
   [observed: the psych test tags three before stage 90]. Clicking a tagged skill untags
   it; an untagged one is tagged while fewer than three are [observed: the owner's
-  screenshots, 2/3 then 3/3]. Reset goes back to the opening state [hypothesis].
+  screenshots, 2/3 then 3/3]. Reset clears every tag, those it opened with too: opened
+  at 3/3 with the save's three tags (`SetTagSkills 3`), it reads 0/3, the skills' figures
+  drop back and Done dims [observed 2026-11-06: private job ov_tags, 1280x720]. Tags an
+  AddTagSkills opening locks stay [hypothesis: not captured; they may not be un-tagged].
 
 - **The attributes page**: the same file's attribute rows, which AddSPECIALPoints opens
   (Intense Training): levelup.md §8.
+
+### 3.1 The tag-skill list drawn from its file (`[UI] TileMenus=CharGenMenu`)
+
+[design: `engine/nvf-play/src/tiles/{tag_menu,selection_menu}.rs`] Off by default.
+The open `ListMenu` owns the sheet and all its rules. This view reads it, writes tiles,
+and queues acts for `chargen::input`; it never constructs a sheet or consumes a script's
+pending request. The hand-built drawing remains with the switch off or a failed readiness.
+Sources: the file's tile-name contract [documented: `menus\chargen\char_gen_menu.xml`, read
+privately], §3's geometry and screenshots, the trait contract in §4.1, and the private job
+`ov_tags` [observed 2026-11-06: the original at 1280 x 720, the hudtest save, `SetTagSkills 3`,
+read with JIP]. Assumptions below are not observations.
+
+- **What the original was seen to do** [observed: `ov_tags`]. The list reads `y` 65, `x` -15,
+  450 x 728, with 13 rows, each 52 high with `_y` the sum above it; the tree's order is not the
+  list's, `listindex` is. `_highlight_y` is -1 with `_selected_height` 0 at the opening, where
+  row 0's picture and text show, and the row's `_y` with 52 under the pointer; the highlight
+  and text keep the last row when it leaves. A tagged row reads `_selected` 1 and shows its
+  marker. `CGM_SelectionText` is at 20, 20, wrapping at 540; the counter is at 20, 317.33, 32
+  high. At 3/3 the counter is empty and hidden and Done's `target` is 1; at 0/3 it is shown and
+  Done's `target` is 0. **Reset took 3/3 to 0/3** with the save's three tags on the list, as §3
+  says. `ClickMenuTile` on `*:k` moved nothing in this job, so taking and giving back by the
+  pointer was not seen. This view's Reset is the open sheet's own (`ListMenu::reset`), which
+  clears every tag except the locked ones, as §3 does; the view does not own the sheet.
+
+- **What the program writes** [design: `tag_menu::snapshot`, `selection_menu::write`].
+  `_CurrPoints` is the sheet's number tagged, `_MaxPoints` its `count`, and `_OnlyAdd` says
+  whether it has locked tags [hypothesis: follows the sheet's AddTagSkills semantics;
+  the file's runtime meaning awaits the capture]. The title, description and counter get
+  `string`; the icon gets `filename` and `visible`; the list gets `visible` and its code-set
+  `y` of 65 and `height` of 728, which the file leaves to code [observed: `ov_tags`]. Rows come from `CGM_SelectItemTemplate`, row `CGM_SelectItem`, with
+  `ListItemText`, `CGM_Template_ItemValue`, and `CGM_Template_ItemMarker`. They get `string`,
+  the value child's `string`, `_selected`, `_TextAlpha`, `id`, `listindex`, `_y`, and measured
+  `height`. The list's highlight and its `lb_scrollbar` counts and value follow §4.1. Done's
+  `target` follows the sheet's `complete()`, so an unfinished sheet cannot finish.
+- **Every string this view writes** [design: `tag_menu.rs`, LEGAL.md,
+  `crates/fnv-ui/src/strings.rs`]. The title is our own `Choose skills: {taken}/{count}`;
+  the counter our own `{remaining} left to choose`, and empty with none left. Neither has a named
+  setting in the strings table; this path does not reuse the hand-built title or counter.
+  Row names are AVIF FULL through `ListView`; row values are decimal `TagSheet::value`
+  (including this sheet's tag bonus); the description is AVIF DESC without an added label.
+  The picture filename is AVIF ICON, or empty when absent. The file retains the button
+  words and hints: the view writes none of them. Their `sReset` and `sDone` resolve through
+  `fnv_ui::strings` (load-order GMST first, otherwise the project's built-in Reset and Done).
+- **Uncaptured numbers and behavior** [hypothesis: follows `trait_menu.rs` and §4.1].
+  Rows use `id` 10 and normal alpha 255 (128 for a faint row); the backing alpha is 193.8.
+  `_selected` means tagged, independently of the highlight. Opening shows the first row's
+  description with no highlight. Leaving the rows removes the highlight and keeps the text;
+  a key move reveals its row, while a pointer choice or scrollbar move does not move the
+  other. The list's counts, row measurement and pointer/key arbitration follow the shared
+  trait machinery. These are candidates for comparison with the 2026-11-06 capture.
+- **Counts and other uses of 1048** [design: `fnv_game::chargen::TagSheet`, `lists.rs::open`].
+  Nothing assumes three: SetTagSkills supplies its total, and AddTagSkills supplies the
+  old tags plus its request. Locked old tags remain locked, extra choices obey that total,
+  and Reset clears every tag except the locked ones (§3). The same applies when a perk opens this sheet.
+  `Sheet::Special`, including AddSPECIALPoints from Intense Training and the revision's
+  SetSPECIALPoints, is excluded before readiness: its attribute template and hand-built
+  drawing stay in place. No candidate tag rows, warning or tag blur run for that page.
+- **Long descriptions** [documented: the file's name contract and §3]. The file has plain
+  `CGM_SelectionText`, without a text window or scrollbar. Its wrap width is 540 interface
+  units, its top 20 below the first divider, with the second divider 300 below it. At
+  1280 x 720 these are 405, 15 and 225 pixels. The body font's line height 31 and wrapped
+  pitch 35 (`chargen/draw.rs`, fonts.md) allow about eight lines before the lower divider;
+  nine lines need about 311 units [hypothesis: this calculation, not a runtime measure of
+  any particular AVIF or mod's description]. There is no guarantee every description fits.
+  This path therefore measures the text and makes the info rectangle a clip ending at the
+  lower divider, with its counter and decorations outside that clip [design:
+  `tag_menu::settle_text`, `fnv_ui::input::OUTSIDE_CLIP`]. The wheel over it and Left/Right
+  scroll by 20 units per step [hypothesis: the trait step], clamped exactly to the measured
+  end; another skill starts at the top. No visible scrollbar is added: the file provides
+  none. The initial text top belongs to the tree, surviving a fallback, so repeated writes
+  never treat a scrolled position as its origin. The artificial long-text aid repeats the
+  description eight times on this path only [design].
+- **Readiness, lifetimes and hand-over** [design: `selection_menu.rs`, §4.1]. Every frame
+  checks the paths, template children, all live row children, usable dimensions and measured
+  text. Failure removes candidate rows and returns the unchanged open sheet to hand-built
+  drawing, with one warning per reason; the next frame retries. An opening keeps its
+  scrolls and highlight through fallback; the tree keeps its original counts and text top;
+  readiness owns the rows. A new opening resets scrolls and highlight. A frame evaluates,
+  writes changed state, measures, places rows and scrolls, and evaluates again. Input rewrites
+  the scroll values after the file's click pulses. The first tiled frame removes hand-built
+  rows; tile input starts after they are gone. Drawing, hand-built suppression and blur
+  share the same opening/menu/tree decision, including a stage replaced by a script.
+- **Checks** [design]. Synthetic unit fixtures contain no game expressions. The 22 trait
+  tests remain; tag tests cover variable totals, locked tags, Reset, SpecialSheet exclusion,
+  live-child readiness, a readable text end, fallback lifetimes and stale clicks. Smoke
+  `tiles-tag-*` includes the six basic scenarios, AddTagSkills, attributes fallback, a long
+  description and fallback while open; every new scenario requests 1280 x 720 shots.
 
 ## 4. The trait menu (1084)
 
@@ -218,6 +308,10 @@ none.
 - **Evidence**: the unit tests (`tiles::trait_menu`) use a small layout written for them,
   which says nothing of the file's geometry; the smoke scenarios `tiles-trait-*` read the
   vanilla file.
+
+[design: `chargen/lists.rs::info`] The hand-built trait description still uses its fixed
+275-unit clip without scrolling. The hand-built tag description likewise keeps its existing
+unscrolled drawing. The scrolling described in §3.1 and §4.1 belongs only to the opt-in tiles.
 
 ## 5. The name menu (1051)
 

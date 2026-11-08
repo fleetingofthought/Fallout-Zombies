@@ -156,3 +156,56 @@ Left unbuilt (73), with the reason:
   PlayerIsDrinkingPlacedWater, GetIsActivationPromptShown, IsPlayerLookingAround,
   GetSpellUsageNumEx, GetVATSTargetable, PlaceAtReticleAlt, RefillPlayerAmmo (deprecated
   for ITR's RefillAmmo), RemoveAllItemsShowOff (its page says its flags are buggy).
+
+## 7. Batch 4 (2026-11-08, #1010, `nvse_showoff4.rs` and `mod_files.rs`)
+
+The owner lifted the 2026-11-06 pause on 2026-11-08 ("finish every unbuilt extender
+function"). From the pages alone [documented], not probed yet: probe set `showoff4`
+(`tools/capture/jip_probes.py`, lab `L5.ext.showoff4`) is written, not run. The census
+drops from 71 ShowOff functions to 37 (602 to 568 in all). Tests:
+`crates/fnv-game/tests/showoff4.rs` on a synthetic plugin. The export now has pages for
+the seven Matrix functions, SayTo_GetTopic(Info) and HasINISetting_Cached (§6 said none:
+their titles have a space where the name has an underscore).
+
+| Function (aliases) | NVForever |
+|---|---|
+| Matrix_IsMatrix (Mat_IsMat) `array` | a list of numbers (one row) or a list of lists of numbers, all of one length; empty, mixed or ragged arrays are none [documented: the page's seven examples]. Only lists count [hypothesis: every example builds with ar_List] |
+| Matrix_ApplyOperationWithMatrix (Mat_ApplyOpWithMat) `A op B` | `+ - / %` element by element (`%` the Schur product), `*` the matrix product when A's columns are B's rows; anything else no array [documented: the table and examples, e.g. (3 4; 5 6)·(7 8; 9 10) = (57 64; 89 100), 1×3 · 1×3 undefined] |
+| Matrix_ApplyOperationWithScalar (Mat_ApplyOpWithScal) `A op s` | `+ - * /` on each element, `%` no array [documented]; division by 0 the floating-point infinity [hypothesis]. The catalogue row was named "Matrix" (the template's name has a space); fixed in `script_functions.py` NAME_FIXES |
+| Matrix_Transpose (Mat_T), Matrix_Dump (Mat_Dump) | the transpose [documented]; the dump prints a heading and each row with four decimals to the console, the heading in NVForever's own words |
+| Quaternion_GetMatrix (Quat_GetMat) `[w x y z]`, Matrix3x3_GetQuaternion (Mat_GetQuat) | the layout [w, x, y, z] [documented]; the usual right-handed rotation matrix of the normalised quaternion, and back by the largest of trace and diagonal with w not negative [hypothesis: the pages give no convention; probe quat.*] |
+| Results' shape | a one-row result of a one-dimensional input stays one-dimensional; a 1-D row transposed is a column of one-element lists [hypothesis; probe schur.flat.size, transpose.flat.size] |
+| SayTo_GetTopic, SayTo_GetTopicInfo | the topic and response of the actor's running SayTo line (`Game::speech`), none without one [documented] |
+| Get/SetItemHotkeyIconPath `item [onlyOverride]`, `item path` | the override, else GetTexturePath's icon; onlyOverride 1 the override or ""; "" resets [documented]. Kept game-side only: the engine's hotkey pictures (`weapon_wheel::draw`, `pipboy::hotkey_panel`) do not read it yet [follow-up] |
+| Get/SetPlayerCanPickpocketEquippedItems (Get/SetPCCanStealEqItems) | off by default; on, the pickpocket menu lists the victim's equipped items, never a child's (`Game::pickpocket_worn`, `nvf_play::menu::model::Steal::worn`) [documented] |
+| ClearCinematicTextQueue (ClearQuestMessageQueue) | the quest lines waiting are dropped, as KillQuestUpdates [documented: "Clears the quest message queue"; hypothesis: the line on screen finishes] |
+| ToggleQuestMessages `[bOn]` | 0 hides every quest line (`UiRequests::quest_messages_off`, read by `nvf_play::script`), 1 shows them; 1 when that changed; -1 or nothing reads 1 while they are on [documented; hypothesis: what the read means, the page's wording leaves it open] |
+| SetShowOffOnCornerMessageEventHandler (SetOnCornerMessageEventHandler) `1/0 handler [flag]` | each corner message queued (ShowMessage, MessageEx…) reaches the handlers with its text, icon type 0, icon path, sound path and seconds, an empty string as "<void>" [documented]; run on the next frame, and the sound always "<void>" [hypothesis] |
+| FreezeAmmoRegen `[toggle]` | whether it was frozen; while frozen no regenerating weapon gains rounds (`fnv_combat::attack::Cycle::regen_frozen`) [documented] |
+| PatchFreezeTime | nothing to do: NVForever never stops loading cells while FreezeTime holds the clock [documented: the patch's only effect] |
+| ResetInteriorAlt (IWantThisRoomCleanRightNow) `cell` | ResetInterior that also brings back dead actors flagged to respawn (`FormChanges::expired_cells_full`, `crate::respawn`) [documented]; an exterior cell refused (0) [hypothesis, as ResetInterior] |
+| SetOwnershipTemp `[newOwner] [cell]` | SetOwnership or SetCellOwnership for the session: a save writes the owner from before (`Game::snapshot`); SetOwnership / SetCellOwnership afterwards is saved as usual [documented] |
+| ClearShowoffSavedData `0 auxTimers` | 1 the calling mod's private permanent aux timers, 2 every public permanent one, gone without their stop event [documented]. "*" starts a temporary timer's name and "_" a public one's [hypothesis: the aux variables' naming; the timers' own page is not in the export] |
+| DisableAlt (SnigOff), EnableAlt (SnigOn) `[fade]` | Disable and Enable that also work on a reference with an enable parent: from then on its own flag counts (`World::keep_own_enable`) [documented: "Ignores Disable's limitation"; hypothesis: until SetEnableParent] |
+| SetEnableParent (SetParentRef) `[newParent]` | the reference's enable parent for the session, none removing it; GetParentRef and the enable state follow (`World::set_enable_parent`) [documented]; not saved [hypothesis] |
+| HasINISetting_Cached (HasINISettingC), ReloadIniCache, SaveCachedIniFile (SaveCachedIni) `[iniPath]` | the cache of `Data\Config` INI files (`mod_files.rs`): whether a key is cached; read again (0 for a missing file); written back into the file in NVForever's layer, keys in place, new ones added to their section in lower case [documented; hypothesis: the format kept] |
+| ReadFromJSON `path [pointer] [mode] [useCache]`, WriteToJSON `value path [pointer] [mode] [useCache] [saveFile] [compact]` | files under the game's folder through NVForever's layer (`GameRoot`, never the game folder); objects are string maps, arrays lists, forms "@Plugin.esm:FormID" [documented]; every parser mode reads standard JSON, a pointer into a missing part makes the objects on the way, failures give 0 [hypothesis] |
+| CreateFolder (CreateDirectory) `path`, DumpFormList (FListDump) `list [file] [append]` | the folder made in NVForever's layer; the list's forms to the console or appended to a file there [documented], the lines in NVForever's own words |
+| GetActorFadeState, GetCalculatedActorSpread, IsFormLoading | 0 [decision: the pages are marked Incomplete with no summary, arguments or result; nothing to build from] |
+
+Follow-ups: the engine's hotkey pictures should read SetItemHotkeyIconPath's override;
+the three Incomplete pages need their text.
+
+Left for batch 5 (37), with what each needs: the level-up menu's pages and points
+(Get/SetLevelUpMenuCurrentPage, GetLevelUpMenuPoints, SetLevelUpMenuCanExitEarly,
+ShowPerkMenu, ShowSkillMenu: the engine's menu owns its pages; a game↔engine channel is
+needed), ShowPauseMenu, live explosions and projectiles (Get/SetExplosionRefRadius/Source,
+GetProjectileRefIsStuck, SpawnTracingProjectile, SetForceDrawHitscanProjectiles,
+SetProjectileTracerChanceOverride), the fast-travel checks (GetPCCanFastTravel,
+GetPCHasScriptedFastTravelOverride), Improved Detection (IsActorInvisibleToPlayer,
+HighlightAdditionalReferenceAlt), GetNumCombatActorsFromActor, ForceHitStaggerReaction,
+ForceRecoilAnim, KillAllHostiles, GetCalculatedItemValue, GetCalculatedAPCost,
+GetVATSMaxEngageDistance, GetVATSTargetable, ToANSIChar, GetHitLocationLingering,
+PlayerHasNightVisionActive, PlayerIsDrinkingPlacedWater, GetIsActivationPromptShown,
+IsPlayerLookingAround, GetSpellUsageNumEx, PlaceAtReticleAlt, RefillPlayerAmmo,
+RemoveAllItemsShowOff.

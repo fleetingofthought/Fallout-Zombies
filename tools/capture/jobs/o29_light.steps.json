@@ -1,0 +1,1346 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "o29_light",
+ "title": "Check 93: GetActorLightAmount at noon (NVWastelandClear) on a grid around the Goodsprings gas station canopy, and in SLGoodspringsCaveINT at set offsets from one RedLight (radius 384)",
+ "start": "Load a save.",
+ "steps": [
+  {
+   "console": "tgm"
+  },
+  {
+   "console": "coc Goodsprings"
+  },
+  {
+   "frames": 600
+  },
+  {
+   "console": "CloseAllMenus"
+  },
+  {
+   "frames": 60
+  },
+  {
+   "console": "ForceWeather NVWastelandClear 1"
+  },
+  {
+   "console": "set GameHour to 12"
+  },
+  {
+   "frames": 400
+  },
+  {
+   "console": "player.moveto 0017748C 0 0 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_0",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_0",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_0",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_0",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_0",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 200 0 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_200_0",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_200_0",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_200_0",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_200_0",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_200_0",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C -200 0 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-200_0",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-200_0",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-200_0",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-200_0",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-200_0",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 0 200 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_200",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_200",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_200",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_200",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_200",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 0 -200 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-200",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-200",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-200",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-200",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-200",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 400 0 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_400_0",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_400_0",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_400_0",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_400_0",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_400_0",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C -400 0 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-400_0",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-400_0",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-400_0",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-400_0",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-400_0",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 0 400 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_400",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_400",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_400",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_400",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_400",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 0 -400 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-400",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-400",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-400",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-400",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-400",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 800 0 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_800_0",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_800_0",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_800_0",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_800_0",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_800_0",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C -800 0 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-800_0",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-800_0",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-800_0",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-800_0",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_-800_0",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 0 800 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_800",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_800",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_800",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_800",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_800",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 0 -800 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-800",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-800",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-800",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-800",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_0_-800",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0017748C 2000 2000 150"
+  },
+  {
+   "frames": 240
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_2000_2000",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_2000_2000",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_2000_2000",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_2000_2000",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gas_2000_2000",
+   "field": "light"
+  },
+  {
+   "console": "coc SLGoodspringsCaveINT"
+  },
+  {
+   "frames": 600
+  },
+  {
+   "console": "CloseAllMenus"
+  },
+  {
+   "frames": 60
+  },
+  {
+   "console": "player.moveto 0015319B 0 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_0",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_0",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_0",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_0",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_0",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 64 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_64",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_64",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_64",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_64",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_64",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 128 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_128",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_128",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_128",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_128",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_128",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 192 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_192",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_192",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_192",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_192",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_192",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 256 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_256",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_256",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_256",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_256",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_256",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 320 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_320",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_320",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_320",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_320",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_320",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 384 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_384",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_384",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_384",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_384",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_384",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 512 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_512",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_512",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_512",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_512",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_512",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B -64 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-64",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-64",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-64",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-64",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-64",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B -128 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-128",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-128",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-128",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-128",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-128",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B -192 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-192",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-192",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-192",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-192",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-192",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B -256 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-256",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-256",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-256",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-256",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-256",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B -320 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-320",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-320",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-320",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-320",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-320",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B -384 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-384",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-384",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-384",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-384",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_x_-384",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 0 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_0",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_0",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_0",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_0",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_0",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 64 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_64",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_64",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_64",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_64",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_64",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 128 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_128",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_128",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_128",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_128",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_128",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 192 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_192",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_192",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_192",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_192",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_192",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 256 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_256",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_256",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_256",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_256",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_256",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 320 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_320",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_320",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_320",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_320",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_320",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 384 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_384",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_384",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_384",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_384",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_384",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 512 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_512",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_512",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_512",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_512",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_512",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 -64 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-64",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-64",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-64",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-64",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-64",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 -128 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-128",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-128",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-128",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-128",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-128",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 -192 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-192",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-192",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-192",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-192",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-192",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 -256 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-256",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-256",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-256",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-256",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-256",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 -320 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-320",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-320",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-320",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-320",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-320",
+   "field": "light"
+  },
+  {
+   "console": "player.moveto 0015319B 0 -384 0"
+  },
+  {
+   "frames": 180
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-384",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-384",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-384",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-384",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "lamp_y_-384",
+   "field": "light"
+  }
+ ]
+}

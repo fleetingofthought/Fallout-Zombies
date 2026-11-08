@@ -996,6 +996,32 @@ impl BlendPlayer {
         Some(n)
     }
 
+    /// [`Self::pose`] for callers that sample apart from writing (several actors at once
+    /// on the compute pool, the writes made afterwards in a fixed order): the sampled
+    /// transforms are added to `out` by node entity, nothing is written.
+    pub fn sample_into(&mut self, scratch: &mut Vec<(usize, Transform)>, out: &mut Vec<(Entity, Transform)>) -> usize {
+        let n = self.sample(scratch);
+        out.extend(scratch.iter().filter_map(|(i, tr)| self.nodes.get(*i).map(|e| (*e, *tr))));
+        n
+    }
+
+    /// [`Self::pose_held`] apart from writing, as [`Self::sample_into`]: `written` is
+    /// [`Self::written_since`], asked before (it reads the transforms).
+    pub fn sample_held_into(&mut self, written: bool, scratch: &mut Vec<(usize, Transform)>, out: &mut Vec<(Entity, Transform)>) -> Option<usize> {
+        if pose_stands(self.posed_from.as_ref(), &self.layers, self.rest_changes) && !written {
+            return None;
+        }
+        let n = self.sample_into(scratch, out);
+        self.posed_from = Some(PosedFrom { layers: self.layers.clone(), rest_changes: self.rest_changes });
+        Some(n)
+    }
+
+    /// Whether a node posed last time was written since the calling system last ran
+    /// ([`Self::pose_held`]'s check, for [`Self::sample_held_into`]).
+    pub fn written_since(&self, transforms: &mut Query<&mut Transform>) -> bool {
+        self.nodes_written(transforms)
+    }
+
     /// Forget the pose [`Self::pose_held`] made: its next call samples.
     pub fn forget_pose(&mut self) {
         self.posed_from = None;
@@ -1511,6 +1537,39 @@ mod tests {
         world.clear_trackers();
         assert_eq!(p.pose_held(&mut scratch, &mut state.get_mut(&mut world).unwrap()), None);
         assert_eq!(*world.get::<Transform>(node).unwrap(), moved);
+    }
+
+    /// The split `locomotion::drive` uses to sample actors on the compute pool (the check
+    /// first, the sampling into a list, the writes afterwards) poses as `pose_held` does.
+    #[test]
+    fn sampling_apart_from_writing_poses_as_pose_held_does() {
+        let bind = Transform::from_xyz(5.0, 0.0, 0.0);
+        let (mut wa, mut wb) = (World::new(), World::new());
+        let (na, nb) = (wa.spawn(bind).id(), wb.spawn(bind).id());
+        let (mut a, mut b) = (BlendPlayer::new(vec![na], Arc::new(vec![bind])), BlendPlayer::new(vec![nb], Arc::new(vec![bind])));
+        let (mut sa, mut sb) = (SystemState::<Query<&mut Transform>>::new(&mut wa), SystemState::<Query<&mut Transform>>::new(&mut wb));
+        let mut scratch = Vec::new();
+        let clip = on_node_0(9.0);
+        let steps: [(Option<f32>, Option<Transform>); 6] = [(Some(0.5), None), (Some(0.5), None), (Some(0.999), None), (Some(0.999), Some(bind)), (Some(0.999), None), (None, None)];
+        for (phase, other_writer) in steps {
+            for (p, w) in [(&mut a, &mut wa), (&mut b, &mut wb)] {
+                p.layers[0] = phase.map(|phase| Layer { clip: clip.clone(), phase, weight: 1.0 });
+                if let Some(t) = other_writer {
+                    w.clear_trackers();
+                    *w.query::<&mut Transform>().single_mut(w).unwrap() = t;
+                }
+                w.clear_trackers();
+            }
+            let held = a.pose_held(&mut scratch, &mut sa.get_mut(&mut wa).unwrap());
+            let (written, mut out) = (b.written_since(&mut sb.get_mut(&mut wb).unwrap()), Vec::new());
+            let apart = b.sample_held_into(written, &mut scratch, &mut out);
+            let mut q = sb.get_mut(&mut wb).unwrap();
+            for (e, tr) in out {
+                q.get_mut(e).unwrap().set_if_neq(tr);
+            }
+            assert_eq!(held, apart, "{phase:?}");
+            assert_eq!(*wa.get::<Transform>(na).unwrap(), *wb.get::<Transform>(nb).unwrap(), "{phase:?}");
+        }
     }
 
     fn assert_transform(world: &World, node: Entity, expected: Transform, changed: bool) {

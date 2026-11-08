@@ -165,6 +165,16 @@ uGridsToLoad=5).
     of each (was 256): models read ahead wait unused until their cell loads, and turning
     back finds the cells left behind still prepared.
 
+- **The reads' own pool** (#1732, `nvf_assets::read_pool`). Everything above that runs "on
+  a worker thread" for cells, models, textures, actor parts, clips and `.egt` files runs
+  on a pool of the game's own, not on Bevy's async compute pool, where pipelines compile
+  and a frame can wait on one (§3). It has as many threads as that pool, 25 % of the
+  logical threads, 1 to 4 [documented: bevy_app 0.20.1 `task_pool_plugin.rs`] [design], so
+  the reads keep the size they had and share it with nothing. Bevy's I/O pool was not
+  used: the embedded shaders load on it at the same moment, and sound decodes went there
+  to get away from these reads [design]. Size test aid: `NVF_PLAY_TEST_READ_THREADS`.
+  Not run or measured yet when this was written.
+
 ## 3. Left to do
 
 - Done: the FaceGen tint is added in the face and skin shader (`nvf-assets`

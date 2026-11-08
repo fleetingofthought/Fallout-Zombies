@@ -228,7 +228,47 @@ pub struct Character {
     pub passes_characters: bool,
     /// Steps climbed by [`step_up_move`] (a count for reports).
     pub stepped: u32,
+    /// Hold this character where it is while it is stuck ([`Held`]): a step whose sweep
+    /// ran out of the controller's sweeps without moving it is not swept again for the
+    /// next [`STUCK_RETRY`] − 1 steps. Off by default (the player, the tools' probes);
+    /// the game turns it on for the actors it walks.
+    pub hold_when_stuck: bool,
+    held: Option<Held>,
+    /// Steps held so far ([`Self::hold_when_stuck`], a count for reports).
+    pub held_steps: u32,
 }
+
+/// A character held where it got stuck ([`Character::hold_when_stuck`]): rapier's
+/// controller sweeps the shape at most [`CONTROLLER_SWEEPS`] times a move, sliding along
+/// each surface it meets; pressed into a crease between two meshes every slide meets the
+/// other surface and the controller's normal nudge keeps the motion left over above its
+/// stop threshold, so each step used all of them, with the autostep's casts and a contact
+/// pass for the ground after each, and went nowhere [observed: rapier 0.36.0 source
+/// `move_shape`; in the 50-a-side battle an actor between terrain and a canyon rock's
+/// mesh took 3 ms a step, one between two yuccas' meshes 22 ms, against about 0.1 ms,
+/// 20 sweeps every step and the feet not moved, issue #1797]. The step that finds it so
+/// holds it: the steps after it return the same standing result without sweeping, and
+/// every [`STUCK_RETRY`]-th step is a full move again, which moves it on when the way is
+/// free (or holds it again).
+#[derive(Debug, Clone)]
+struct Held {
+    /// Where it stands; moved elsewhere (placed, or its feet set), it is not held.
+    feet: [f32; 3],
+    /// Steps held since the move that found it stuck.
+    steps: u32,
+    touched: Vec<Owner>,
+}
+
+/// The sweeps rapier's character controller makes at most in one move [documented:
+/// rapier3d 0.36.0 `KinematicCharacterController::move_shape`, `max_iters = 20`]; a move
+/// that met something on each of them used them all.
+const CONTROLLER_SWEEPS: usize = 20;
+
+/// A held character's full move comes every this many steps, a third of a second at the
+/// 60 steps a second [engineering choice: the residents' own stuck rule moves an actor
+/// on along its path after a second; a stuck actor's move was 3-22 ms, issue #1797].
+pub const STUCK_RETRY: u32 = 20;
+
 
 impl Character {
     /// This character's key, for query filters (e.g. to keep its own activation ray from
@@ -346,6 +386,9 @@ impl PhysWorld {
             ground_gap: None,
             passes_characters: false,
             stepped: 0,
+            hold_when_stuck: false,
+            held: None,
+            held_steps: 0,
         };
         let body =
             self.insert_body(RigidBodyBuilder::kinematic_position_based().translation(c.center(self.k)).user_data(owner.encode()));
@@ -369,6 +412,7 @@ impl PhysWorld {
         c.since_landing = None;
         c.walked_off_z = None;
         c.air_top_z = None;
+        c.held = None;
         let center = c.center(self.k);
         self.w.bodies[c.body].set_translation(center, true);
         // A body that had gone to sleep (a character not moved for a while) stayed where
@@ -444,6 +488,10 @@ impl PhysWorld {
     /// about 300 ms of CPU a second moving the characters one by one, CPU profile
     /// 2026-10-23].
     pub fn plan_move(&self, c: &mut Character, input: CharacterInput) -> (CharacterStep, Push) {
+        if let Some(held) = self.held_move(c, &input) {
+            return held;
+        }
+        let start_feet = c.feet;
         let dt = self.params.dt;
         let g = self.params.gravity;
         let surface = self.water_surface_for(c.feet);
@@ -563,10 +611,13 @@ impl PhysWorld {
         // physics.md §6.4.1], where rapier's controller slides it off contacts steeper than
         // the slope limit. The horizontal motion is made first, sliding along walls.
         let two_phase = !c.swimming && !on_walkable;
+        // Hits of the controller's first move (one a sweep), for `Held`.
+        let sweeps;
         let mut moved = if two_phase {
             let q = self.w.query_pipeline_with_filter(filter);
             let air = KinematicCharacterController { snap_to_ground: None, ..kcc };
             let h = air.move_shape(dt, &q, c.shape.as_ref(), &pos, Vector::new(desired.x, desired.y, 0.0) * k, |hit| collisions.push(hit));
+            sweeps = collisions.len();
             let fall = KinematicCharacterController { slide: false, autostep: None, ..air };
             let from = Pose::from_translation(pos.translation + h.translation);
             let mut hits = Vec::new();
@@ -581,7 +632,9 @@ impl PhysWorld {
             }
         } else {
             let q = self.w.query_pipeline_with_filter(filter);
-            kcc.move_shape(dt, &q, c.shape.as_ref(), &pos, desired * k, |hit| collisions.push(hit))
+            let m = kcc.move_shape(dt, &q, c.shape.as_ref(), &pos, desired * k, |hit| collisions.push(hit));
+            sweeps = collisions.len();
+            m
         };
         let mut touched_handles: Vec<ColliderHandle> = collisions.iter().map(|h| h.handle).collect();
         // Walls hit while sliding, and walls the capsule already touches (within its gap
@@ -814,7 +867,32 @@ impl PhysWorld {
             swimming: c.swimming,
             touched,
         };
+        let stuck = c.hold_when_stuck && sweeps >= CONTROLLER_SWEEPS && c.feet == start_feet && c.grounded && !c.swimming && !jumping;
+        c.held = stuck.then(|| Held { feet: c.feet, steps: 0, touched: step.touched.clone() });
         (step, push)
+    }
+
+    /// The step of a character [`Held`] where it got stuck: standing where it is, as the
+    /// move that found it stuck left it, without sweeping; `None` when it is not held, or
+    /// when this step is a full move (every [`STUCK_RETRY`]-th, a jump, moved elsewhere).
+    fn held_move(&self, c: &mut Character, input: &CharacterInput) -> Option<(CharacterStep, Push)> {
+        let held = c.held.as_mut()?;
+        held.steps += 1;
+        if !c.hold_when_stuck || input.jump || c.swimming || !c.grounded || c.feet != held.feet || held.steps >= STUCK_RETRY {
+            c.held = None;
+            return None;
+        }
+        let touched = held.touched.clone();
+        let dt = self.params.dt;
+        // As the stuck move left it: on the ground, not moving.
+        c.vertical_speed = 0.0;
+        c.velocity = [0.0, 0.0];
+        c.air_time = 0.0;
+        c.since_landing = c.since_landing.map(|t| t + dt).filter(|&t| ((t * 60.0).round() as usize) < air::LANDING_SPEEDS.len());
+        c.held_steps += 1;
+        let push = Push { kcc: c.controller(self.k), dt, ignore: c.ignore_layers, passes: c.passes_characters, collisions: Vec::new() };
+        let step = CharacterStep { feet: c.feet, grounded: true, sliding: false, landed_speed: None, gap: c.gap, swimming: false, touched };
+        Some((step, push))
     }
 
     /// Put a move planned by [`Self::plan_move`] into the world: the bodies heavy enough

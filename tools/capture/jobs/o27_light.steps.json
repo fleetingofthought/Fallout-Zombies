@@ -1,0 +1,409 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "o27_light",
+ "title": "#970: GetActorLightAmount at the coc Goodsprings spot at 12 and 0 in three weathers, and in the Goodsprings cave and the abandoned shack",
+ "start": "Load a save.",
+ "steps": [
+  {
+   "console": "tgm"
+  },
+  {
+   "console": "coc Goodsprings"
+  },
+  {
+   "frames": 600
+  },
+  {
+   "console": "CloseAllMenus"
+  },
+  {
+   "frames": 60
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "pos",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "pos",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "pos",
+   "field": "pz"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := TimeScale\nSetFunctionValue fV\nEnd\n",
+   "label": "pos",
+   "field": "timescale"
+  },
+  {
+   "console": "ForceWeather NVWastelandClear 1"
+  },
+  {
+   "console": "set GameHour to 12"
+  },
+  {
+   "frames": 400
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandClear_12",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandClear_12",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandClear_12",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GetActiveMenuMode\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandClear_12",
+   "field": "menu"
+  },
+  {
+   "console": "set GameHour to 0"
+  },
+  {
+   "frames": 400
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandClear_00",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandClear_00",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandClear_00",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GetActiveMenuMode\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandClear_00",
+   "field": "menu"
+  },
+  {
+   "console": "ForceWeather NVWastelandHazy 1"
+  },
+  {
+   "console": "set GameHour to 12"
+  },
+  {
+   "frames": 400
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandHazy_12",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandHazy_12",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandHazy_12",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GetActiveMenuMode\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandHazy_12",
+   "field": "menu"
+  },
+  {
+   "console": "set GameHour to 0"
+  },
+  {
+   "frames": 400
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandHazy_00",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandHazy_00",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandHazy_00",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GetActiveMenuMode\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_NVWastelandHazy_00",
+   "field": "menu"
+  },
+  {
+   "console": "ForceWeather HVDustStorm 1"
+  },
+  {
+   "console": "set GameHour to 12"
+  },
+  {
+   "frames": 400
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_HVDustStorm_12",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_HVDustStorm_12",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_HVDustStorm_12",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GetActiveMenuMode\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_HVDustStorm_12",
+   "field": "menu"
+  },
+  {
+   "console": "set GameHour to 0"
+  },
+  {
+   "frames": 400
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_HVDustStorm_00",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_HVDustStorm_00",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_HVDustStorm_00",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GetActiveMenuMode\nSetFunctionValue fV\nEnd\n",
+   "label": "gs_HVDustStorm_00",
+   "field": "menu"
+  },
+  {
+   "console": "ReleaseWeatherOverride"
+  },
+  {
+   "console": "coc SLGoodspringsCaveINT"
+  },
+  {
+   "frames": 600
+  },
+  {
+   "console": "CloseAllMenus"
+  },
+  {
+   "frames": 60
+  },
+  {
+   "console": "set GameHour to 12"
+  },
+  {
+   "frames": 300
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_12",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_12",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_12",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_12",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_12",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_12",
+   "field": "pz"
+  },
+  {
+   "console": "set GameHour to 0"
+  },
+  {
+   "frames": 300
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_00",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_00",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_00",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_00",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_00",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "SLGoodspringsCaveINT_00",
+   "field": "pz"
+  },
+  {
+   "console": "coc GSAbandonedShack"
+  },
+  {
+   "frames": 600
+  },
+  {
+   "console": "CloseAllMenus"
+  },
+  {
+   "frames": 60
+  },
+  {
+   "console": "set GameHour to 12"
+  },
+  {
+   "frames": 300
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_12",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_12",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_12",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_12",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_12",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_12",
+   "field": "pz"
+  },
+  {
+   "console": "set GameHour to 0"
+  },
+  {
+   "frames": 300
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GameHour\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_00",
+   "field": "hour"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_00",
+   "field": "light1"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetActorLightAmount\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_00",
+   "field": "light2"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos X\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_00",
+   "field": "px"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Y\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_00",
+   "field": "py"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := player.GetPos Z\nSetFunctionValue fV\nEnd\n",
+   "label": "GSAbandonedShack_00",
+   "field": "pz"
+  }
+ ]
+}

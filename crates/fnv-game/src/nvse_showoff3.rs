@@ -542,7 +542,7 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         }
         // `info`: the response texts in order [documented: TopicInfoGetResponseStrings].
         "topicinfogetresponsestrings" => {
-            let texts: Vec<XVal> = form(args, 0).and_then(|i| g.data.infos.get(&i)).map(|d| d.responses.iter().map(|r| XVal::Str(r.text.clone())).collect()).unwrap_or_default();
+            let texts: Vec<XVal> = form(args, 0).and_then(|i| g.dialogue_view().info(&i).map(|d| d.responses.iter().map(|r| XVal::Str(r.text.clone())).collect())).unwrap_or_default();
             list(g, texts.into_iter())
         }
         _ => return None,

@@ -283,9 +283,15 @@ pub fn set_actor_value(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, Strin
     }
     // The player's skill keeps its part from the attributes: SetActorValue sets the rest
     // [observed: gaps6, Guns 17 (all from the attributes at level 1, untagged) reads 67
-    // after SetActorValue Guns 50, and 117 after 100, GetBaseActorValue the same].
+    // after SetActorValue Guns 50, and 117 after 100, GetBaseActorValue the same;
+    // o26_setav 2026-11-06, nvfdoc: `player.setav repair 35` from the console and from a
+    // script read 52 with Repair 17 from the attributes, issue #1575].
     let v = a.num(1)?;
-    let v = if r == FormId::PLAYER_REF && crate::actor_values::SKILLS.contains(&code) { v + g.derived_skill(r, code) } else { v };
+    // The tag bonus stays too, the points spent go [observed: o26_setav, nvfLanius at
+    // level 50, 27 from the attributes: Repair 127 read 62 after SetAV 35 and Science 127
+    // read 27 after SetAV 0, Guns 142 read 92 after SetAV 50, 15 above; that the 15 is
+    // Guns' tag bonus (fAVDTagSkillBonus) is a hypothesis, the save's tags were not read].
+    let v = if r == FormId::PLAYER_REF && crate::actor_values::SKILLS.contains(&code) { v + g.derived_skill(r, code) + g.tag_bonus(code) } else { v };
     set_base(g, r, code, v)?;
     none()
 }
@@ -592,7 +598,7 @@ pub fn remove_from_faction(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, S
 /// A script changed `r`'s factions: the kept lists of them go ([`FactionKeep`]).
 fn forget_factions(g: &Game, r: FormId) {
     for keep in keeps(g) {
-        if let Ok(mut k) = keep.factions.lock() {
+        if let Ok(mut k) = keep.factions.write() {
             k.remove(&r);
         }
     }
@@ -797,11 +803,11 @@ pub fn is_killer(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> {
 pub fn factions_of(g: &Game, r: FormId) -> Vec<FormId> {
     // Kept while asked again and again ([`FactionKeep`]).
     let kept = keep(g).map(|k| &k.factions);
-    if let Some(f) = kept.and_then(|k| k.lock().ok()?.get(&r).cloned()) {
+    if let Some(f) = kept.and_then(|k| k.read().ok()?.get(&r).cloned()) {
         return f;
     }
     let out = factions_now(g, r);
-    if let Some(mut k) = kept.and_then(|k| k.lock().ok()) {
+    if let Some(mut k) = kept.and_then(|k| k.write().ok()) {
         k.insert(r, out.clone());
     }
     out
@@ -813,10 +819,13 @@ pub fn factions_of(g: &Game, r: FormId) -> Vec<FormId> {
 /// (`Game::begin_faction_frame`). They change only by script (AddToFaction, SetEnemy and
 /// the like) and crimes (SetPCEnemyOfFaction's rule), which forget them
 /// ([`forget_factions`], [`forget_relations`]).
+///
+/// Read under a shared lock: a detection round works out its pairs' hostility on several
+/// threads at once (`Game::round_hostility`, #1799), and almost every ask is a read.
 #[derive(Debug, Default)]
 pub struct FactionKeep {
-    factions: std::sync::Mutex<std::collections::HashMap<FormId, Vec<FormId>>>,
-    relations: std::sync::Mutex<std::collections::HashMap<(FormId, FormId), i64>>,
+    factions: std::sync::RwLock<std::collections::HashMap<FormId, Vec<FormId>>>,
+    relations: std::sync::RwLock<std::collections::HashMap<(FormId, FormId), i64>>,
 }
 
 /// The keep in use: the detection round's while one runs, else the combat AI frame's.
@@ -868,11 +877,11 @@ pub fn get_faction_combat_reaction(g: &mut Game, _ctx: &Ctx, a: &Args) -> Result
 pub fn faction_relation(g: &Game, r: FormId, o: FormId) -> i64 {
     // Kept while asked again and again ([`FactionKeep`]).
     let kept = keep(g).map(|k| &k.relations);
-    if let Some(v) = kept.and_then(|k| k.lock().ok()?.get(&(r, o)).copied()) {
+    if let Some(v) = kept.and_then(|k| k.read().ok()?.get(&(r, o)).copied()) {
         return v;
     }
     let v = factions_relation(g, &factions_of(g, r), o);
-    if let Some(mut k) = kept.and_then(|k| k.lock().ok()) {
+    if let Some(mut k) = kept.and_then(|k| k.write().ok()) {
         k.insert((r, o), v);
     }
     v
@@ -882,7 +891,7 @@ pub fn faction_relation(g: &Game, r: FormId, o: FormId) -> i64 {
 /// relations go ([`FactionKeep`]).
 pub(crate) fn forget_relations(g: &Game) {
     for keep in keeps(g) {
-        if let Ok(mut k) = keep.relations.lock() {
+        if let Ok(mut k) = keep.relations.write() {
             k.clear();
         }
     }
@@ -895,7 +904,15 @@ pub fn factions_relation(g: &Game, mine: &[FormId], o: FormId) -> i64 {
     if o == FormId::PLAYER_REF && mine.iter().any(|f| g.player.enemy_of.contains(f)) {
         return 1;
     }
-    let theirs = factions_of(g, o);
+    factions_between(g, mine, o, &factions_of(g, o))
+}
+
+/// [`factions_relation`] with `o`'s factions given (`theirs`): reads no kept factions, so
+/// it takes no lock (a detection round's pairs on several threads, #1799).
+pub fn factions_between(g: &Game, mine: &[FormId], o: FormId, theirs: &[FormId]) -> i64 {
+    if o == FormId::PLAYER_REF && mine.iter().any(|f| g.player.enemy_of.contains(f)) {
+        return 1;
+    }
     let all: Vec<i64> = mine.iter().flat_map(|&x| theirs.iter().map(move |&y| (x, y))).map(|(x, y)| reaction(g, x, y)).collect();
     if all.contains(&1) {
         1

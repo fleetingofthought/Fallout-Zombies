@@ -243,6 +243,9 @@ pub struct Cycle {
     /// [documented: GECK wiki Weapons, Regen Rate].
     pub regen: Option<f32>,
     regen_acc: f32,
+    /// No round regenerates while set (ShowOff's FreezeAmmoRegen, the game's
+    /// `ShowOffState::ammo_regen_frozen`) [documented: FreezeAmmoRegen].
+    pub regen_frozen: bool,
     /// Every fourth shot uses no ammunition (a "Regenerate Ammo (shots)" mod,
     /// docs/spec-notes/weapon-data-fields.md §5); shots fired so far.
     free_fourth: bool,
@@ -271,6 +274,7 @@ impl Cycle {
             no_ammo,
             regen: (w.regen_rate > 0.0).then_some(w.regen_rate),
             regen_acc: 0.0,
+            regen_frozen: false,
             free_fourth: w.free_fourth_shot,
             shots: 0,
             held: false,
@@ -343,7 +347,7 @@ impl Cycle {
         if !i.trigger {
             self.spun = false;
         }
-        if let Some(r) = self.regen {
+        if let Some(r) = self.regen.filter(|_| !self.regen_frozen) {
             if self.magazine < self.clip_size {
                 self.regen_acc += i.dt;
                 while self.regen_acc >= r && self.magazine < self.clip_size {

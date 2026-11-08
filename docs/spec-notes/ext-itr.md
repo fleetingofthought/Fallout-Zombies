@@ -61,7 +61,7 @@ events.
 | GetCasinoBan `casino`, SetCasinoBan `casino banned` | banned when the player's earnings there reached the casino's max winnings; SetCasinoBan 1 sets the earnings to the max (making the entry) and the winnings level 4, 0 drops them to max − 1 where there is an entry, level 3 [documented]; 0 for a non-casino [observed: 0 for the five casinos (the save has no ban) and for an NPC] |
 | ModChallenge `challenge amount` | forwards in steps of what the threshold takes, so one call crosses a recurring challenge's threshold more than once [documented: "Handles overflow"]; backwards lowers the progress, not below 0 and not undoing a completion [hypothesis] |
 | GetWorldspaceOffsetScale, …X, …Y `worldspace` | WRLD ONAM's world map scale, cell X and Y offsets [documented: the pages; the fields: xEdit wbWorldMapOffset; observed: WastelandNV 1, 0, 0]; 0 for no worldspace |
-| GetDialogueInfoFlags `info`, SetDialogueInfoFlags `info flags` | INFO DATA's two flag bytes, the second from bit 8 [documented: the flag table]; the setter writes all 16 bits for the session, read back by the getter (`Game::info_flags`) [observed: 4 and 0 on two greetings, 258 set and read back]; the dialogue's own Say Once and Goodbye rules still read the record: follow-up |
+| GetDialogueInfoFlags `info`, SetDialogueInfoFlags `info flags` | INFO DATA's two flag bytes, the second from bit 8 [documented: the flag table]; the setter writes all 16 bits for the session, read back by the getter (`Game::info_flags`) [observed: 4 and 0 on two greetings, 258 set and read back]; since SUP batch 2 the write is a dialogue edit (`crate::dialogue_edits`, ext-sup2.md §1): the dialogue's Say Once, Goodbye and Random rules read it, and it rides across a load |
 
 ## 5. The radio (batch 1)
 
@@ -163,8 +163,8 @@ the dialogue camera and camera angle, the custom dialogue entries and their alph
 barter filter, gestures, ragdolls, impacts, reloads, eye meshes, the weapon emissive
 colour, the UI alpha maps and texture offsets, contact events, the new-game request and
 the primitives switch: each is kept on `Game::other.itr` / `itr2` for the engine to read.
-The combat AI's weapon search and switch (`ItrKept`) and the dialogue's own Say Once and
-Goodbye rules (`Game::info_flags`) wait on those systems.
+The combat AI's weapon search and switch (`ItrKept`) waits on that system; the dialogue's
+own rules read SetDialogueInfoFlags since SUP batch 2 (ext-sup2.md §1).
 
 ## 13. Probes and the lab (2026-11-01)
 

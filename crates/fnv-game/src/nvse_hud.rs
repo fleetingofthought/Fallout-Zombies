@@ -61,7 +61,12 @@ impl Game<'_> {
     /// A corner message joins the queue (MessageEx, ShowMessage without a box)
     /// [documented: GetNumQueuedCornerMessages counts the one shown too; observed: hud1,
     /// three MessageEx calls raise the count by 3 in their frame].
-    pub(crate) fn queue_corner_message(&mut self) {
+    /// ShowOff's corner-message handlers get the text, the icon path and the seconds
+    /// (`nvse_showoff4`, run on the next frame).
+    pub(crate) fn queue_corner_message(&mut self, text: &str, icon: &str, seconds: f64) {
+        if !self.showoff.corner_handlers.is_empty() {
+            self.showoff.corner_pending.push((text.to_string(), icon.to_string(), seconds));
+        }
         if self.hud.corner_queue == 0 {
             self.hud.corner_until = self.time + CORNER_SECONDS;
         }
@@ -71,6 +76,7 @@ impl Game<'_> {
     /// Each frame (`Game::tick`): the shown corner message ends after its time, and the
     /// weapon changes due take effect.
     pub(crate) fn hud_tick(&mut self) {
+        self.corner_handlers_run();
         if self.hud.corner_queue > 0 && self.time >= self.hud.corner_until {
             self.hud.corner_queue -= 1;
             self.hud.corner_until = self.time + CORNER_SECONDS;

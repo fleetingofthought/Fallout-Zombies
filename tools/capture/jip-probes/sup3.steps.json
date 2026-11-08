@@ -1,0 +1,275 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "sup3",
+ "title": "sup3, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.1f %.1f %.1f\" ((GetTFCPos X) - (rP.GetPos X)) ((GetTFCPos Y) - (rP.GetPos Y)) ((GetTFCPos Z) - (rP.GetPos Z)))\nEnd\n",
+   "label": "sup3.cam.off.pos",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" (GetTFCAngle X) (GetTFCAngle Z) (GetTFCRot X) (GetTFCRot Y))\nEnd\n",
+   "label": "sup3.cam.off.angles",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.4f %.4f\" (rP.GetAngle X) (rP.GetAngle Z))\nEnd\n",
+   "label": "sup3.cam.off.player",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nCon_TFC\nSetFunctionValue 1\nEnd\n",
+   "label": "sup3.cam.on",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.1f %.1f %.1f\" ((GetTFCPos X) - (rP.GetPos X)) ((GetTFCPos Y) - (rP.GetPos Y)) ((GetTFCPos Z) - (rP.GetPos Z)))\nEnd\n",
+   "label": "sup3.cam.on.pos",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" (GetTFCAngle X) (GetTFCAngle Z) (GetTFCRot X) (GetTFCRot Y))\nEnd\n",
+   "label": "sup3.cam.on.angles",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := SetTFCPos X ((rP.GetPos X) + 100)\nSetTFCPos Y ((rP.GetPos Y) - 50)\nSetTFCPos Z ((rP.GetPos Z) + 25)\nSetFunctionValue (sv_Construct \"%g %.1f %.1f %.1f\" fA ((GetTFCPos X) - (rP.GetPos X)) ((GetTFCPos Y) - (rP.GetPos Y)) ((GetTFCPos Z) - (rP.GetPos Z)))\nEnd\n",
+   "label": "sup3.cam.setpos",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.1f %.1f %.1f\" ((GetTFCPos X) - (rP.GetPos X)) ((GetTFCPos Y) - (rP.GetPos Y)) ((GetTFCPos Z) - (rP.GetPos Z)))\nEnd\n",
+   "label": "sup3.cam.setpos.next",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := (rP.GetPos X) + 10\nlet fY := (rP.GetPos Y) + 20\nlet fZ := (rP.GetPos Z) + 30\nlet fA := SetTFCPosEx fX fY fZ\nlet fB := GetTFCPosEx fX fY fZ\nSetFunctionValue (sv_Construct \"%g %g %.1f %.1f %.1f\" fA fB (fX - (rP.GetPos X)) (fY - (rP.GetPos Y)) (fZ - (rP.GetPos Z)))\nEnd\n",
+   "label": "sup3.cam.setposex",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := SetTFCAngle X 30\nSetFunctionValue (sv_Construct \"%g %.4f %.4f %.4f %.4f\" fA (GetTFCAngle X) (GetTFCAngle Z) (GetTFCRot X) (GetTFCRot Y))\nEnd\n",
+   "label": "sup3.cam.setangle.x",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetTFCAngle Z 45\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" (GetTFCAngle X) (GetTFCAngle Z) (GetTFCRot X) (GetTFCRot Y))\nEnd\n",
+   "label": "sup3.cam.setangle.z",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" (GetTFCAngle X) (GetTFCAngle Z) (GetTFCRot X) (GetTFCRot Y))\nEnd\n",
+   "label": "sup3.cam.setangle.next",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetTFCAngle Z 400\nSetTFCAngle X -100\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" (GetTFCAngle X) (GetTFCAngle Z) (GetTFCRot X) (GetTFCRot Y))\nEnd\n",
+   "label": "sup3.cam.setangle.wide",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := SetTFCRot X 0.5\nSetFunctionValue (sv_Construct \"%g %.4f %.4f %.4f %.4f\" fA (GetTFCAngle X) (GetTFCAngle Z) (GetTFCRot X) (GetTFCRot Y))\nEnd\n",
+   "label": "sup3.cam.setrot.x",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetTFCRot Y 1\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" (GetTFCAngle X) (GetTFCAngle Z) (GetTFCRot X) (GetTFCRot Y))\nEnd\n",
+   "label": "sup3.cam.setrot.y",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetTFCAngleEx 10 20\nlet fA := GetTFCAngleEx fA fB\nGetTFCRotEx fC fD\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" fA fB fC fD)\nEnd\n",
+   "label": "sup3.cam.angleex",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetTFCRotEx 0.25 0.75\nGetTFCRotEx fC fD\nGetTFCAngleEx fA fB\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" fA fB fC fD)\nEnd\n",
+   "label": "sup3.cam.rotex",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := rP.GetPos X\nlet fY := rP.GetPos Y\nlet fZ := rP.GetPos Z\nSetTFCPosEx fX fY fZ\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" (GetCalculatedAngleXForTFCCamera (fX + 100) fY (fZ + 100)) (GetCalculatedAngleXForTFCCamera fX (fY + 100) (fZ - 100)) (GetCalculatedAngleXForTFCCamera fX (fY + 100) fZ) (GetCalculatedAngleXForTFCCamera fX (fY + 30) (fZ + 40)))\nEnd\n",
+   "label": "sup3.cam.calc.x",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := rP.GetPos X\nlet fY := rP.GetPos Y\nSetTFCPosEx fX fY (rP.GetPos Z)\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f %.4f\" (GetCalculatedAngleZForTFCCamera (fX + 100) fY) (GetCalculatedAngleZForTFCCamera fX (fY + 100)) (GetCalculatedAngleZForTFCCamera (fX - 100) fY) (GetCalculatedAngleZForTFCCamera fX (fY - 100)) (GetCalculatedAngleZForTFCCamera (fX + 100) (fY + 100)))\nEnd\n",
+   "label": "sup3.cam.calc.z",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nCon_TFC\nSetFunctionValue 1\nEnd\n",
+   "label": "sup3.cam.off2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.1f %.1f %.1f\" ((GetTFCPos X) - (rP.GetPos X)) ((GetTFCPos Y) - (rP.GetPos Y)) ((GetTFCPos Z) - (rP.GetPos Z)))\nEnd\n",
+   "label": "sup3.cam.off2.pos",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.4f %.4f %.4f %.4f\" (GetTFCAngle X) (GetTFCAngle Z) (GetTFCRot X) (GetTFCRot Y))\nEnd\n",
+   "label": "sup3.cam.off2.angles",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nrP.GetCalculatedPos 0 25 fX fY\nSetFunctionValue (sv_Construct \"%.3f %.3f\" (fX - (rP.GetPos X)) (fY - (rP.GetPos Y)))\nEnd\n",
+   "label": "sup3.calc.pos.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nrP.GetCalculatedPos 90 25 fX fY\nSetFunctionValue (sv_Construct \"%.3f %.3f\" (fX - (rP.GetPos X)) (fY - (rP.GetPos Y)))\nEnd\n",
+   "label": "sup3.calc.pos.90",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nrP.GetCalculatedPos 45 25 fX fY\nSetFunctionValue (sv_Construct \"%.3f %.3f\" (fX - (rP.GetPos X)) (fY - (rP.GetPos Y)))\nEnd\n",
+   "label": "sup3.calc.pos.45",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nrP.GetCalculatedPos -90 25 fX fY\nSetFunctionValue (sv_Construct \"%.3f %.3f\" (fX - (rP.GetPos X)) (fY - (rP.GetPos Y)))\nEnd\n",
+   "label": "sup3.calc.pos.-90",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nrP.GetCalculatedPos 180 25 fX fY\nSetFunctionValue (sv_Construct \"%.3f %.3f\" (fX - (rP.GetPos X)) (fY - (rP.GetPos Y)))\nEnd\n",
+   "label": "sup3.calc.pos.180",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := GetCalculatedPosAlt 0 25 fX fY 100 200\nSetFunctionValue (sv_Construct \"%g %.3f %.3f\" fA fX fY)\nEnd\n",
+   "label": "sup3.calc.alt.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := GetCalculatedPosAlt 90 25 fX fY 100 200\nSetFunctionValue (sv_Construct \"%g %.3f %.3f\" fA fX fY)\nEnd\n",
+   "label": "sup3.calc.alt.90",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := GetCalculatedPosAlt 30 25 fX fY 100 200\nSetFunctionValue (sv_Construct \"%g %.3f %.3f\" fA fX fY)\nEnd\n",
+   "label": "sup3.calc.alt.30",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (ReadINIFloatFromFile \"Data/NVSE/Plugins/supNVSE.ini\" \"Settings\" \"bTFCPosOnLoadFix\")\nEnd\n",
+   "label": "sup3.ini.float.bom",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (ReadINIFloatFromFile \"Data/NVSE/Plugins/JohnnyGuitar.ini\" \"Main\" \"bFixItemStackCount\")\nEnd\n",
+   "label": "sup3.ini.float.case",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (ReadINIFloatFromFile \"Data/NVSE/Plugins/jip_nvse.ini\" \"GamePatches\" \"bIgnoreDTDRFix\")\nEnd\n",
+   "label": "sup3.ini.float.space",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (ReadINIFloatFromFile \"Data/NVSE/Plugins/JohnnyGuitar.ini\" \"MAIN\" \"bNoSuchKey\")\nEnd\n",
+   "label": "sup3.ini.float.missing",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (ReadINIFloatFromFileAlt \"Data/NVSE/Plugins/JohnnyGuitar.ini\" \"MAIN\" \"bFixItemStackCount\")\nEnd\n",
+   "label": "sup3.ini.alt.found",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := ReadINIFloatFromFileAlt \"Data/NVSE/Plugins/JohnnyGuitar.ini\" \"MAIN\" \"bNoSuchKey\"\nSetFunctionValue (sv_Construct \"%g\" (IsNumberNAN fA))\nEnd\n",
+   "label": "sup3.ini.alt.missing",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := ReadINIFloatFromFileAlt \"Data/NVSE/Plugins/NoSuchFile.ini\" \"MAIN\" \"bX\"\nSetFunctionValue (sv_Construct \"%g\" (IsNumberNAN fA))\nEnd\n",
+   "label": "sup3.ini.alt.nofile",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (ReadINIFloatFromFile \"Data\\\\NVSE\\\\Plugins\\\\JohnnyGuitar.ini\" \"MAIN\" \"bFixItemStackCount\")\nEnd\n",
+   "label": "sup3.ini.float.backslash",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"[%z]\" (ReadINIStringFromFile \"Data/NVSE/Plugins/jip_nvse.ini\" \"GamePatches\" \"bIgnoreDTDRFix\"))\nEnd\n",
+   "label": "sup3.ini.string",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"[%z]\" (ReadINIStringFromFile \"Data/NVSE/Plugins/JohnnyGuitar.ini\" \"MAIN\" \"bNoSuchKey\"))\nEnd\n",
+   "label": "sup3.ini.string.missing",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := ReadINISectionKeysFromFile \"Data/NVSE/Plugins/JohnnyGuitar.ini\" \"MAIN\"\nlet fA := ar_Size aList\nif fA > 0\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nelse\nSetFunctionValue (sv_Construct \"%g\" fA)\nendif\nEnd\n",
+   "label": "sup3.ini.keys",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := ReadINISectionKeysFromFile \"Data/NVSE/Plugins/JohnnyGuitar.ini\" \"main\"\nlet fA := ar_Size aList\nif fA > 0\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nelse\nSetFunctionValue (sv_Construct \"%g\" fA)\nendif\nEnd\n",
+   "label": "sup3.ini.keys.case",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := ReadINISectionsFromFile \"Data/NVSE/Plugins/supNVSE.ini\"\nlet fA := ar_Size aList\nif fA > 0\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nelse\nSetFunctionValue (sv_Construct \"%g\" fA)\nendif\nEnd\n",
+   "label": "sup3.ini.sections.sup",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := ReadINISectionsFromFile \"Data/NVSE/Plugins/jip_nvse.ini\"\nlet fA := ar_Size aList\nif fA > 0\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nelse\nSetFunctionValue (sv_Construct \"%g\" fA)\nendif\nEnd\n",
+   "label": "sup3.ini.sections.jip",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := ReadINISectionsFromFile \"Data/NVSE/Plugins/NoSuchFile.ini\"\nlet fA := ar_Size aList\nif fA > 0\nSetFunctionValue (sv_Construct \"%g|%z|%z\" fA (aList[0]) (aList[fA - 1]))\nelse\nSetFunctionValue (sv_Construct \"%g\" fA)\nendif\nEnd\n",
+   "label": "sup3.ini.sections.nofile",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (ReadINIFloatFromFile \"../Fallout New Vegas/Data/NVSE/Plugins/supNVSE.ini\" \"Settings\" \"bTFCPosOnLoadFix\")\nEnd\n",
+   "label": "sup3.ini.float.outside",
+   "field": "value"
+  }
+ ]
+}

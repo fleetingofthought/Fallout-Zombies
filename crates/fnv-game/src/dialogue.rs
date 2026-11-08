@@ -285,8 +285,9 @@ impl<'a> Game<'a> {
     /// speaker's stead ([`Game::say_by_script`]). A topic with no lines is not one.
     pub(crate) fn no_line_for_speaker(&self, speaker: FormId, topic: FormId) -> bool {
         let data = self.data;
+        let dv = self.dialogue_view();
         let lines = data.lines_tried(topic);
-        !lines.is_empty() && lines.iter().all(|i| data.infos.get(i).is_some_and(|def| self.fixed_speaker_refuses(def, speaker)))
+        !lines.is_empty() && lines.iter().all(|i| dv.info(i).is_some_and(|def| self.fixed_speaker_refuses(def, speaker)))
     }
 
     /// [`Game::can_say`] for an actor or a radio station. A station is not held to a
@@ -296,8 +297,9 @@ impl<'a> Game<'a> {
     /// Radio's segment lines name Tabitha or Raul Tejada, radio.md §5].
     pub(crate) fn can_say_as(&mut self, speaker: FormId, listener: Option<FormId>, info: FormId, says: Says) -> bool {
         let data = self.data;
-        let Some(def) = data.infos.get(&info) else { return false };
-        if def.say_once && self.said.iter().any(|&(_, i)| i == info) {
+        let dv = self.dialogue_view();
+        let Some(def) = dv.info(&info) else { return false };
+        if def.say_once && self.said_once(info) {
             return false;
         }
         // Low / High Intelligence lines: for a dim player, and for one who is not
@@ -402,8 +404,9 @@ impl<'a> Game<'a> {
     /// (the Legion's and Yes Man's chains need it).
     pub(crate) fn select_choice_line(&mut self, speaker: FormId, listener: Option<FormId>, topic: FormId, keep: impl Fn(&InfoDef) -> bool) -> Option<FormId> {
         let data = self.data;
+        let dv = self.dialogue_view();
         let lines = data.lines_tried(topic);
-        if lines.iter().any(|i| data.follow_up_targets.contains(i)) {
+        if lines.iter().any(|i| dv.is_follow_up(i)) {
             if let Some(i) = self.select_among(speaker, listener, &lines, &keep, true, Says::Actor) {
                 return Some(i);
             }
@@ -415,9 +418,9 @@ impl<'a> Game<'a> {
     /// `lead_only`, follow-up lines ([`GameData::follow_up_targets`]) count as lines the
     /// speaker cannot say.
     fn select_among(&mut self, speaker: FormId, listener: Option<FormId>, lines: &[FormId], keep: &impl Fn(&InfoDef) -> bool, lead_only: bool, says: Says) -> Option<FormId> {
-        let data = self.data;
-        let flag = |i: &FormId, f: u16| data.infos.get(i).is_some_and(|d| d.has(f));
-        let kept = |i: &FormId| !(lead_only && data.follow_up_targets.contains(i)) && data.infos.get(i).is_some_and(keep);
+        let dv = self.dialogue_view();
+        let flag = |i: &FormId, f: u16| dv.info(i).is_some_and(|d| d.has(f));
+        let kept = |i: &FormId| !(lead_only && dv.is_follow_up(i)) && dv.info(i).is_some_and(keep);
         let mut at = 0;
         while at < lines.len() {
             if !flag(&lines[at], info_flag::RANDOM) {
@@ -462,7 +465,7 @@ impl<'a> Game<'a> {
                 out.push(Link { topic: t, from: None });
             }
         }
-        for &t in self.data.linked_from.get(&topic).map(Vec::as_slice).unwrap_or_default() {
+        for &t in self.dialogue_view().linked_from(topic) {
             if !out.iter().any(|l| l.topic == t) {
                 out.push(Link { topic: t, from: Some(topic) });
             }
@@ -494,7 +497,11 @@ impl<'a> Game<'a> {
     /// from every actor once any has said it. `always` remembers every line
     /// (conversations: the shading of choices already made).
     pub(crate) fn mark_said(&mut self, speaker: FormId, info: FormId, always: bool) {
-        let Some(def) = self.data.infos.get(&info) else { return };
+        let dv = self.dialogue_view();
+        let Some(def) = dv.info(&info) else { return };
+        // Said now: a value a script set for the session gives way [hypothesis: saying
+        // the line sets the flag in the original].
+        self.dialogue_edits.said_once.remove(&info);
         if def.say_once || always {
             self.said.insert((speaker, info));
         }
@@ -519,7 +526,7 @@ impl<'a> Game<'a> {
     /// Seconds a whole line lasts: its responses one after another; a line without
     /// responses lasts as long as an empty response.
     pub fn line_seconds(&self, speaker: FormId, info: FormId) -> f64 {
-        let n = self.data.infos.get(&info).map_or(0, |d| d.responses.len());
+        let n = self.dialogue_view().info(&info).map_or(0, |d| d.responses.len());
         if n == 0 {
             return self.response_seconds(speaker, info, 0);
         }
@@ -587,6 +594,7 @@ impl<'a> Game<'a> {
 
     fn open_dialogue(&mut self, actor: FormId, topic: Option<FormId>, forced: bool) -> Result<FormId, String> {
         let data = self.data;
+        let dv = self.dialogue_view();
         if let Some(c) = &self.dialogue {
             return Err(format!("a conversation with {} is running", data.name(c.actor)));
         }
@@ -622,7 +630,7 @@ impl<'a> Game<'a> {
         };
         // Through a talking activator a Goodbye greeting opens a conversation too, which
         // the line ends (`crate::talking_activators`).
-        if !forced && through.is_none() && Some(topic) == data.greeting && data.infos.get(&info).is_some_and(|d| d.goodbye) {
+        if !forced && through.is_none() && Some(topic) == data.greeting && dv.info(&info).is_some_and(|d| d.goodbye) {
             self.extra.entry(actor).or_default().talked_to_pc = true;
             self.say_line(actor, listener, topic, info, LineKind::Greeting);
             return Ok(info);
@@ -643,8 +651,8 @@ impl<'a> Game<'a> {
     /// asked for, that moment is when the line is picked; the masters set the flag only
     /// on Radio and Conversation lines].
     fn speak(&mut self, actor: FormId, topic: FormId, info: FormId) {
-        let data = self.data;
-        let Some(def) = data.infos.get(&info) else { return };
+        let dv = self.dialogue_view();
+        let Some(def) = dv.info(&info) else { return };
         // A SayTo line the actor was saying stops [hypothesis, as for a second SayTo].
         self.cut_line(actor);
         self.mark_said(actor, info, true);
@@ -703,9 +711,9 @@ impl<'a> Game<'a> {
             self.end_dialogue_as(ended::ACTOR_GONE);
             return;
         }
-        let data = self.data;
+        let dv = self.dialogue_view();
         let Some(mut line) = c.line.clone() else { return };
-        let Some(def) = data.infos.get(&line.info) else { return };
+        let Some(def) = dv.info(&line.info) else { return };
         let order = def.response_order();
         line.remaining -= dt;
         while line.remaining <= 1e-9 {
@@ -769,8 +777,8 @@ impl<'a> Game<'a> {
     /// conversation (Goodbye, or nothing to offer) starts once it has closed
     /// ([`Game::hold_force_greet`]) [design, issue #1107; observer check 39].
     fn finish_line(&mut self, actor: FormId, topic: FormId, info: FormId) {
-        let data = self.data;
-        let Some(def) = data.infos.get(&info) else { return };
+        let dv = self.dialogue_view();
+        let Some(def) = dv.info(&info) else { return };
         if let Some(c) = self.dialogue.as_mut() {
             c.line = None;
             c.ending = true;
@@ -795,7 +803,7 @@ impl<'a> Game<'a> {
         }
         let listener = Some(FormId::PLAYER_REF);
         for &f in &def.follow_ups {
-            let Some(fd) = data.infos.get(&f) else { continue };
+            let Some(fd) = dv.info(&f) else { continue };
             if !(fd.goodbye && !def.choices.is_empty()) && self.can_say(actor, listener, f) {
                 self.drop_held_greet();
                 self.speak(actor, fd.topic.unwrap_or(FormId(0)), f);
@@ -954,17 +962,18 @@ impl<'a> Game<'a> {
     /// Goodbye].
     pub fn build_choices(&mut self, actor: FormId, topic: FormId, def: &InfoDef) -> Vec<Choice> {
         let data = self.data;
-        let priority = |t: &FormId| data.topic_defs.get(t).map_or(50.0, |d| d.priority);
+        let dv = self.dialogue_view();
+        let priority = |t: &FormId| dv.topic(t).map_or(50.0, |d| d.priority);
         let mut links = self.links_after(topic, def);
         if !def.choices.is_empty() {
             links.sort_by(|a, b| priority(&b.topic).total_cmp(&priority(&a.topic)));
             let out = self.offer(actor, &links);
             return self.itr_menu(actor, out);
         }
-        let mut listed: Vec<Link> = data.top_level.iter().map(|&t| Link { topic: t, from: None }).collect();
-        let known = self.player.topics.iter().filter(|t| !data.top_level.contains(t)).map(|&t| Link { topic: t, from: None });
+        let mut listed: Vec<Link> = dv.top_level().iter().map(|&t| Link { topic: t, from: None }).collect();
+        let known = self.player.topics.iter().filter(|t| !dv.top_level().contains(t)).map(|&t| Link { topic: t, from: None });
         let mut known: Vec<Link> = known.collect();
-        links.retain(|l| !data.top_level.contains(&l.topic) && !self.player.topics.contains(&l.topic));
+        links.retain(|l| !dv.top_level().contains(&l.topic) && !self.player.topics.contains(&l.topic));
         known.append(&mut links);
         if !known.is_empty() {
             listed.append(&mut known);
@@ -972,13 +981,13 @@ impl<'a> Game<'a> {
             // one the player also learned) in record order.
             let key = |t: &FormId| ListKey {
                 priority: priority(t),
-                learned: (!data.top_level.contains(t)).then(|| self.player.topics.iter().position(|k| k == t)).flatten(),
-                order: data.topic_defs.get(t).map_or((usize::MAX, 0), |d| d.order),
+                learned: (!dv.top_level().contains(t)).then(|| self.player.topics.iter().position(|k| k == t)).flatten(),
+                order: dv.topic(t).map_or((usize::MAX, 0), |d| d.order),
             };
             listed.sort_by(|a, b| key(&a.topic).list_cmp(&key(&b.topic)));
         }
         let mut out = self.offer(actor, &listed);
-        if !out.iter().any(|c| c.goodbye && data.infos.get(&c.info).is_some_and(|d| d.end.is_none())) {
+        if !out.iter().any(|c| c.goodbye && dv.info(&c.info).is_some_and(|d| d.end.is_none())) {
             if let Some(bye) = data.goodbye.filter(|b| !out.iter().any(|c| c.topic == *b)) {
                 out.extend(self.offer(actor, &[Link { topic: bye, from: None }]));
             }
@@ -990,7 +999,7 @@ impl<'a> Game<'a> {
     /// The entries for the topics of `links` the actor has a line for ([`Game::link_line`]),
     /// in that order.
     fn offer(&mut self, actor: FormId, links: &[Link]) -> Vec<Choice> {
-        let data = self.data;
+        let dv = self.dialogue_view();
         // A dim player's lines read as their topics' Dumb Responses ([`Game::player_dim`]).
         let dim = self.player_dim();
         let listener = Some(FormId::PLAYER_REF);
@@ -1003,7 +1012,7 @@ impl<'a> Game<'a> {
             // Link From reaches player dialogue only from the Topics tab: a player line
             // (type Topic) of a topic of type Topic, as before conversations between actors
             // and the radio shared [`GameData::linked_from`].
-            if link.from.is_some() && data.topic_defs.get(&topic).is_none_or(|d| d.topic_type != crate::data::topic_type::TOPIC) {
+            if link.from.is_some() && dv.topic(&topic).is_none_or(|d| d.topic_type != crate::data::topic_type::TOPIC) {
                 continue;
             }
             let player_line = |d: &InfoDef| link.from.is_none() || d.info_type == crate::data::topic_type::TOPIC;
@@ -1012,17 +1021,18 @@ impl<'a> Game<'a> {
                 Some(_) => self.link_line_where(actor, listener, link, player_line, Says::Actor),
             };
             let Some(info) = found else { continue };
-            let def = &data.infos[&info];
+            // The script-edited line, so a flag or prompt set by SUP's setters shows here too.
+            let Some(def) = dv.info(&info) else { continue };
             let challenge = def.challenge_form.map(|form| {
                 let (needed, have, skill) = self.challenge_levels(def);
                 Challenge { form, difficulty: def.challenge_difficulty, needed, have, skill }
             });
             let said = self.said.contains(&(actor, info));
-            let dumb = dim && data.topic_defs.get(&topic).is_some_and(|t| t.dumb_response.is_some());
+            let dumb = dim && dv.topic(&topic).is_some_and(|t| t.dumb_response.is_some());
             out.push(Choice {
                 topic,
                 info,
-                chars: if dumb { data.topic_defs[&topic].dumb_response.as_deref().unwrap_or("").chars().count() } else { data.choice_text(topic, info).chars().count() },
+                chars: if dumb { dv.topic(&topic).expect("topic").dumb_response.as_deref().unwrap_or("").chars().count() } else { dv.choice_text(topic, info).chars().count() },
                 dumb,
                 prompt: def.prompt.is_some(),
                 goodbye: def.goodbye,
@@ -1059,11 +1069,12 @@ impl<'a> Game<'a> {
     /// The text of a choice: the topic's Dumb Response for a dim player, else the line's
     /// prompt, else the topic's name [documented: Category:Dialogue, "Prompt"; for the
     /// Dumb Response see [`Game::player_dim`]].
-    pub fn choice_text(&self, c: &Choice) -> &'a str {
+    /// A script's edits show (`crate::dialogue_edits`): TopicInfoSetPrompt's prompt.
+    pub fn choice_text(&self, c: &Choice) -> std::borrow::Cow<'a, str> {
         let data = self.data;
         match data.topic_defs.get(&c.topic).and_then(|t| t.dumb_response.as_deref()).filter(|_| c.dumb) {
-            Some(d) => d,
-            None => data.choice_text(c.topic, c.info),
+            Some(d) => std::borrow::Cow::Borrowed(d),
+            None => self.dialogue_view().choice_text(c.topic, c.info),
         }
     }
 
@@ -1071,7 +1082,7 @@ impl<'a> Game<'a> {
     /// ([`Game::expand_codes`]; FalloutNV.esm's topics read "The name's &PCName;."
     /// [observed]).
     pub fn shown_choice_text(&self, c: &Choice) -> String {
-        self.expand_codes(self.choice_text(c))
+        self.expand_codes(&self.choice_text(c))
     }
 
     /// Whether the player is dim: Intelligence at or below
@@ -1106,7 +1117,7 @@ impl<'a> Game<'a> {
         // [hypothesis, dialogue.md §3.3]. New Vegas's skill checks (KNAM without the
         // flag) give none here: their pass lines' result scripts carry RewardXP (638 of
         // the 1,499 in the masters [observed]), which would count twice.
-        if let Some(d) = self.data.infos.get(&choice.info).filter(|d| d.has(info_flag::SPEECH_CHALLENGE)).and_then(|d| d.challenge_difficulty) {
+        if let Some(d) = self.dialogue_view().info(&choice.info).filter(|d| d.has(info_flag::SPEECH_CHALLENGE)).and_then(|d| d.challenge_difficulty) {
             self.count_stat(crate::misc_stats::SPEECH_SUCCESSES, 1.0);
             let x = crate::experience::speech_challenge_xp(self, d);
             crate::experience::award(self, crate::experience::Source::SpeechChallenge, x);
@@ -1161,8 +1172,8 @@ impl<'a> Game<'a> {
     /// follow-up are not chosen: they end their conversation when they are over, as
     /// before (`Game::finish_line`) [owner statement 2026-10-11 for the force greet].
     fn say_farewell(&mut self, actor: FormId, topic: FormId, info: FormId, lines: u32) {
-        let data = self.data;
-        let Some(def) = data.infos.get(&info).filter(|d| d.goodbye) else { return };
+        let dv = self.dialogue_view();
+        let Some(def) = dv.info(&info).filter(|d| d.goodbye) else { return };
         if self.speech.iter().any(|s| s.speaker == actor) {
             return;
         }
@@ -1370,9 +1381,10 @@ impl<'a> Game<'a> {
     ///    dialogue.md §5.1].
     pub(crate) fn next_conversation_line(&mut self, said: &Speech, lines: u32) {
         let data = self.data;
+        let dv = self.dialogue_view();
         let (speaker, Some(listener)) = (said.speaker, said.target) else { return };
         let end = |g: &mut Self, reason: &'static str| g.emit(EventKind::ActorConversationEnded { speaker, target: listener, reason, lines });
-        let Some(def) = data.infos.get(&said.info) else { return end(self, ended::NO_LINKS) };
+        let Some(def) = dv.info(&said.info) else { return end(self, ended::NO_LINKS) };
         if def.goodbye {
             return end(self, ended::GOODBYE);
         }
@@ -1392,8 +1404,8 @@ impl<'a> Game<'a> {
         // but it carries the history on.
         let earlier: Vec<FormId> = said.earlier_topics.iter().copied().chain(std::iter::once(said.topic)).collect();
         for &(who, to) in turns {
-            if let Some(&f) = def.follow_ups.iter().find(|&&f| data.infos.get(&f).is_some_and(between_actors) && self.can_say(who, Some(to), f)) {
-                let topic = data.infos.get(&f).and_then(|d| d.topic).unwrap_or(FormId(0));
+            if let Some(&f) = def.follow_ups.iter().find(|&&f| dv.info(&f).is_some_and(between_actors) && self.can_say(who, Some(to), f)) {
+                let topic = dv.info(&f).and_then(|d| d.topic).unwrap_or(FormId(0));
                 self.say_line(who, Some(to), topic, f, next);
                 self.set_line_look(who, said.look);
                 if let Some(s) = self.speech.iter_mut().find(|s| s.speaker == who && s.info == f) {
@@ -1404,7 +1416,7 @@ impl<'a> Game<'a> {
             let mut linked: Vec<(FormId, FormId)> = Vec::new();
             for link in self.links_after(said.topic, def) {
                 if let Some(i) = self.link_line_where(who, Some(to), link, between_actors, Says::Actor) {
-                    let repeats_ok = data.infos.get(&i).and_then(|d| d.quest).and_then(|q| data.quests.get(&q)).is_some_and(|q| q.repeated_topics());
+                    let repeats_ok = dv.info(&i).and_then(|d| d.quest).and_then(|q| data.quests.get(&q)).is_some_and(|q| q.repeated_topics());
                     if earlier.contains(&link.topic) && !repeats_ok {
                         continue;
                     }
@@ -1435,16 +1447,16 @@ impl<'a> Game<'a> {
     /// in a conversation, or the response of a SayTo line being said; 0 (Neutral) otherwise
     /// [documented: GECK wiki GetDialogueEmotion, the codes; hypothesis: 0 when silent].
     pub fn dialogue_emotion(&self, actor: FormId) -> u8 {
-        let data = self.data;
+        let dv = self.dialogue_view();
         if let Some(l) = self.dialogue.as_ref().filter(|c| c.actor == actor).and_then(|c| c.line.as_ref()) {
-            if let Some(def) = data.infos.get(&l.info) {
+            if let Some(def) = dv.info(&l.info) {
                 return def.response_order().get(l.response).map_or(0, |&r| def.responses[r].emotion);
             }
         }
         self.speech
             .iter()
             .find(|s| s.speaker == actor)
-            .and_then(|s| data.infos.get(&s.info).map(|def| (def, s.response)))
+            .and_then(|s| dv.info(&s.info).map(|def| (def, s.response)))
             .and_then(|(def, at)| {
                 let order = def.response_order();
                 order.get(at).or(order.first()).map(|&r| def.responses[r].emotion)

@@ -19,5 +19,10 @@ thiserror.workspace = true
 # Tracy build; the version the other crates use.
 tracing = "0.1"
 
+[features]
+# rapier's own stage timers, summed in `Stats::solver_us` (the engine's profile build turns
+# it on; results are unchanged, only timers are read).
+solver-timers = ["rapier3d/profiler"]
+
 [dev-dependencies]
 proptest = "1"

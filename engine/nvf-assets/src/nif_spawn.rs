@@ -189,7 +189,9 @@ impl Props {
         self.external_emittance
     }
 
-    /// The stored emissive colour (black when none) and multiplier (1 when none).
+    /// The stored emissive colour (black when none) and multiplier (1 when none), held
+    /// for unlit pictures by [`shape_emissive_mult`] [hypothesis, nif.md §6
+    /// "Unlit shapes that are pictures, and cut-out signs"].
     pub(crate) fn emissive_parts(&self) -> ([f32; 3], f32) {
         (self.emissive.unwrap_or([0.0; 3]), self.emissive_mult.unwrap_or(1.0).max(0.0))
     }
@@ -641,6 +643,38 @@ pub(crate) fn burns(props: &Props) -> bool {
     e.iter().fold(0.0f32, |a, &c| a.max(c)) * m > 1.0
 }
 
+/// An opaque unlit surface without External Emittance is a picture, including House's
+/// authored opaque screen drawn with an actor alpha gate (`shape_alpha_mode`): its colour
+/// times its multiplier is held to 1, so a Securitron's face (grey 0.05 x 30) and House's
+/// screen show their texture and no more. Blended and additive effects and authored
+/// cut-outs keep their authored multipliers, and a material track's keys multiply the
+/// stored multiplier, as authored (`Props::emissive_parts`) [hypothesis, fitted to the
+/// original's frames of 2026-11-06; nif.md section 6 "Unlit shapes that are pictures, and
+/// cut-out signs"].
+pub(crate) fn shape_emissive_mult(props: &Props, alpha_mode: AlphaMode) -> f32 {
+    let mult = props.emissive_mult.unwrap_or(1.0).max(0.0);
+    let opaque = matches!(alpha_mode, AlphaMode::Opaque)
+        || (props.alpha.is_none() && props.alpha_gated && !props.lod_building && matches!(alpha_mode, AlphaMode::Mask(_)));
+    if props.unlit && !props.external_emittance && opaque {
+        let top = props.emissive.map_or(1.0, |e| e.iter().copied().fold(0.0f32, f32::max));
+        mult.min(1.0 / top.max(f32::EPSILON))
+    } else {
+        mult
+    }
+}
+
+/// Unlit shapes without External Emittance skip the image-space scale (x). An authored
+/// cut-out sign skips it too, and takes the plain path of blended shapes rather than
+/// `hot_light` (y), so its texture keeps its letters and it stays under the bright pass's
+/// threshold [hypothesis, fitted to the same frames and nif.md's section].
+pub(crate) fn shape_emissive_rule(props: &Props, alpha_mode: AlphaMode) -> Vec4 {
+    if !props.unlit {
+        return Vec4::ZERO;
+    }
+    let cutout = props.alpha.is_some() && matches!(alpha_mode, AlphaMode::Mask(_));
+    Vec4::new(if !props.external_emittance || cutout { 1.0 } else { 0.0 }, if cutout { 1.0 } else { 0.0 }, 0.0, 0.0)
+}
+
 /// Emitted light of a shape: emissive colour × emissive multiplier (× the glow map and the
 /// surface colour in the shader) [hypothesis, docs/spec-notes/nif.md §6 "Emissive light"],
 /// `None` when the colour is black. An unlit shape's value is [`unlit_emissive`]. A
@@ -649,7 +683,7 @@ pub(crate) fn burns(props: &Props) -> bool {
 /// ([`display_emissive`], nif.md §6 "Multiply blend", "Additive blend").
 pub(crate) fn shape_emissive(props: &Props, alpha_mode: AlphaMode) -> Option<LinearRgba> {
     let e = props.emissive.filter(|e| e.iter().any(|&c| c > 0.0))?;
-    let m = props.emissive_mult.unwrap_or(1.0).max(0.0);
+    let m = shape_emissive_mult(props, alpha_mode);
     if props.unlit && !matches!(alpha_mode, AlphaMode::Multiply) {
         let mut tint = unlit_emissive(e, m);
         if emissive_in_display(alpha_mode) {
@@ -775,8 +809,28 @@ pub(crate) fn shape_material(
     shape_material_with(props, mesh, &mut StoreTextures { textures, data, images, formats })
 }
 
+/// [`shape_material`] for a copy of a mesh that went through it before (an actor part's
+/// kept CPU mesh, `actor::PartShape::cpu`): tangents it already has are the ones
+/// generating them again would give, so they are kept. The copy only serves to make the
+/// material; generating them again cost an actor 5 ms in the frame it was drawn
+/// [observed 2026-11-07, #1429, Sierra Madre lobby].
+pub(crate) fn shape_material_reusing_tangents(
+    props: &Props,
+    mesh: &mut Mesh,
+    textures: &mut TextureCache,
+    data: &GameData,
+    images: &mut Assets<Image>,
+    formats: Option<&CompressedImageFormatSupport>,
+) -> (NifMaterial, Option<String>) {
+    shape_material_inner(props, mesh, &mut StoreTextures { textures, data, images, formats }, true)
+}
+
 /// [`shape_material`] with its textures from `textures`.
 pub(crate) fn shape_material_with(props: &Props, mesh: &mut Mesh, textures: &mut impl TextureSource) -> (NifMaterial, Option<String>) {
+    shape_material_inner(props, mesh, textures, false)
+}
+
+fn shape_material_inner(props: &Props, mesh: &mut Mesh, textures: &mut impl TextureSource, keep_tangents: bool) -> (NifMaterial, Option<String>) {
     fix_vertex_colors(mesh, props.vertex_alpha);
     if props.unlit {
         unlit_vertex_colors(mesh);
@@ -785,7 +839,7 @@ pub(crate) fn shape_material_with(props: &Props, mesh: &mut Mesh, textures: &mut
     let normal = props.textures.get(1).filter(|t| !t.is_empty()).and_then(|t| textures.texture(t, false));
     let missing = if base.is_none() { props.textures.first().filter(|t| !t.is_empty()).cloned() } else { None };
     let has_uv = mesh.attribute(Mesh::ATTRIBUTE_UV_0).is_some();
-    let normal = normal.filter(|_| has_uv && mesh.generate_tangents().is_ok());
+    let normal = normal.filter(|_| has_uv && ((keep_tangents && mesh.attribute(Mesh::ATTRIBUTE_TANGENT).is_some()) || mesh.generate_tangents().is_ok()));
     let cut = blend_cut(props, mesh);
     let alpha_mode = if cut.is_some() { AlphaMode::Blend } else { shape_alpha_mode(props) };
     let cutout = blended_cutout(props, cut, alpha_mode, || props.textures.first().is_some_and(|t| !t.is_empty() && textures.alpha_is_mask(t)));
@@ -829,6 +883,7 @@ pub(crate) fn shape_material_with(props: &Props, mesh: &mut Mesh, textures: &mut
         material.extension.depth_write = true;
     }
     material.extension.add_whole = if adds_whole(props) { 1.0 } else { 0.0 };
+    material.extension.emissive_rule = shape_emissive_rule(props, alpha_mode);
     material.extension.decal = props.decal;
     if crate::nif_material::soft_intersections(alpha_mode, props.unlit, props.refraction.is_some(), burns(props)) {
         material.extension.soft.x = crate::nif_material::soft_distance(mesh_extent(mesh));
@@ -1391,6 +1446,82 @@ mod tests {
         let warm = Props { unlit: true, emissive: Some([1.0, 0.5, 0.0]), emissive_mult: Some(2.0), ..Default::default() };
         let w = shape_emissive(&warm, AlphaMode::Add).unwrap();
         assert!((w.red - 2f32.powf(2.2)).abs() < 1e-4 && (w.green - (0.5f32 * 2.0).powf(2.2)).abs() < 1e-4 && w.blue == 0.0);
+    }
+
+    #[test]
+    fn an_unlit_pictures_tracks_multiply_the_stored_multiplier_not_the_held_one() {
+        let picture = Props { unlit: true, emissive: Some([1.0; 3]), emissive_mult: Some(30.0), ..Default::default() };
+        assert_eq!(shape_emissive_mult(&picture, AlphaMode::Opaque), 1.0);
+        assert_eq!(shape_emissive(&picture, AlphaMode::Opaque).unwrap(), LinearRgba::WHITE);
+        assert_eq!(picture.emissive_parts(), ([1.0; 3], 30.0));
+        let gated = Props { dynamic_alpha: true, alpha_gated: true, ..picture.clone() };
+        assert_eq!(gated.emissive_parts(), ([1.0; 3], 30.0));
+        assert_eq!(shape_emissive(&gated, shape_alpha_mode(&gated)).unwrap(), LinearRgba::WHITE);
+
+        let blended = Props { alpha: Some((0x12ed, 0)), emissive_mult: Some(40.0), ..picture.clone() };
+        assert_eq!(shape_emissive_mult(&blended, AlphaMode::Blend), 40.0);
+        assert_eq!(blended.emissive_parts().1, 40.0);
+        assert_eq!(shape_emissive(&blended, AlphaMode::Blend).unwrap().red, 40.0);
+        let additive = Props { alpha: Some((1, 0)), ..blended };
+        assert_eq!(shape_emissive_mult(&additive, AlphaMode::Add), 40.0);
+        assert_eq!(additive.emissive_parts().1, 40.0);
+        assert!((shape_emissive(&additive, AlphaMode::Add).unwrap().red - 40f32.powf(2.2)).abs() < 1e-2);
+
+        let neon = Props { external_emittance: true, emissive_mult: Some(25.0), ..picture };
+        assert_eq!(shape_emissive_mult(&neon, AlphaMode::Opaque), 25.0);
+        assert_eq!(neon.emissive_parts().1, 25.0);
+        assert_eq!(shape_emissive(&neon, AlphaMode::Opaque).unwrap().red, 25.0);
+    }
+
+    #[test]
+    fn a_picture_holds_its_colour_times_its_multiplier() {
+        // A Securitron's screen: grey 0.05 x 30 shows its texture, not a twentieth of it.
+        let face = Props { unlit: true, emissive: Some([0.05; 3]), emissive_mult: Some(30.0), ..Default::default() };
+        // Its idle track keys 0.032 x 30, about 1, on the stored multiplier.
+        assert_eq!(face.emissive_parts().1, 30.0);
+        assert!((shape_emissive(&face, AlphaMode::Opaque).unwrap().red - 1.0).abs() < 1e-5);
+        // Under 1 it is left alone; with the flag it is no picture.
+        let dim = Props { emissive_mult: Some(4.0), ..face.clone() };
+        assert_eq!(shape_emissive_mult(&dim, AlphaMode::Opaque), 4.0);
+        let neon = Props { external_emittance: true, ..face };
+        assert_eq!(shape_emissive_mult(&neon, AlphaMode::Opaque), 30.0);
+    }
+
+    #[test]
+    fn unlit_cutouts_take_the_plain_path_and_no_scale() {
+        let no_scale = Vec4::new(1.0, 0.0, 0.0, 0.0);
+        let cutout_rule = Vec4::new(1.0, 1.0, 0.0, 0.0);
+        let picture = Props { unlit: true, emissive_mult: Some(30.0), ..Default::default() };
+        for mode in [AlphaMode::Opaque, AlphaMode::Blend, AlphaMode::Add] {
+            assert_eq!(shape_emissive_rule(&picture, mode), no_scale);
+        }
+        // A gated screen with no authored alpha is a picture, not a cut-out.
+        assert_eq!(shape_emissive_rule(&picture, AlphaMode::Mask(0.5)), no_scale);
+        let sign = Props { external_emittance: true, emissive_mult: Some(4.0), alpha: Some((0x12EC, 128)), ..picture };
+        for mult in [4.0, 7.5, 14.0] {
+            let sign = Props { emissive_mult: Some(mult), ..sign.clone() };
+            assert_eq!(shape_emissive_rule(&sign, AlphaMode::Mask(0.5)), cutout_rule);
+            assert_eq!(shape_emissive_mult(&sign, AlphaMode::Mask(0.5)), mult);
+            let no_flag = Props { external_emittance: false, ..sign };
+            assert_eq!(shape_emissive_rule(&no_flag, AlphaMode::Mask(0.5)), cutout_rule);
+        }
+        for mode in [AlphaMode::Opaque, AlphaMode::Blend, AlphaMode::Add] {
+            assert_eq!(shape_emissive_rule(&sign, mode), Vec4::ZERO);
+        }
+    }
+
+    #[test]
+    fn lit_shapes_keep_their_emissive_rules() {
+        for external_emittance in [false, true] {
+            let lit = Props { external_emittance, emissive: Some([1.0; 3]), emissive_mult: Some(30.0), ..Default::default() };
+            for mode in [AlphaMode::Opaque, AlphaMode::Mask(0.5), AlphaMode::Blend, AlphaMode::Add] {
+                assert_eq!(shape_emissive_mult(&lit, mode), 30.0);
+                assert_eq!(shape_emissive_rule(&lit, mode), Vec4::ZERO);
+            }
+            assert_eq!(lit.emissive_parts().1, 30.0);
+            assert_eq!(shape_emissive(&lit, AlphaMode::Opaque).unwrap().red, 30.0);
+            assert_eq!(shape_emissive_rule(&Props { emissive_mult: Some(4.0), ..lit }, AlphaMode::Mask(0.5)), Vec4::ZERO);
+        }
     }
 
     #[test]

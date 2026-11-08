@@ -317,16 +317,21 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
             XVal::Ref(0)
         }
         // ENIT flags, bit by bit [observed: gaps3, the stimpak's flags 5 read 1 0 1].
+        // An actor effect's SPIT, an object effect's or ingestible's ENIT; SetEffectFlag's
+        // change first (`crate::nvse_jip8`).
         "geteffectflag" => {
             let f = form(args, 0).unwrap_or(FormId(0));
-            bit(json_num(g.data.record_field(f, "ENIT", "flags")), num(args, 1, -1.0))
+            let sub = if g.data.sig(f) == Some(*b"SPEL") { "SPIT" } else { "ENIT" };
+            let flags = crate::nvse::record_value(g, f, sub, "flags").and_then(|v| v.num().ok()).unwrap_or(0.0);
+            bit(flags, num(args, 1, -1.0))
         }
         // MGEF DATA [observed: gaps3, RestoreHealth archetype 0, actor value 16, flags
         // 112 so bits 0–3 read 0].
         "getbaseeffectarchetype" => XVal::Num(form(args, 0).and_then(|f| g.data.magic_effects.get(&f)).map_or(0, |m| m.archetype) as f64),
         "getbaseeffectav" => XVal::Num(form(args, 0).and_then(|f| g.data.magic_effects.get(&f)).and_then(|m| m.actor_value).map_or(-1.0, f64::from)),
         "getbaseeffectflag" => {
-            let flags = form(args, 0).and_then(|f| g.data.magic_effects.get(&f)).map_or(0, |m| m.flags);
+            // SetBaseEffectFlag's change first (`crate::nvse_jip8`).
+            let flags = form(args, 0).map_or(0, |f| g.base_effect_flags(f));
             bit(f64::from(flags), num(args, 1, -1.0))
         }
         // ---- ammunition ----
@@ -473,7 +478,11 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // [observed: gaps4, the street brahmin's PNAM 00015833]
         "getbodypartdata" => {
             let b = form(args, 0).or(subject).map(|f| base(g, f)).unwrap_or(FormId(0));
-            if g.data.sig(b) == Some(*b"CREA") { json_form(g.data.record_field(b, "PNAM", "")) } else { XVal::Ref(0) }
+            // SetBodyPartData's change first (`crate::nvse_jip8`).
+            match crate::nvse::record_value(g, b, "PNAM", "") {
+                Some(XVal::Ref(r)) if g.data.sig(b) == Some(*b"CREA") => XVal::Ref(r),
+                _ => XVal::Ref(0),
+            }
         }
         // YNAM [observed: gaps2, the 10mm pistol 000864D5, the stimpak none].
         "getpickupsound" => match form(args, 0).and_then(|f| crate::nvse::record_value(g, f, "YNAM", "")) {
@@ -1166,9 +1175,15 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // ---- cells, climates, recipes ----
         // CELL DATA flags bit by bit [observed: gaps3, Doc's house (Interior, Public)
         // reads 1 0 0 0].
+        // 0-7 DATA, 8-16 the lighting template inherit flags (LNAM bits 0-8)
+        // [documented: the page's table; hypothesis: LNAM's order]; SetCellFlag's change
+        // first (`crate::nvse_jip8`).
         "getcellflag" => {
             let c = form(args, 0).unwrap_or(FormId(0));
-            bit(json_num(g.data.record_field(c, "DATA", "")), num(args, 1, -1.0))
+            let k = num(args, 1, -1.0);
+            let (sub, k) = if k >= 8.0 { ("LNAM", k - 8.0) } else { ("DATA", k) };
+            let flags = crate::nvse::record_value(g, c, sub, "").and_then(|v| v.num().ok()).unwrap_or(0.0);
+            bit(flags, k)
         }
         // XCIM [observed: gaps4, Doc's house 0001507A].
         "getcellimagespace" => json_form(form(args, 0).and_then(|c| g.data.record_field(c, "XCIM", ""))),

@@ -187,6 +187,7 @@ fn body(name: &str, mass: f32) -> RagdollBody {
             shape: Shape::Sphere { radius: 1.0 }.into(),
             shell: 0.0,
             material: Some(7),
+            wind: false,
         },
         linear_damping: 0.1,
         angular_damping: 0.05,

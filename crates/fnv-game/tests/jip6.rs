@@ -150,9 +150,12 @@ fn destruction_stages_read_and_change() {
     assert_eq!(n(&mut g, "GetNthDestructionStageDebris TestBox 0"), f64::from(EXPL));
     q(&mut g, "SetNthDestructionStageTrait TestBox 1 3 5");
     assert_eq!(n(&mut g, "GetNthDestructionStageTrait TestBox 1 3"), 5.0);
-    // Values past what a trait holds are not set: health past 100, infinity, NaN
-    // (#1354 review).
-    for (t, bad, keep) in [(0, "150", 50.0), (1, "(Pow 10 400)", 0.0), (2, "((Pow 10 400) - (Pow 10 400))", 1.0)] {
+    // Infinity and NaN are not set (#1354 review); a health percentage past 100 is kept
+    // modulo 101 [observed: jip6b dest.hp.*].
+    q(&mut g, "SetNthDestructionStageTrait TestBox 0 0 150");
+    assert_eq!(n(&mut g, "GetNthDestructionStageTrait TestBox 0 0"), 49.0);
+    q(&mut g, "SetNthDestructionStageTrait TestBox 0 0 50");
+    for (t, bad, keep) in [(1, "(Pow 10 400)", 0.0), (2, "((Pow 10 400) - (Pow 10 400))", 1.0)] {
         q(&mut g, &format!("SetNthDestructionStageTrait TestBox 0 {t} {bad}"));
         assert_eq!(n(&mut g, &format!("GetNthDestructionStageTrait TestBox 0 {t}")), keep, "trait {t} {bad}");
     }
@@ -163,16 +166,20 @@ fn destruction_stages_read_and_change() {
     assert_eq!(s(&mut g, "GetNthDestructionStageReplacement TestBox 0"), "clutter\\other.nif");
     q(&mut g, "SetDestructionDataTargetable TestBox 0");
     assert_eq!(n(&mut g, "GetDestructionDataTargetable TestBox"), 0.0);
-    // Add and remove: the new count, -1 when nothing changed [documented].
-    assert_eq!(n(&mut g, "AddDestructionStage TestBox 1 80 3"), 3.0);
+    // Add and remove: the stage's index, -1 when nothing changed [observed: jip6 dest.add.*,
+    // dest.remove.*].
+    assert_eq!(n(&mut g, "AddDestructionStage TestBox 1 80 3"), 1.0);
     assert_eq!(n(&mut g, "GetNthDestructionStageTrait TestBox 1 0"), 80.0);
     assert_eq!(n(&mut g, "GetNthDestructionStageTrait TestBox 1 2"), 3.0);
     assert_eq!(n(&mut g, "GetNthDestructionStageExplosion TestBox 2"), f64::from(EXPL2), "the old stage 1 moved down");
-    assert_eq!(n(&mut g, "AddDestructionStage TestPlain 0 50 1"), -1.0);
+    // a form without destruction data gets it [observed: jip6b dest.add.none]
+    assert_eq!(n(&mut g, "AddDestructionStage TestPlain 0 50 1"), 0.0);
+    assert_eq!(n(&mut g, "GetDestructionDataNumStages TestPlain"), 1.0);
+    assert_eq!(n(&mut g, "AddDestructionStage TestBox 9 50 1"), -1.0, "past the end");
     // A NaN index adds nothing (#1354 review).
     assert_eq!(n(&mut g, "AddDestructionStage TestBox ((Pow 10 400) - (Pow 10 400)) 50 1"), -1.0);
     assert_eq!(n(&mut g, "GetNthDestructionStageTrait TestBox 0 0"), 50.0);
-    assert_eq!(n(&mut g, "RemoveDestructionStage TestBox 0"), 2.0);
+    assert_eq!(n(&mut g, "RemoveDestructionStage TestBox 0"), 0.0);
     assert_eq!(n(&mut g, "RemoveDestructionStage TestBox 7"), -1.0);
     // The game reads the changed data too.
     let d = g.destruction(FormId(ACTI)).unwrap();
@@ -191,12 +198,14 @@ fn creature_data_and_models() {
     assert_eq!(n(&mut g, "GetCreatureDamage TestBox"), 0.0, "not a creature");
     q(&mut g, "SetCreatureDamage 40 TestCreature");
     assert_eq!(n(&mut g, "GetCreatureDamage TestCreature"), 40.0);
-    // Combat's attack reads the change; a value past the i16 field, NaN or infinity is
-    // not set (#1354 review).
+    // Combat's attack reads the change; NaN is not set (#1354 review), anything else is
+    // held to 0-65535 [observed: jip6b cr.dmg.*].
     assert_eq!(g.creature_attack(FormId(CREA)).map(|a| a.0), Some(40.0));
-    for bad in ["40000", "((Pow 10 400) - (Pow 10 400))", "(Pow 10 400)"] {
-        q(&mut g, &format!("SetCreatureDamage {bad} TestCreature"));
-        assert_eq!(n(&mut g, "GetCreatureDamage TestCreature"), 40.0, "{bad}");
+    q(&mut g, "SetCreatureDamage ((Pow 10 400) - (Pow 10 400)) TestCreature");
+    assert_eq!(n(&mut g, "GetCreatureDamage TestCreature"), 40.0, "NaN");
+    for (v, want) in [("40000", 40000.0), ("70000", 65535.0), ("-3", 0.0), ("40", 40.0)] {
+        q(&mut g, &format!("SetCreatureDamage {v} TestCreature"));
+        assert_eq!(n(&mut g, "GetCreatureDamage TestCreature"), want, "{v}");
     }
     q(&mut g, "SetCreatureSoundsTemplate TestCreature");
     assert_eq!(n(&mut g, "GetCreatureSoundsTemplate TestCreature"), 0.0, "left out clears it");
@@ -210,7 +219,8 @@ fn creature_data_and_models() {
     let first = q(&mut g, "array_var a\nstring_var sOut\nlet a := GetCreatureModels TestCreature\nlet sOut := a[0]\nSetFunctionValue sOut");
     assert_eq!(first, XVal::Str("dogbody.nif".into()));
     assert_eq!(models(&mut g), XVal::Num(1.0));
-    assert_eq!(n(&mut g, "CreatureHasModel \"eyessetvicious.nif\" TestCreature"), 1.0, "a model toggled off is still in the list");
+    // a model turned off is not had [observed: jip6 cr.toggle.off]
+    assert_eq!(n(&mut g, "CreatureHasModel \"eyessetvicious.nif\" TestCreature"), 0.0);
 }
 
 #[test]

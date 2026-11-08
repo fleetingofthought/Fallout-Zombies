@@ -177,4 +177,8 @@ pub struct CollisionObject {
     /// none. Triangle meshes keep one per triangle in the shape instead. What is hit, for
     /// impact effects and sounds (docs/spec-notes/audio.md §11).
     pub material: Option<u32>,
+    /// The body responds to the weather's wind: its Body Flags bit 0 [documented: nif.xml
+    /// bhkRigidBody, "1 = respond to wind"]; set on the tumbleweed model alone among the
+    /// masters' placed models [observed: nif-engine-gap-audit.md, body_flags].
+    pub wind: bool,
 }

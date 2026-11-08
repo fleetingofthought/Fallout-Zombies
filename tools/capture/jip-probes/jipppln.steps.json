@@ -1,0 +1,172 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jipppln",
+ "title": "jipppln, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nSetFunctionValue (HasRuntimeNode rObj \"nvfNode\")\nEnd\n",
+   "label": "jpp.has.fresh",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nSetFunctionValue (ClearRuntimeNodes rObj)\nEnd\n",
+   "label": "jpp.clear.fresh",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nSetFunctionValue (GetCalculatedWeaponDegradation rObj rOther)\nEnd\n",
+   "label": "jpp.degrade.pistol.ammo10mm",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"8F216\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"8ED02\"\nSetFunctionValue (GetCalculatedWeaponDegradation rObj rOther)\nEnd\n",
+   "label": "jpp.degrade.revolver.ammo357",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"140AA0\"\nSetFunctionValue (GetCalculatedWeaponDegradation rObj rOther)\nEnd\n",
+   "label": "jpp.degrade.pistol.jsp308",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nSetFunctionValue (GetCalculatedWeaponDegradation rObj)\nEnd\n",
+   "label": "jpp.degrade.pistol",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 0 0)\nEnd\n",
+   "label": "jpp.control.0.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 0 1)\nEnd\n",
+   "label": "jpp.control.0.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 0 2)\nEnd\n",
+   "label": "jpp.control.0.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 0 3)\nEnd\n",
+   "label": "jpp.control.0.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 4 0)\nEnd\n",
+   "label": "jpp.control.4.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 4 1)\nEnd\n",
+   "label": "jpp.control.4.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 4 2)\nEnd\n",
+   "label": "jpp.control.4.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 4 3)\nEnd\n",
+   "label": "jpp.control.4.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 5 0)\nEnd\n",
+   "label": "jpp.control.5.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 5 1)\nEnd\n",
+   "label": "jpp.control.5.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 5 2)\nEnd\n",
+   "label": "jpp.control.5.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 5 3)\nEnd\n",
+   "label": "jpp.control.5.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 7 0)\nEnd\n",
+   "label": "jpp.control.7.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 7 1)\nEnd\n",
+   "label": "jpp.control.7.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 7 2)\nEnd\n",
+   "label": "jpp.control.7.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetControlCodeByID 7 3)\nEnd\n",
+   "label": "jpp.control.7.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aA := rP.GetActiveEffectsInfo 3\nSetFunctionValue (ar_Size aA)\nEnd\n",
+   "label": "jpp.effects.player.ingest",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aA := rDoc.GetActiveEffectsInfo\nSetFunctionValue (ar_Size aA)\nEnd\n",
+   "label": "jpp.effects.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aA := rDoc.GetActiveEffectsInfo 0 1\nSetFunctionValue (ar_Size aA)\nEnd\n",
+   "label": "jpp.effects.doc.temp",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rP.RefreshInventoryWeight)\nEnd\n",
+   "label": "jpp.refreshweight",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nInsertNode rObj 1 \"Bip01|nvfNode\"\nlet sText := sv_Construct \"%g %g %g %g\" (HasRuntimeNode rObj \"Bip01|nvfNode\" 1) (HasRuntimeNode rObj \"Bip01|nvfNode\" 2) (HasRuntimeNode rObj \"nvfNode\") (HasRuntimeNode rObj \"nvfnode\")\nlet fRes := ClearRuntimeNodes rObj\nSetFunctionValue (sv_Construct \"%z %g %g\" sText fRes (HasRuntimeNode rObj \"nvfNode\"))\nEnd\n",
+   "label": "jpp.insert.has",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"4326\"\nInsertNode rObj 1 \"Bip01|nvfNode\"\nlet fRes := CopyRuntimeNodes rOther rObj 0\nlet sText := sv_Construct \"%g %g\" fRes (HasRuntimeNode rOther \"nvfNode\")\nlet fN := CopyRuntimeNodes rOther rObj 1\nlet sText := sv_Construct \"%z %g %g\" sText fN (ClearRuntimeNodes rOther)\nSetFunctionValue (sv_Construct \"%z %g %g\" sText (ClearRuntimeNodes rObj) (HasRuntimeNode rOther \"nvfNode\"))\nEnd\n",
+   "label": "jpp.copy",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"4326\"\nlet fRes := AttachFormModel rObj rOther 1 \"Bip01\"\nlet sText := sv_Construct \"%g %g %g\" fRes (HasRuntimeNode rObj \"Bip01|\") (HasRuntimeNode rObj \"Bip01|\" 2)\nlet fRes := AttachFormModel rObj rOther 0 \"Bip01\"\nlet sText := sv_Construct \"%z %g %g\" sText fRes (HasRuntimeNode rObj \"Bip01|\")\nlet fRes := AttachFormModel rObj rOther 0 \"Bip01\"\nSetFunctionValue (sv_Construct \"%z %g %g\" sText fRes (ClearRuntimeNodes rObj))\nEnd\n",
+   "label": "jpp.attachform",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aA := rDoc.GetActiveEffectsInfo\nlet fRes := rDoc.SetActiveEffectsInfo aA\nSetFunctionValue (sv_Construct \"%g %g\" fRes (ar_Size aA))\nEnd\n",
+   "label": "jpp.effects.setsame",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet rBox := rP.PlaceAtMe rObj 1\nlet fRes := rBox.ClampToGround\nrBox.Disable\nrBox.MarkForDelete\nSetFunctionValue fRes\nEnd\n",
+   "label": "jpp.clamp",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rOther\nref rBox\nfloat fRes\nfloat fN\nstring_var sText\narray_var aA\narray_var aE\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nSetFunctionValue (rObj.ClampToGround)\nEnd\n",
+   "label": "jpp.clamp.base",
+   "field": "value"
+  }
+ ]
+}

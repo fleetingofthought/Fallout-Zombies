@@ -603,7 +603,7 @@ conversation (…), line …` instead, and both end with `… has talked (…)`.
   greeted from 253 units.
 
 **Sight and loading screens** (2026-10-23, owner's playtest list 7 items 24, 41/42):
-- A force greet (not a Say To line) needs a clear line from the actor to the player:
+- A force greet (and, since 2026-11-08, a Say To line to the player, below) needs a clear line from the actor to the player:
   nothing solid, a wall or a closed door, between them at the engine's last detection
   measurement of the pair (`Detection::clear`, the line-of-sight ray of
   `nvforever` detection.rs, whichever way the actor faces) [owner statement: Davison in
@@ -618,6 +618,24 @@ conversation (…), line …` instead, and both end with `… has talked (…)`.
   `… waits to talk to 0x00000014 (…): 586 units away, with something solid between`.
   The activate distances stay the records' (Davison 600, Harland 1200): the line is what
   was missing, not a shorter distance [decision].
+- **A Say To line to the player** needs the same clear line (2026-11-08) [hypothesis, from
+  an owner report: in Tale of Two Wastelands the escape from Vault 101 softlocked in
+  Amata's wake-up, the player's wake-up idle playing over and over]. Officer Kendall's
+  `CG04Security02Ambush` (Fallout3.esm; Dialogue, Say To, topic `CG04SecurityBarks`,
+  activate distance 1500, wait location radius 0, no trigger location: case 3 above,
+  condition `GetStage CG04 < 12`) said "There he is! Hold it right there!" from 855 units,
+  through the walls, while the player was still in bed at stage 2 [observed in ours,
+  TTW 3.4]. The line's end script (INFO 0x0602D4B2 / 0x0602D4B3) sets CG04 stage 12, and
+  the quest script moves on to stage 3 only `if GetStage CG04 == 2` (SCPT 0x06029341, 6.3 s
+  after stage 2) [observed: TTW load order, `fnvtool script decompile`]. Stage 3 removes the
+  player's script package `CG04PlayerSection0`, so without it the package stayed, and its
+  collection (Run In Sequence, timer 0) replayed the one-shot `LooseCG04PlayerWaking`
+  (6.33 s, loop 0 / 0) for ever, the view held by its camera node. In the original the
+  bark comes when the player steps into the hall. Say To lines to an NPC are not held back:
+  only pairs with the player are measured. The 27 Say To packages aimed at the player in
+  the ten New Vegas masters (follower barks such as `RaulHooverBark`, the Honest Hearts
+  Chalk barks, `VVault21SarahStartTour`) wait the same way until the speaker can see the
+  player [observed: `fnvtool ai show`]. Logged as the force greet's "waits to talk to …".
 - Nobody acts under a loading screen: while `nvf_play::loading` holds the screen up the
   script runner sets `Game::loading`, which holds the residents (packages, force greets,
   hellos, combat), as menus and conversations do [owner: Johnson Nash greeted the player

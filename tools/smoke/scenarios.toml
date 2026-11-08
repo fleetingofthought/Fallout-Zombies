@@ -226,6 +226,21 @@ expect = [
 ]
 
 [[scenario]]
+name = "placed-water-no-reflect"
+source = "issue #1780: the Ultra-Luxe fountain's placed water (PWAT DupontCircle01Water, which does not set DNAM bit 0 Reflects) is a dull green pool in the original, no reflection; it is drawn with its water type's body alone (fnv_world::sky::placeable_water_reflects, engine/nvforever/src/water.rs, docs/spec-notes/world.md §6 Placed water)"
+note = "the observer-checks item 87 spot, facing north at noon (capture ul_fountain, 2026-11-06). Before the fix the pool was the pale sky with waves (about sRGB 170,190,193)"
+areas = ["renderer", "graphics"]
+paths = ["engine/nvforever/src/water.rs", "engine/nvforever/src/water.wesl", "crates/fnv-world/src/sky.rs"]
+env = { NVF_PLAY_TEST_GOD = "1", NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_LOOK = "3:0:0", NVF_PLAY_TEST_SHOTS = "8:ul_fountain_water.png" }
+args = ["--play", "--world", "TheStripWorldNew", "--pos=1176,-700,1080", "--hour", "12", "--no-voice", "--no-messages"]
+run_seconds = 10
+manual = "ul_fountain_water.png against the original's frame from the same spot (kept privately): an even dull olive-green pool, no sky, obelisk or building reflection, no bright waves"
+expect = [
+  { text = "placed water 00165AD0: its PWAT 000A1A9D does not set Reflects, drawn without reflection", label = "the fountain's water is drawn without reflection" },
+  { re = 'test aid: screenshot .*ul_fountain_water\.png', label = "the frame is saved" },
+]
+
+[[scenario]]
 name = "reflection-lake"
 source = "issue #1042: at Lake Mead the reflection camera switches on with the lake in view and off looking at the sky, where Bevy's box test of the water planes still passed them (engine/nvforever/src/reflection.rs)"
 note = "Boulder Beach shore (as wade-in-swim), the lakelurks kept unaware (NVF_PLAY_TEST_UNSEEN); looking at the lake, then 70 degrees up. Since #1060 the camera comes on only when the water shader counted drawn water pixels, so this is also the positive check of that count (water.wesl), the one reflection-off-unseen (camera stays off) cannot give"
@@ -267,6 +282,20 @@ order = [[
   { text = "console: Water off", label = "water hidden" },
   { text = "water reflection: off (no water on screen for 1 s)", label = "camera off after the water is hidden" },
 ]]
+
+[[scenario]]
+name = "read-pool-one-thread"
+source = "#1732: cell, model and actor reads have their own pool (nvf_assets::read_pool); at one thread on it and one on the async compute pool, as a 4-thread machine has, nothing waits on anything else in its pool"
+note = "The cell-streaming flight at the smallest sizes. A task that waited on another on the same pool would stop the flight's cells here. Only the count is checked: at one thread the flight outruns the read-ahead more often than cell-streaming allows."
+areas = ["renderer"]
+paths = ["engine/nvf-assets/src/read_pool.rs"]
+env = { NVF_PLAY_TEST_READ_THREADS = "1", NVF_PLAY_TEST_ASYNC_THREADS = "1" }
+args = ["--cell", "Goodsprings", "--auto-fly", "3000"]
+run_seconds = 40
+expect = [
+  "read pool threads: 1",
+  { re = 'streaming summary: (\d+) cells loaded', range = [40, 100000], label = "cells streamed in" },
+]
 
 [[scenario]]
 name = "cell-streaming"
@@ -509,6 +538,21 @@ expect = [
 ]
 
 [[scenario]]
+name = "stress-sample-phases"
+source = "issue #1415 (docs/design/stress-tests.md §2, engine/nvforever/src/stress_sample.rs): each frame is timed and judged at the same two boundaries (the sampler's own instants in First), frames that cross a loading screen's coming or going are kept apart, and every sample window says what it held"
+note = "log-format checks only: the sample line keeps its fields and place and gains the window's counts before the place; the exit's frames line adds the frames across a phase change. Does not check how many frames crossed (that depends on when the start's screen comes down against start-up's end); the timing itself is checked by the unit tests in stress_sample.rs"
+areas = ["performance", "profiling"]
+paths = ["engine/nvforever/src/stress_sample.rs"]
+env = { NVF_PLAY_TEST_SAMPLE = "2" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages"]
+run_seconds = 15
+expect = [
+  { re = 'stress start-up: \d+ frames, \d+ ms, slowest [\d.]+ ms', count = 1, label = "start-up is logged once" },
+  { re = 'stress sample: t [\d.]+ s, frames \d+, frame mean [\d.]+ ms, frame worst [\d.]+ ms, entities \d+, .*, startup frames \d+, hidden frames \d+, phase changes \d+, window \d+ ms, at ', min = 3, label = "sample lines carry the window's counts before the place" },
+  { re = 'stress frames: \d+ frames, mean [\d.]+ ms, 1% low [\d.]+ ms \([\d.]+ fps\), worst [\d.]+ ms; \d+ behind loading screens left out, \d+ across a phase change left out', count = 1, label = "the exit's frames line counts the frames left out" },
+]
+
+[[scenario]]
 name = "render-diagnostics-profile"
 source = "docs/design/frame-rate-audit.md §1 (profiling options together) and issue #1275: NVF_PLAY_TEST_PROFILE enables the profile reporting path and its render diagnostics registration"
 note = "Source-reviewed on pinned Bevy 0.20.1; profile-build startup/output verification passes; broader profiling validation remains"
@@ -743,6 +787,32 @@ expect = [
   { re = 'player body summary: weapon sway on, most turn lag (?P<n>[\d.]+) degrees sideways', range = [1.5, 5.01], label = "a quick turn leaves the arms behind, within the 5 degree limit" },
   { re = 'player body summary: weapon sway on, most turn lag [\d.]+ degrees sideways and (?P<n>[\d.]+) up or down', range = [0, 3.51], label = "up or down within the 3.5 degree limit" },
   { re = 'player body summary: weapon sway on, .*deepest bob (?P<n>[\d.]+) units', range = [0.3, 0.91], label = "running bobs the arms, within the 0.9 unit dip" },
+]
+
+[[scenario]]
+name = "head-bob-first-person"
+source = "owner 2026-11-07 (engine/nvforever/src/head_bob.rs): a head bob in first person, none in third; running in first person the camera and arms dip at each footfall"
+areas = ["player-body"]
+paths = ["engine/nvforever/src/head_bob.rs", "engine/nvforever/src/view_sway.rs", "engine/nvforever/src/player_body.rs"]
+env = { NVF_PLAY_TEST_MOVE = "5:1:0,10:0:0" }
+args = ["--cell", "Goodsprings", "--play", "--no-voice", "--no-messages", "--hour", "12"]
+run_seconds = 12
+expect = [
+  { re = 'player body summary: head bob on, deepest first-person dip (?P<n>[\d.]+) units', range = [1.0, 1.61], label = "running bobs the first-person view, within the 1.6 unit dip" },
+]
+
+[[scenario]]
+name = "head-bob-third-person"
+source = "owner 2026-11-07 (engine/nvforever/src/head_bob.rs): no head bob in third person; running after switching to third person, the camera's pivot leaves out the head's rise and fall"
+areas = ["player-body"]
+paths = ["engine/nvforever/src/head_bob.rs", "engine/nvforever/src/player_body.rs"]
+env = { NVF_PLAY_TEST_CONTROL = "3:view", NVF_PLAY_TEST_MOVE = "5:1:0,10:0:0" }
+args = ["--cell", "Goodsprings", "--play", "--no-voice", "--no-messages", "--hour", "12"]
+run_seconds = 12
+expect = [
+  { re = 'third-person pivot over (?P<n>\d+) frames', range = [150, 1e9], label = "the view was third person while running" },
+  { re = 'pivot/head (?P<n>[\d.]+)', range = [0, 0.35], label = "the pivot moves at most about a third as much as the head frame to frame" },
+  { re = 'deepest first-person dip (?P<n>[\d.]+) units', range = [0, 0.05], label = "no first-person bob in third person" },
 ]
 
 [[scenario]]
@@ -1387,7 +1457,7 @@ kind = "tool"
 source = "CLAUDE.md: after detection changes, fnvtool actor detect (docs/design/detection.md §4)"
 areas = ["detection"]
 paths = ["crates/fnv-game/src/detection.rs", "engine/nvforever/src/detection.rs", "crates/fnvtool/src/actor_detect.rs"]
-commands = [["actor", "detect", "--schema", "schemas/fnv", "{data}", "FalloutNV.esm", "--detector", "SunnyRef"]]
+commands = [["actor", "detect", "--schema", "schemas/fnv", "{data}", "FalloutNV.esm", "--detector", "SunnyRef", "--light", "90", "--dark", "10"]]
 # The table of detection.md §4 ("never" is null in the output).
 expect = [
   { json = "situations.?situation=standing, lit.detected_out_to", equals = 2590.0 },
@@ -1419,7 +1489,7 @@ env = { NVF_PLAY_TEST_SCRIPT_MENUS = "1", NVF_PLAY_TEST_EQUIP = "000E3778", NVF_
 args = ["--cell", "Goodsprings", "--play", "--hour", "12", "--no-voice", "--no-messages"]
 run_seconds = 40
 order = [[
-  { re = 'detection: GSSettlerAM 00104F0A → the player: hidden → noticed .*sneaking' },
+  { re = 'detection: GSSettlerAM 00104F0A → the player: hidden → noticed .*sneaking', known_failing = "#970 (claude/observer-o27, 2026-11-06): the light at the player at noon is now the original's GetActorLightAmount, 100 (was our 93); the sneaking player at about 1,900 units reaches the settler's detected band straight from hidden (value 0.3 to 1.9 in sight, light 100). Whether the original's settler notices or detects here is not captured" },
   { re = 'detection: GSSettlerAM 00104F0A → the player: \w+ → detected', known_failing = "claude/sight-own-capsule 2026-10-23, 2 of 2 runs: actors' sight rays no longer pass through walls (they started inside the detector's own capsule and always ended clear, docs/design/streaming-hitches.md §4); the settler, about 1,830 units off, loses the sneaking player behind something (noticed → hidden, out of sight (blocked)) and the shots at 22 s do not reach detected. The step was recorded while every actor saw through walls; whether the original's settler detects the player here is not captured" },
 ]]
 expect = [
@@ -1513,6 +1583,40 @@ expect = [
   { re = 'locomotion: \S+ 000F570B 1EFiendViolet 2hr Left plays \S*h2hleft\.kf', label = "walking left with her rifle she side-steps as the fists do, body square (combat-ai.md §23)" },
 ]
 forbid = [{ re = 'locomotion: \S+ 000F570B 1EFiendViolet 2hr (Fast)?Left plays \S*mt(fast)?left\.kf', label = "the unarmed walk left, which turns her side-on to the player (owner's video 2026-10-25)" }]
+
+[[scenario]]
+name = "player-limbs-shots"
+source = "issue #1345; docs/spec-notes/combat-rules.md §12: NPC shots select a part on the player's capsule and damage its condition [design]"
+note = "[design] combat-violet's Hunting Rifle setup, without god mode. Health 5000 keeps the player alive while Violet fires. Six conditions are read at the end; at least one must be below 100. Not yet run."
+areas = ["combat"]
+paths = ["engine/nvf-play/src/combat.rs", "crates/fnv-game/src/combat.rs"]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "1", NVF_PLAY_TEST_CONSOLE = "3:player.setav health 5000;3.3:close;42:player.getav PerceptionCondition;42.1:player.getav EnduranceCondition;42.2:player.getav LeftAttackCondition;42.3:player.getav RightAttackCondition;42.4:player.getav LeftMobilityCondition;42.5:player.getav RightMobilityCondition;42.8:close" }
+args = ["--cell", "Goodsprings", "--pos=-43900,64896,7000", "--play", "--hour", "12", "--no-voice", "--npc-packages", "FiendVioletRef"]
+run_seconds = 45
+expect = [
+  "fights the player with WeapHuntingRifle (gun)",
+  { re = "combat: the player's (?:head|torso|left arm|right arm|left leg|right leg) takes [0-9.]+, condition (?P<n>[0-9.]+)", range = [0, 99.9], label = "a rifle shot takes player limb condition" },
+  { re = 'console: GetActorValue on player >> [0-9.]+', count = 6, label = "all six conditions after rifle hits are read" },
+  { re = 'console: GetActorValue on player >> (?P<n>[0-9.]+)', range = [0, 99.99], label = "a final condition after rifle hits is below 100" },
+]
+forbid = ["god mode: no damage taken", "combat: the player died"]
+
+[[scenario]]
+name = "player-limbs-blows"
+source = "issue #1345; docs/spec-notes/combat-rules.md §12: a creature's blow selects a part on the player's capsule [design]"
+note = "[design] combat-violet's position, without god mode; combat-dogs' nearby dog 000F573F is added to npc-packages so it can turn and approach. Violet is disabled and the dog is put beside the player and set on them. Health 5000 keeps the player alive; all six conditions are read at the end. Tests the creature/Fists limb multiplier hypothesis. Not yet run."
+areas = ["combat"]
+paths = ["engine/nvf-play/src/combat.rs", "crates/fnv-game/src/combat.rs", "engine/nvforever/src/npc_combat.rs"]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "1", NVF_PLAY_TEST_CONSOLE = "3:player.setav health 5000;3.3:close;42:player.getav PerceptionCondition;42.1:player.getav EnduranceCondition;42.2:player.getav LeftAttackCondition;42.3:player.getav RightAttackCondition;42.4:player.getav LeftMobilityCondition;42.5:player.getav RightMobilityCondition;42.8:close", NVF_PLAY_TEST_SCRIPT = "4:call:FiendVioletRef:Disable,6:moveto:0x000F573F:player:140:0:0,6.2:combat:0x000F573F:player" }
+args = ["--cell", "Goodsprings", "--pos=-43900,64896,7000", "--play", "--hour", "12", "--no-voice", "--npc-packages", "FiendVioletRef,000F573F"]
+run_seconds = 45
+expect = [
+  { re = 'npc combat summary.*[1-9][0-9]* blows', label = "the dog lands blows" },
+  { re = "combat: the player's (?:head|torso|left arm|right arm|left leg|right leg) takes [0-9.]+, condition (?P<n>[0-9.]+)", range = [0, 99.9], label = "a creature blow takes player limb condition" },
+  { re = 'console: GetActorValue on player >> [0-9.]+', count = 6, label = "all six conditions after creature blows are read" },
+  { re = 'console: GetActorValue on player >> (?P<n>[0-9.]+)', range = [0, 99.99], label = "a final condition after creature blows is below 100" },
+]
+forbid = ["god mode: no damage taken", "combat: the player died", "combat: Violet hits the player"]
 
 [[scenario]]
 name = "combat-dogs"
@@ -1736,6 +1840,18 @@ expect = [
   { re = 'armed locomotion: Actor 00104C7D .* 1hp (Forward|Backward|Left|Right|TurnLeft|TurnRight) plays .*\\1hp\w+\.kf', label = "Ringo walks or turns on the pistol's own clips" },
   { re = 'armed locomotion: Actor 00104C7D .* 1hp Fast\w+ plays .*\\locomotion\\1hpfast\w+\.kf', label = "Ringo runs on the pistol's own run clips (pistol up)" },
   { re = 'armed locomotion: .* 1hp (Fast)?(Forward|Backward|Left|Right) plays .*\\mt\w+\.kf', count = 0, label = "no unarmed walk or run with the pistol drawn" },
+]
+
+[[scenario]]
+name = "h2h-weapon-hand"
+source = "#1586 (owner's report 2026-11-04): Veronica's bare hand stuck out of her power fist. A hand-to-hand weapon's BIPL names its own hand model (WeapPowerFistVeronica: WeaponPowerfist -> ARMAPowerfist, Right Hand, PowerFist.NIF), worn in place of the bare hand as an outfit's glove is [observed: the original shows the metal hand, capture pf_h2h_rest3 2026-11-06] (docs/spec-notes/actors.md §9.2, crates/fnv-actor/src/resolve.rs)"
+note = "at the 188 Trading Post at noon with every NPC's weapon out (--actor-weapons drawn); Veronica (VeronicaREF 0x000E32A9) stands 180 units south of the camera with her power fist"
+areas = ["actors"]
+paths = ["crates/fnv-actor/src/resolve.rs", "crates/fnv-actor/src/records.rs", "engine/nvforever/src/player_body.rs", "engine/nvforever/src/outfits.rs"]
+args = ["--play", "--pos=30941,31711,5531", "--heading", "180", "--hour", "12", "--no-voice", "--actor-weapons", "drawn"]
+run_seconds = 15
+expect = [
+  { re = '(?i)actor weapons: 000E32A9 \S*powerfistrigid\.nif: worn with its hand model\(s\) \[.*powerfist\.nif.*\] in place of the bare hand', label = "Veronica's power fist comes with its metal hand" },
 ]
 
 [[scenario]]
@@ -2607,6 +2723,93 @@ expect = [
 order = [["menu: a script opens the barter menu with 0x00104C79", "menu: figures of 10mm Pistol", "menu: close"]]
 
 [[scenario]]
+name = "tiles-barter"
+source = "[design] barter-menu.md section 9, issue #1468: the barter view from its file, rows, prices, purses, offered squares, caps direction, Accept and Exit use the existing model and its sounds"
+note = "[hypothesis] Pointer coordinates borrow the container's measured geometry at 1280x720: first rows at y 186, left bar x 362, Accept at 1320:690 and Exit at 1340:738. Confirm against the barter capture. [design] At 14, 16 and 18 seconds the pointer crosses from the player's list to the merchant's and back before clicking, exercising the focus rects over disabled rows. The dialogue opens Chet's shop; the automatic barter aid is delayed beyond the run so tile input makes the trade. All aids use the start clock. Shots show empty Accept, an offered pistol, the returned pistol, the sale, the accepted trade, category, and scroll."
+areas = ["ui", "barter", "menus"]
+paths = ["engine/nvf-play/src/tiles/barter_menu.rs", "engine/nvf-play/src/tiles/item_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/item_card.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/menu.rs", "engine/nvf-play/src/menu/**", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "BarterMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "9:call:0x00104C79:ShowBarterMenu", NVF_PLAY_TEST_GIVE = "0000000F:100,0000434F:1,00176AC4:3", NVF_PLAY_TEST_POINTER = "14:600:186,14.5:600:186:click,16:1150:186,16.5:1150:186:click,18:600:186,18.5:600:186:click,20:1320:690,20.5:1320:690:click,22:400:108:click,24:450:100:click,26:362:517:click,27:362:480:click,28:off,36:1340:738,36.5:1340:738:click,37:off", NVF_PLAY_TEST_KEYS = "29:down,30:pagedown,31:wheel-down,32:right", NVF_PLAY_TEST_SHOTS = "13:tiles_barter_open.png,15:tiles_barter_offered.png,17:tiles_barter_returned.png,19:tiles_barter_sale.png,21:tiles_barter_accepted.png,23:tiles_barter_category.png,30.5:tiles_barter_scrolled.png" }
+args = ["--cell", "GSGeneralStore", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 42
+expect = [
+  { re = 'tiles: \[UI\] TileMenus=BarterMenu .*BarterMenu drawn from tiles; its QuantityMenu prompt follows', label = "opt-in switch" },
+  { re = 'tiles: BarterMenu drawn from tiles \(\d+ file tiles, [1-9]\d* code tiles\)', label = "file with code rows" },
+  { text = "BarterMenu drawn by hand:", count = 0, label = "complete file" },
+  { re = 'tiles: BarterMenu drawn from tiles: .*balance [1-9]\d*; offered true; affordable true', label = "selling pays the player" },
+  { re = 'tiles: BarterMenu drawn from tiles: .*balance 0; offered false', label = "nothing offered" },
+  { text = "tiles: BarterMenu Accept on its tiles", count = 1, label = "Accept once" },
+  { text = "tiles: BarterMenu Close on its tiles", count = 1, label = "Exit once" },
+  { re = 'tiles: BarterMenu player list scrolled to [1-9]', label = "bar or keys scroll" },
+  "tile menu blur: BarterMenu radius 3",
+  "tile menu blur: off",
+  "ui sounds: barter trade made:",
+  { re = 'selected "10mm Pistol" price "[1-9]\d*"; figures: .*', label = "priced row and card" },
+  { text = "tiles: BarterMenu Hover(Container, 0) on its tiles", label = "pointer crosses to merchant rows through the focus rect" },
+  { text = "tiles: BarterMenu Hover(Player, 0) on its tiles", label = "pointer crosses back to player rows through the focus rect" },
+  { text = "tiles: ContainerMenu", count = 0, label = "barter only" },
+]
+order = [["menu: a script opens the barter menu with 0x00104C79", "stock in 0x00104C7A", "tiles: BarterMenu Select(Player, 0) on its tiles", "Selling 10mm Pistol x1", "Took back 10mm Pistol x1", "tiles: BarterMenu Accept on its tiles", "menu: Accept: Traded", "tiles: BarterMenu Category(Player, -1) on its tiles", "tiles: BarterMenu Close on its tiles", "menu: close"]]
+
+[[scenario]]
+name = "barter-sale-beyond-merchant-caps"
+source = "[observed 2026-11-06] barter-menu.md section 9, issue #1468: a sale beyond the merchant's caps is dimmed, still accepted, and pays what the merchant holds"
+note = "[design] The console empties the merchant's container of caps first, so the sale asks more than it holds at any price. Otherwise the first pointer steps of tiles-barter."
+areas = ["ui", "barter", "menus"]
+paths = ["engine/nvf-play/src/tiles/barter_menu.rs", "engine/nvf-play/src/menu.rs", "engine/nvf-play/src/menu/**"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "BarterMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_CONSOLE = "5:00104C7A.removeitem 0000000F 100000;5.3:close", NVF_PLAY_TEST_SCRIPT = "9:call:0x00104C79:ShowBarterMenu", NVF_PLAY_TEST_GIVE = "0000000F:100,0000434F:1", NVF_PLAY_TEST_POINTER = "14:600:186,14.5:600:186:click,20:1320:690,20.5:1320:690:click,24:off" }
+args = ["--cell", "GSGeneralStore", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 28
+expect = [
+  { re = 'tiles: BarterMenu drawn from tiles: .*balance [1-9]\d*; offered true; affordable false', label = "the sale is beyond the merchant's caps, and dims" },
+  { text = "tiles: BarterMenu Accept on its tiles", count = 1, label = "Accept once" },
+  { text = "ui sounds: barter trade made: UIMenuOK", label = "no caps moved, so no caps sound" },
+  { re = 'tiles: BarterMenu drawn from tiles: .*balance 0; offered false', label = "the trade went through" },
+]
+forbid = ["doesn't have enough caps"]
+
+[[scenario]]
+name = "tiles-barter-quantity"
+source = "[design] barter-menu.md sections 7 and 9, issue #1468: BarterMenu alone brings QuantityMenu, blocks underlying rows, cancels without a trade, then offers the chosen amount and accepts once"
+note = "[hypothesis] Container pointer coordinates at 1280x720: the second player row y 238 is 10mm Round (70) after the given pistol sorts first; the first row y 186 lies outside the prompt box but must remain blocked. Quantity decrease 644:470, OK 1155:515. Confirm positions on the first run. Shots show both prompt attempts, cancellation, decreased amount, and the offered stack."
+areas = ["ui", "barter", "menus", "items"]
+paths = ["engine/nvf-play/src/tiles/barter_menu.rs", "engine/nvf-play/src/tiles/item_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/menu.rs", "engine/nvf-play/src/menu/**"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "BarterMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "9:call:0x00104C79:ShowBarterMenu", NVF_PLAY_TEST_GIVE = "0000000F:100,0000434F:1,00176AC4:3,00004241:20", NVF_PLAY_TEST_POINTER = "14:600:238,14.5:600:238:click,16:600:186:click,18:600:238,18.5:600:238:click,19:600:186:click,20:644:470,20.5:644:470:click,21.5:1155:515,22:1155:515:click,23:off", NVF_PLAY_TEST_KEYS = "17:e,24.5:a,26:x", NVF_PLAY_TEST_SHOTS = "15:tiles_barter_quantity.png,17.5:tiles_barter_quantity_cancelled.png,19.5:tiles_barter_quantity_again.png,21:tiles_barter_quantity_decreased.png,23:tiles_barter_quantity_offered.png" }
+args = ["--cell", "GSGeneralStore", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 34
+expect = [
+  { re = 'how many\? \(70 of 70\)', count = 2, label = "Cancel leaves the full stack" },
+  { text = "tiles: QuantityMenu drawn from tiles: amount 70 of 70", min = 2, label = "prompt follows with its switch off" },
+  { re = 'tiles: QuantityMenu drawn from tiles \(\d+ file tiles, 0 code tiles\)', label = "prompt tree draws" },
+  { text = "tiles: BarterMenu Select(Player, 0) on its tiles", count = 0, label = "no click passes the prompt" },
+  { text = "tiles: BarterMenu Hover(Player, 0) on its tiles", count = 0, label = "nor hover" },
+  { text = "tiles: QuantityMenu AmountStep(-1) on its tiles", count = 1, label = "decrease once" },
+  { text = "tiles: QuantityMenu AmountOk on its tiles", count = 1, label = "OK once" },
+  "tiles: QuantityMenu drawn from tiles: amount 69 of 70",
+  "menu: AmountOk: Selling 10mm Round x69",
+  { text = "tiles: BarterMenu Accept on its tiles", count = 0, label = "physical A stays with the model" },
+  { text = "menu: Accept: Traded", count = 1, label = "the trade is accepted once" },
+]
+order = [["menu: a script opens the barter menu with 0x00104C79", "tiles: QuantityMenu drawn from tiles: amount 70 of 70", "menu: AmountCancel: prompt closed", "tiles: QuantityMenu drawn from tiles: amount 70 of 70", "tiles: QuantityMenu AmountStep(-1) on its tiles", "menu: AmountOk: Selling 10mm Round x69", "menu: Accept: Traded", "menu: close"]]
+
+[[scenario]]
+name = "barter-default-drawing"
+source = "[design] barter-menu.md sections 5 and 9: with the tile switch empty the hand-built barter view stays the default; sell, take back, Accept and Exit keep their existing behavior"
+note = "The barter-figures-currency recipe through Chet's dialogue, with the same timed shots and trade as tiles-barter but using the hand-built keys. No pointer aid. The automatic barter aid is delayed beyond the run. At 1280x720 these shots are the comparison set."
+areas = ["ui", "barter", "menus"]
+paths = ["engine/nvf-play/src/tiles/barter_menu.rs", "engine/nvf-play/src/tiles/item_menu.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/menu.rs", "engine/nvf-play/src/menu/**"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "9:call:0x00104C79:ShowBarterMenu", NVF_PLAY_TEST_GIVE = "0000000F:100,0000434F:1,00176AC4:3", NVF_PLAY_TEST_KEYS = "14.5:enter,16:right,16.2:up,16.5:enter,18:left,18.5:enter,19:enter,20.5:a,22:bracketleft,24:bracketright,29:down,30:pagedown,31:wheel-down,32:right,36.5:x", NVF_PLAY_TEST_SHOTS = "13:default_barter_open.png,15:default_barter_offered.png,17:default_barter_returned.png,19:default_barter_sale.png,21:default_barter_accepted.png,23:default_barter_category.png,30.5:default_barter_scrolled.png" }
+args = ["--cell", "GSGeneralStore", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 42
+expect = [
+  { text = "tiles: BarterMenu", count = 0, label = "no barter adapter runs" },
+  { text = "tiles: QuantityMenu", count = 0, label = "no prompt adapter runs" },
+  { text = "tile menu blur:", count = 0, label = "no tile blur" },
+  { re = 'menu: figures of 10mm Pistol: DAM \d+, WG [\d.]+, VAL \d+, .*DPS \d+, .*CND', label = "hand-built item card" },
+  { text = "menu: Accept: Traded", count = 1, label = "A accepts once" },
+]
+order = [["menu: a script opens the barter menu with 0x00104C79", "stock in 0x00104C7A", "Selling 10mm Pistol x1", "Took back 10mm Pistol x1", "menu: Accept: Traded", "menu: close"]]
+
+[[scenario]]
 name = "barter"
 note = "the player is given 100 caps at the start (NVF_PLAY_TEST_GIVE, caps 0x0000000F): the add-on packs' GameMode scripts that hand out caps and items first run about one quest delay after the scripts start, the time of the 10 s talk, and wait while the conversation is open, so the player had nothing to pay with ('You don't have enough caps.' instead of Traded: 1 of 2 runs on main 2026-10-12, every run on main 539a8e6c and #408 2026-10-17)"
 source = "CLAUDE.md: after changes to the container or barter menus (docs/spec-notes/barter-menu.md §6): the barter from Chet's dialogue"
@@ -2640,10 +2843,26 @@ expect = [
 ]
 
 [[scenario]]
+name = "tag-reset-clears"
+source = "[observed 2026-11-06] docs/spec-notes/chargen.md §3: Reset clears the tags the menu opened with, and Done is refused until three are tagged again"
+note = "[design] The second opening starts with the first's three tags, so the old rule (back to the opening state) would finish with those at the first Done."
+areas = ["chargen", "menus"]
+paths = ["engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "crates/fnv-game/src/chargen.rs"]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "3:menu:1048,8:menu:1048", NVF_PLAY_TEST_CHARGEN = "5:pick:Guns,5.1:pick:Speech,5.2:pick:Survival,6:done,10:reset,10.1:done,10.2:pick:Lockpick,10.3:pick:Medicine,10.4:pick:Repair,11:done" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice"]
+run_seconds = 14
+order = [[
+  "done, tag skills: Guns, Speech, Survival",
+  "chargen: reset",
+  "Done refused: 0 of 3 skills tagged",
+  "done, tag skills: Lockpick, Medicine, Repair",
+]]
+
+[[scenario]]
 name = "chargen-menus"
 source = "CLAUDE.md: after changes to the name, tag-skill or trait menus (docs/spec-notes/chargen.md §7)"
 areas = ["chargen", "menus"]
-paths = ["engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/chargen/name.rs", "engine/nvf-play/src/chargen/draw.rs", "crates/fnv-game/src/chargen.rs", "engine/nvf-play/src/tiles/trait_menu.rs"]
+paths = ["engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/chargen/name.rs", "engine/nvf-play/src/chargen/draw.rs", "crates/fnv-game/src/chargen.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs"]
 env = { NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "3:menu:1051,8:menu:1048,13:menu:1084", NVF_PLAY_TEST_CHARGEN = "5:clear,5.1:done,5.2:type:Courier Six,6:done,10:pick:Lockpick,10.1:done,10.2:pick:Guns,10.3:pick:Speech,10.4:pick:Survival,10.5:pick:Lockpick,10.6:pick:Survival,11:done,15:pick:Four Eyes,15.2:pick:Early Bird,15.4:pick:Wild Wasteland,16:done" }
 args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice"]
 run_seconds = 20
@@ -3453,15 +3672,16 @@ expect = [
 
 [[scenario]]
 name = "creature-sounds-aware"
-source = "playtest list 7 item 46 (docs/spec-notes/audio.md §14.1): a creature that becomes aware plays its Aware sound"
-note = "three radscorpions (CrRadscorpion1Small 0x0001CF9D; its AudioTemplateRadScorpion lists Aware at a 75 % chance (CSDC 75), no clip has an Aware key) placed at the player in Goodsprings at 3, 6 and 9 s, each its own roll; god mode; they notice the player and fight"
+source = "issue #989 (docs/spec-notes/audio.md §16.1): a creature that becomes aware plays no Aware sound unless a clip key names it; the original's radscorpions and lakelurk kings played none (observer batch o28). Until then (playtest list 7 item 46) it was played on becoming aware"
+note = "three radscorpions (CrRadscorpion1Small 0x0001CF9D; its AudioTemplateRadScorpion lists Aware at a 75 % chance (CSDC 75), no clip has an Aware key) placed at the player in Goodsprings at 3, 6 and 9 s; god mode; they notice the player and fight without an Aware sound"
 areas = ["creature-sounds", "audio"]
 paths = ["engine/nvforever/src/anim_sounds.rs"]
 env = { NVF_PLAY_TEST_SCRIPT_MENUS = "1", NVF_PLAY_TEST_GOD = "1", NVF_PLAY_TEST_SCRIPT = "3:call:player:PlaceAtMe:CrRadscorpion1Small:1,6:call:player:PlaceAtMe:CrRadscorpion1Small:1,9:call:player:PlaceAtMe:CrRadscorpion1Small:1" }
 args = ["--cell", "Goodsprings", "--pos=-61000,4500,8500", "--play", "--hour", "12", "--no-voice"]
 run_seconds = 20
 expect = [
-  { re = 'anim sounds summary:.*creatures: \d+ sounds \([^)]*\bAware [1-9]', label = "its Aware sound on noticing the player" },
+  { re = 'anim sounds summary:.*creatures: [1-9]\d* sounds', label = "the radscorpions sound their keys" },
+  { re = 'anim sounds summary:.*creatures: \d+ sounds \([^)]*\bAware [1-9]', count = 0, label = "no Aware sound on noticing the player" },
 ]
 
 [[scenario]]
@@ -3610,10 +3830,10 @@ order = [[
 [[scenario]]
 name = "traps-bear"
 source = "queue item 25 (traps): a bear trap's model holds a Trigger-layer box that sets off its OnTriggerEnter; another is disarmed by hand (docs/spec-notes/traps.md)"
-note = "South of Goodsprings, by three bear traps (0x00165495, 0x0015834D, 0x0015834C). trapbearskillreq01 set to 0; the player activates 0x00165495 at 15 s and picks Disarm; at 17 s the player is put on 0x0015834D, whose trigger box the player's capsule enters: its OnTriggerEnter plays Forward, damages the player 45 and a leg"
+note = "South of Goodsprings, by three bear traps (0x00165495, 0x0015834D, 0x0015834C). The gecko hunters 0x00165185-0x00165187 and the geckos 0x00157B3D/E are disabled at 1 s, as in bear-trap: since the aids' clock starts when the start's loading screen comes down (b8aa64a4f) they have 15 s to reach the player, and one sprang 0x00165495 at 11.5 s, so the player's hand got its rearm box and not the disarm box (2026-11-07). trapbearskillreq01 set to 0; the player activates 0x00165495 at 15 s and picks Disarm; at 17 s the player is put on 0x0015834D, whose trigger box the player's capsule enters: its OnTriggerEnter plays Forward, damages the player 45 and a leg"
 areas = ["traps", "scripts"]
 paths = ["engine/nvf-play/src/script_trigger.rs", "engine/nvf-play/src/phys/prepare.rs", "crates/fnv-game/src/traps.rs"]
-env = { NVF_PLAY_TEST_SCRIPT = "11:var:0x0002012B:trapbearskillreq01:0,15:activate:0x00165495,15.1:button:1,17:moveto:player:0x0015834D" }
+env = { NVF_PLAY_TEST_SCRIPT = "1:call:0x00165185:Disable,1:call:0x00165186:Disable,1:call:0x00165187:Disable,1:call:0x00157B3D:Disable,1:call:0x00157B3E:Disable,11:var:0x0002012B:trapbearskillreq01:0,15:activate:0x00165495,15.1:button:1,17:moveto:player:0x0015834D" }
 args = ["--play", "--pos=-68124,-17000,9100", "--hour", "12", "--no-voice"]
 run_seconds = 22
 expect = [
@@ -4236,6 +4456,34 @@ expect = [
   { re = 'blit warm: 12 upscaling pipelines queued for compiling at start-up', label = "every upscaling key is compiled at start-up, not when a camera first draws" },
   "run log: the game exited normally",
 ]
+
+[[scenario]]
+name = "cpu-placement"
+source = "#1842: on a processor with L3 domains of different sizes (dual-CCD X3D Ryzens) the game runs on the largest and sizes Bevy's pools to it; elsewhere nothing is done (engine/nvforever/src/cpu_placement.rs, docs/design/frame-rate-audit.md §6). The start logs one line saying what was found and done; which one depends on the machine"
+areas = ["performance", "startup"]
+paths = ["engine/nvforever/src/cpu_placement.rs"]
+args = ["--cell", "GSDocMitchellHouse"]
+run_seconds = 8
+expect = [
+  { re = 'cpu placement: (one L3 domain, nothing to do|no L3 domain found, nothing to do|more than one processor group, nothing to do|only done on Windows so far, nothing to do|L3 domains .*; (all the same size, nothing to do|no single largest, nothing to do|the largest has \d+ LPs \(under 8\), nothing to do|affinity already set, left alone|restricted to the \d+ [KM]iB domain \(\d+ LPs\), task pools \d+))$', label = "the start says what it found and did" },
+]
+forbid = [
+  { text = "restricting failed", label = "placing the process on the domain is refused" },
+  { text = "topology not read", label = "the processor's caches cannot be read" },
+  { text = "process placement not read", label = "the process's affinity cannot be read" },
+]
+
+[[scenario]]
+name = "cpu-placement-off"
+source = "#1842: --cpu-cache-placement off (as NVForever.ini's [Settings] cpu-cache-placement=off) leaves the process on every processor (engine/nvforever/src/cpu_placement.rs)"
+areas = ["performance", "startup"]
+paths = ["engine/nvforever/src/cpu_placement.rs"]
+args = ["--cell", "GSDocMitchellHouse", "--cpu-cache-placement", "off"]
+run_seconds = 8
+expect = [
+  { text = "cpu placement: off by setting (--cpu-cache-placement off)", label = "the setting turns it off" },
+]
+forbid = [{ text = "restricted to the", label = "nothing is restricted when it is off" }]
 
 [[scenario]]
 name = "crash-report"
@@ -4894,6 +5142,45 @@ expect = [
   { re = 'graphics: light glow$', label = "the light glow is on by default" },
   { re = 'drawn \(enabled at run time\): meshes.effects.ambient.fxlightbeamnvstrip\.nif', label = "the scripts switch the street lamp beams on" },
   { re = 'emittance: shapes drawn by scripts take source 0x0012762b', label = "the beams take the street light's colour" },
+]
+
+[[scenario]]
+name = "strip-signs-read"
+source = "#1540; docs/spec-notes/world.md section 6 \"HDR and bloom\": the Lucky 38's and the Tops' letters read at night, with the light glow on, and the sky is dark"
+areas = ["renderer", "effects", "lights"]
+paths = ["engine/nvforever/src/post.rs", "engine/nvforever/src/post.wesl", "engine/nvf-assets/src/nif_material*", "engine/nvf-assets/src/nif_spawn.rs"]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_SHOTS = "70:strip_signs_read.png" }
+args = ["--play", "--world", "TheStripWorldNew", "--pos=-250,8600,1037", "--heading", "185", "--pitch", "0", "--hour", "22", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 72
+expect = [{ re = 'light glow: bright pass (1\.9\d|2\.00) ', label = "the Strip's night bright pass" }]
+manual = "strip_signs_read.png: \"Lucky\" and \"38\" read as letters, and T O P S; the sky is near black, with no grey haze around the signs"
+
+[[scenario]]
+name = "securitron-face-bright"
+source = "#1540; docs/spec-notes/nif.md section 6: a Securitron's screen shows its face at the texture's brightness (grey 0.05 x 30, its colour times multiplier held to 1)"
+areas = ["renderer", "actors"]
+paths = ["engine/nvf-assets/src/nif_spawn.rs", "engine/nvf-assets/src/nif_material*"]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_SHOTS = "20:securitron_face_bright.png" }
+args = ["--cell", "Lucky38CasinoFloor01", "--play", "--pos=1087,-2290,7690", "--heading", "50", "--hour", "12", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 22
+expect = [{ re = 'actor materials: reference [0-9A-F]+ shape screen01:0 driven by its clips', label = "Victor's screen is drawn and its clips drive it" }]
+manual = "securitron_face_bright.png: Victor's cowboy face plain and bright on his screen, not burnt white and not dim"
+
+[[scenario]]
+name = "strip-bright-views"
+source = "#1540; docs/spec-notes/nif.md §6 \"Unlit shapes that are pictures, and cut-out signs\": the Tops marquee and Lucky 38 stair lights at night, with the light glow on"
+areas = ["renderer", "effects", "lights"]
+paths = [
+  "engine/nvf-assets/src/nif_material*", "engine/nvf-assets/src/nif_prepass.wesl", "engine/nvforever/src/emittance.rs",
+  "engine/nvf-play/src/script_draw.rs", "engine/nvforever/src/post.rs", "crates/fnv-world/src/imagespace.rs",
+  "engine/nvf-assets/src/nif_spawn.rs", "engine/nvf-assets/src/nif_surface_bindings.wesl",
+]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_SHOTS = "14:strip_tops_marquee.png" }
+args = ["--play", "--world", "TheStripWorldNew", "--pos=-400,2400,1014", "--heading", "270", "--pitch", "0", "--hour", "22", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 16
+manual = "strip_tops_marquee.png: the Tops marquee keeps distinct bright stripes with a small halo; the sky stays dark. The Lucky 38 rails may remain brighter and wider than the original at this view."
+expect = [
+  { re = 'graphics: light glow$', label = "the light glow is on by default" },
 ]
 
 # ------------------------------------------------------------------ aid items (docs/spec-notes/aid-items.md)
@@ -7853,6 +8140,36 @@ expect = [
 ]
 
 [[scenario]]
+name = "grenade-launcher-arc"
+source = "#1471: the Grenade Launcher's round on the Searchlight Airport runway, first person, along the runway (heading 75), aimed level, 15 and 30 degrees up; the original's (o26_gl, combat-rules.md §5) left 110-140 units above the ground at 1,750 units/s and first hit the ground 793 / 1,944 / 2,815 units out after 0.45 / 1.16 / 1.86 s, going off there"
+note = "the radscorpions about are killed first (killall, as the original's save had them); no spread (NVF_PLAY_TEST_NO_SPREAD), so each round leaves along the aim; the view is set again before each shot (the kick lifts it); each `fire` press is let go 0.1 s later"
+areas = ["combat"]
+paths = ["crates/fnv-combat/src/projectile.rs", "crates/fnv-combat/src/shot.rs", "engine/nvf-play/src/combat.rs"]
+env = { NVF_PLAY_TEST_GOD = "1", NVF_PLAY_TEST_NO_SPREAD = "1", NVF_PLAY_TEST_EQUIP = "0007EA25", NVF_PLAY_TEST_GIVE = "0007EA26:8", NVF_PLAY_TEST_CONSOLE = "1:killall;1.3:close", NVF_PLAY_TEST_LOOK = "2:75:0,10:75:15,15:75:30", NVF_PLAY_TEST_CONTROL = "3:weapon,6:fire,6.1:fire,11:fire,11.1:fire,16:fire,16.1:fire" }
+args = ["--cell", "Goodsprings", "--pos=37000,-117160,6180", "--play", "--hour", "12", "--no-voice", "--no-messages"]
+run_seconds = 22
+expect = [
+  { re = 'combat: projectile 40mmGrenLaunchProjectile left .* at 1750 units/s, -?0\.\d deg up; first touched .*, (?P<n>\d+) units across the ground', range = [760, 860], label = "aimed level it lands about as far as the original's 793 units" },
+  { re = 'combat: projectile 40mmGrenLaunchProjectile left .* at 1750 units/s, 15\.\d deg up; first touched .*, (?P<n>\d+) units across the ground', range = [1860, 2030], label = "15 degrees up: the original's 1,944 units" },
+  { re = 'combat: projectile 40mmGrenLaunchProjectile left .* at 1750 units/s, 30\.\d deg up; first touched .*, (?P<n>\d+) units across the ground', range = [2700, 2930], label = "30 degrees up: the original's 2,815 units" },
+  { re = 'combat: projectile 40mmGrenLaunchProjectile went off after [\d.]+ s at .*units across the ground from where it left$', count = 3, label = "each round goes off where it first lands, without rolling" },
+]
+
+[[scenario]]
+name = "frag-grenade-roll"
+source = "#1785: a thrown frag grenade on the Searchlight Airport runway, aimed level along the runway; the original's (o26_gl frag0, combat-rules.md §5) landed 513 units out after 0.58 s and rolled on to about 1,200 units by its fuse (2.5 s); launcher rounds do not roll (owner)"
+note = "the radscorpions about are killed first (killall); first person; one grenade thrown at 6 s (the attack held 0.5 s, the original's 30 loops)"
+areas = ["combat"]
+paths = ["crates/fnv-combat/src/projectile.rs", "engine/nvf-play/src/combat.rs"]
+env = { NVF_PLAY_TEST_GOD = "1", NVF_PLAY_TEST_NO_SPREAD = "1", NVF_PLAY_TEST_EQUIP = "00004330", NVF_PLAY_TEST_GIVE = "00004330:3", NVF_PLAY_TEST_CONSOLE = "1:killall;1.3:close", NVF_PLAY_TEST_LOOK = "2:75:0", NVF_PLAY_TEST_CONTROL = "3:weapon,6:fire,6.5:fire" }
+args = ["--cell", "Goodsprings", "--pos=37000,-117160,6180", "--play", "--hour", "12", "--no-voice", "--no-messages"]
+run_seconds = 13
+expect = [
+  { re = 'combat: projectile GrenadeFragProjectile left .*first touched .* after (?P<n>[\d.]+) s', range = [0.5, 0.7], label = "it lands after about as long as the original's (0.58 s)" },
+  { re = 'combat: projectile GrenadeFragProjectile went off after 2\.\d+ s .*, (?P<n>\d+) units across the ground from where it left, after rolling', range = [1000, 2500], label = "it rolls on and goes off on its fuse (ours throws at the PROJ's 1,200 units/s, the original's about 950: the distance is not the original's 1,206, issue #1785; about 1,880 expected: at most 1,200 x 0.7 s in the air plus 0.9 x 1,200 / 0.66 rolling is under 2,500)" },
+]
+
+[[scenario]]
 name = "grenade-blast-big-creature"
 source = "owner 2026-10-27: 40 mm grenades fired beside giant radscorpions often did them no harm; a blast now reaches every body within its radius by its nearest part, seen from the blast or just above it, and only walls, rocks, the ground and wrecks shield (projectile.rs blast, combat.rs cover_ray)"
 note = "a large radscorpion (CrRadscorpion2Large) placed 500 units from the player (GOD, UNSEEN) at 3 s and held (SetRestrained); the player fires two 40 mm grenades at it at 9.1 and 11.1 s"
@@ -7869,11 +8186,11 @@ expect = [
 [[scenario]]
 name = "impact-decals-bullets"
 source = "owner 2026-10-20: audit of shot effects, impact decals not built (docs/spec-notes/impact-decals.md): 9mm pistol shots at a rock by the Prospector Saloon leave bullet holes"
-note = "the rock NVNRockCanyon12 (00106B0C) stands 143 units east of the start: two shots without spread at it, two at the ground to the north-east (dirt), more than the IPCT's placement radius (16) apart; frames of the ground at 10.2 s and of the rock at 11.2 s"
+note = "the rock NVNRockCanyon12 (00106B0C) stands 143 units east of the start: two shots without spread at it, two at the ground to the north-east (dirt), more than the IPCT's placement radius (16) apart; frames of the ground at 10.2 s and of the rock at 11.2 s. --no-messages: since the aids' clock starts when the start's loading screen comes down (b8aa64a4f) the add-ons' OK-only start-up boxes stand from 5 s to 8.5 s, over the shots, and held all but one (2026-11-07)"
 areas = ["combat", "effects"]
 paths = ["engine/nvforever/src/decals.rs", "crates/fnv-combat/src/fx.rs"]
 env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_NO_SPREAD = "1", NVF_PLAY_TEST_EQUIP = "0000434F", NVF_PLAY_TEST_GIVE = "00004241:30", NVF_PLAY_TEST_LOOK = "2:97:-4,6.8:93:-1,7.6:60:-30,8.4:75:-30,9.6:68:-26,10.6:96:-3", NVF_PLAY_TEST_CONTROL = "3:weapon,6:fire,6.2:fire,7:fire,7.2:fire,7.8:fire,8:fire,8.6:fire,8.8:fire", NVF_PLAY_TEST_SHOTS = "10.2:decals_bullets_ground.png,11.2:decals_bullets_rock.png" }
-args = ["--cell", "Goodsprings", "--play", "--no-voice", "--pos=-67900,1400,8500", "--hour", "12"]
+args = ["--cell", "Goodsprings", "--play", "--no-voice", "--no-messages", "--pos=-67900,1400,8500", "--hour", "12"]
 run_seconds = 13
 expect = [
   { re = 'decals: Ballistic\w*Impact leaves Decal\w+Ballistic \(Decals\\ImpactDecal\w+\.dds\) on the world', label = "a bullet hole" },
@@ -7883,11 +8200,11 @@ expect = [
 [[scenario]]
 name = "impact-decals-flamer"
 source = "owner 2026-10-20: audit of shot effects, impact decals not built (docs/spec-notes/impact-decals.md): the flamer's stream scorches the ground (FlamerScorchBigImpact, texture set DecalDirtScorch 00019073)"
-note = "the flamer held at the ground by the Prospector Saloon from 6 s to 8 s; the stream lands every frame, so most impacts fall within the placement radius (16) of a live scorch and leave none; the frame at 8.5 s shows the scorches"
+note = "the flamer held at the ground by the Prospector Saloon from 6 s to 8 s; the stream lands every frame, so most impacts fall within the placement radius (16) of a live scorch and leave none; the frame at 8.5 s shows the scorches. --no-messages: since the aids' clock starts when the start's loading screen comes down (b8aa64a4f) the add-ons' OK-only start-up boxes stand from 5 s to 8 s, over the stream, and held all but one shot (2026-11-07)"
 areas = ["combat", "effects"]
 paths = ["engine/nvforever/src/decals.rs", "crates/fnv-combat/src/fx.rs"]
 env = { NVF_PLAY_TEST_EQUIP = "0000432D", NVF_PLAY_TEST_GIVE = "00029371:300", NVF_PLAY_TEST_LOOK = "2:46:-30,7:60:-30", NVF_PLAY_TEST_CONTROL = "3:weapon,6:fire,8:fire", NVF_PLAY_TEST_SHOTS = "8.5:decals_flamer.png" }
-args = ["--cell", "Goodsprings", "--play", "--no-voice", "--pos=-67900,1400,8500", "--hour", "12"]
+args = ["--cell", "Goodsprings", "--play", "--no-voice", "--no-messages", "--pos=-67900,1400,8500", "--hour", "12"]
 run_seconds = 12
 expect = [
   { re = 'decals: FlamerScorchBigImpact leaves DecalDirtScorch \(Decals\\ImpactDecalScorch01\.dds\) on the world: side \d+ of 150-250, depth 96', label = "the flamer's scorch on the ground" },
@@ -8280,6 +8597,19 @@ expect = [
 ]
 
 [[scenario]]
+name = "road-run-smooth"
+source = "owner 2026-11-07, issue #1805 (docs/spec-notes/physics.md §6.11): running east down the Goodsprings main street over the broken side of the road piece 0x00104FB5 (WastelandRoadStraightLongB), the body and camera followed every ripple of the road models' collision; the drawn height must be much smoother than the feet"
+areas = ["physics", "controls"]
+paths = ["engine/nvf-play/src/phys/step_lift.rs", "engine/nvf-play/src/player.rs", "crates/fnv-phys/src/character.rs"]
+env = { NVF_PLAY_TEST_MOVE = "8:1:0,18:0:0" }
+args = ["--play", "--pos=-72000,2152,8390", "--heading", "90", "--hour", "12", "--no-actors", "--no-voice", "--no-messages"]
+run_seconds = 20
+expect = [
+  { re = 'physics: walking on the ground for (\d+) steps', range = [300, 2000], label = "ran down the road on the ground" },
+  { re = 'drawn/feet (\d+\.\d+)', range = [0.0, 0.5], label = "the drawn height's vertical acceleration at most half the feet's (road ripples smoothed)" },
+]
+
+[[scenario]]
 name = "repconn-catwalk-stairs"
 source = "owner's playtest 2026-10-23 (docs/spec-notes/physics.md §6.9.1): the REPCONN Facility's catwalk stairs up to Chris Haversam's and Jason Bright's intercom (RocketLabMid); walking east up the 312-448 flight (24-unit risers and treads), then left up the 450-504 flight onto the intercom catwalk, without a jump (the feral ghouls left out: they block the stairs and fight)"
 areas = ["physics", "controls"]
@@ -8321,6 +8651,31 @@ expect = [
   { re = 'phys: 0x00153171 \S*skeletonfemale50scasual\.nif: collision posed from XRGD \(17 bodies\)' },
   { re = 'phys: 0x001531F5 \S*skeletonmale50scasual\.nif: collision posed from XRGD' },
   { re = 'phys: 0x0017B38F \S*skeletonfemale50scasual\.nif: collision posed from XRGD \(17 bodies\)' },
+]
+
+[[scenario]]
+name = "posed-clutter-torso"
+source = "issue #1400 (docs/spec-notes/dead-on-spawn.md §5.2): a skeleton torso copied with the whole clothed skeleton's 15-entry XRGD poses from its first five entries, and a single body with more entries than it holds is refused and logged once per model"
+areas = ["world", "ragdoll", "physics"]
+paths = ["engine/nvforever/src/clutter_pose.rs", "engine/nvforever/src/world.rs", "engine/nvf-play/src/phys/prepare.rs", "crates/fnv-world/src/xrgd.rs"]
+args = ["--cell", "BisonSteve02", "--play", "--no-voice", "--no-messages"]
+run_seconds = 14
+expect = [
+  { re = 'clutter pose: 0x000EA2D1 \S*skeletontorsonaked\.nif drawn in its stored pose \(5 bodies\)', label = "the torso poses from the first five entries" },
+  { re = 'phys: 0x000EA2D1 \S*skeletontorsonaked\.nif: collision posed from XRGD \(5 bodies\)', label = "its collision lies with the drawing" },
+  { re = 'clutter pose: \S*offrmlighthangingoff01\.nif: its XRGD does not fit \(one body, but more XRGD entries than it can hold; 3 entries, 1 body\); left in the file.s pose', label = "a single body with more entries is refused once per model" },
+]
+
+[[scenario]]
+name = "posed-clutter-container-skeleton"
+source = "issue #1400 (docs/spec-notes/dead-on-spawn.md §5.2): a whole clothed skeleton placed as a CONT (container) poses from its XRGD now that CONT is a posable type"
+areas = ["world", "ragdoll", "physics"]
+paths = ["engine/nvforever/src/clutter_pose.rs", "engine/nvforever/src/world.rs", "engine/nvf-play/src/phys/prepare.rs", "crates/fnv-world/src/xrgd.rs"]
+args = ["--cell", "NVDLC01Vault", "--play", "--no-voice", "--no-messages"]
+run_seconds = 14
+expect = [
+  { re = 'clutter pose: 0x0100DA28 \S*skeletonwholebodyclothed\.nif drawn in its stored pose \(15 bodies\)', label = "the whole clothed skeleton (a CONT) poses" },
+  { re = 'phys: 0x0100DA28 \S*skeletonwholebodyclothed\.nif: collision posed from XRGD \(15 bodies\)', label = "its collision lies with the drawing" },
 ]
 
 [[scenario]]
@@ -11242,6 +11597,20 @@ expect = [
 ]
 
 [[scenario]]
+name = "intercom-voice-unfiltered"
+source = "issue #992 (docs/spec-notes/audio.md §15.5): the original plays a line said through a talking activator as its file, without a voice filter (observer batch o28, Benny through the Tops' security intercom)"
+note = "VMQTops at stage 20, then VTopsPresidentialIntercomREF (0x00129556) activated: its OnActivate (SCPT 0x0012954B) sets Benny as its talking actor and activates itself while VMQTops 20 is done, objective 30 not shown and Benny is out of the suite (in a new game the script only says there is no response); Benny's GREETING through the intercom (0x00147865) needs only IsActorTalkingThroughActivator 1 and GetIsID Benny and has voice files"
+areas = ["dialogue", "audio"]
+paths = ["engine/nvf-play/src/voice_filter.rs", "engine/nvf-play/src/voice.rs", "crates/fnv-sim/src/forms.rs"]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "8", NVF_PLAY_TEST_SCRIPT = "5:stage:VMQTops:20,12:activate:VTopsPresidentialIntercomREF" }
+args = ["--cell", "2ETopsPresidentialSuite", "--play", "--pos=1990,1216,8040", "--heading", "0", "--hour", "20", "--no-messages"]
+run_seconds = 30
+expect = [
+  { re = 'voice: playing \S+\.ogg \([\d.]+ s\) .*line \S*00147865', label = "Benny's intercom line plays from its file" },
+  { re = 'voice: playing .* through the voice filter', count = 0, label = "and not through the voice filter" },
+]
+
+[[scenario]]
 name = "knockdown-player"
 source = "playthrough blocker row 1's leftover (docs/outstanding.md): the player knocked down by PushActorAway drops as a ragdoll, the view leaves first person, the controls are held, the get-up idle plays and the view and the controls come back (docs/spec-notes/unconscious.md §5.4)"
 note = "in Goodsprings, Easy Pete is brought 300 units north of the player at 14 s; at 16 s the console has him push the player with force 10 and reads the player's GetKnockedState (0 for a pushed actor); the player lies 2.4 s (PLAYER_KNOCKDOWN_DOWN, observed in the original), the camera held where the eye was; gets up with GetUpFaceUp or GetUpFaceDown seen from the third-person camera, and is in first person again"
@@ -11518,6 +11887,29 @@ expect = [
   { re = 'sneak gauges summary: on true, shown (?P<n>[\d.]+) s', range = [10, 30], label = "shown for the time sneaking" },
   { re = 'sneak gauges summary: .*most light (?P<n>\d+)', range = [30, 100], label = "noon light measured at the player" },
   { re = 'sneak gauges summary: .*most noise (?P<n>\d+)', range = [100, 1000], label = "the shot is loud" },
+]
+
+[[scenario]]
+name = "detection-light-night"
+source = "#970 (docs/design/detection.md §3): the light at the player follows the original's GetActorLightAmount; at midnight in Goodsprings under NVWastelandClear it read 82.35 (210/255, the night sunlight's blue) in o11_light and o27_light"
+areas = ["detection"]
+paths = ["engine/nvforever/src/detection.rs", "crates/fnv-world/src/sky.rs"]
+args = ["--cell", "Goodsprings", "--play", "--hour", "0", "--weather", "NVWastelandClear", "--no-voice", "--no-messages"]
+run_seconds = 20
+expect = [
+  { re = 'detection summary: .*; light at the player (?P<n>[\d.]+) to', range = [80, 85], label = "the least light at the player is the night sunlight's 82.35" },
+]
+
+[[scenario]]
+name = "wind-tumbleweeds"
+source = "#1401 (docs/spec-notes/wind.md): the bodies whose model flags respond to wind (the tumbleweeds, bhkRigidBody Body Flags bit 0) start awake and roll downwind; in the original those near Goodsprings rolled north-north-west at 150-210 units a second after a load (o27_tumble)"
+areas = ["physics"]
+paths = ["engine/nvforever/src/tumble.rs", "crates/fnv-phys/src/world.rs", "crates/fnv-collide/src/nif.rs"]
+args = ["--cell", "Goodsprings", "--play", "--hour", "12", "--weather", "NVWastelandClear", "--no-voice", "--no-messages"]
+run_seconds = 30
+expect = [
+  { re = 'wind summary: (?P<n>\d+) bodies respond to the wind', range = [1, 100], label = "the tumbleweeds near Goodsprings respond to the wind" },
+  { re = 'wind summary: .*the farthest went [0-9A-F]{8} (?P<n>\d+) units', range = [100, 100000], label = "one of them rolls away" },
 ]
 
 [[scenario]]
@@ -11907,10 +12299,10 @@ expect = [
 [[scenario]]
 name = "blast-perks-grenade-demolition"
 source = "#1569 (docs/spec-notes/perk-entry-points.md §2): the player's own 40 mm grenade at their feet: Demolition Expert changes the damage, with the weapon behind the blast, and no DT comes in"
-note = "The damage falls off with where the blast lands, so the check reads the perks line. Its factor is not read here (a log line cannot divide): fnv-combat a_blast_passes_the_damage_and_dt_entry_points and nvf-play combat::tests::blast_perks have the arithmetic. the shot catches the player in about 6 runs of 10 (#1581): a missing blast line fails this scenario, so rerun it before reading more into that"
+note = "Aimed 70 degrees down, not 75: since the round leaves the muzzle (#1471) a shot at 75 lands about 10 units off its old spot, where the blast's line-of-sight rays to the player were blocked in both runs (the Hit the Deck runs, same aim, were caught); The damage falls off with where the blast lands, so the check reads the perks line. Its factor is not read here (a log line cannot divide): fnv-combat a_blast_passes_the_damage_and_dt_entry_points and nvf-play combat::tests::blast_perks have the arithmetic. the shot catches the player in about 6 runs of 10 (#1581): a missing blast line fails this scenario, so rerun it before reading more into that"
 areas = ["combat", "perks"]
 paths = ["engine/nvf-play/src/combat.rs", "crates/fnv-combat/src/damage.rs"]
-env = { NVF_PLAY_TEST_SCRIPT_MENUS = "1", NVF_PLAY_TEST_NO_SPREAD = "1", NVF_PLAY_TEST_EQUIP = "0007EA25", NVF_PLAY_TEST_GIVE = "0007EA26:8", NVF_PLAY_TEST_CONSOLE = "4:player.addperk DemolitionExpert;player.getav health;4.6:close;14:player.getav health;14.4:close", NVF_PLAY_TEST_LOOK = "6:46:-75", NVF_PLAY_TEST_CONTROL = "7:weapon,10:fire" }
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "1", NVF_PLAY_TEST_NO_SPREAD = "1", NVF_PLAY_TEST_EQUIP = "0007EA25", NVF_PLAY_TEST_GIVE = "0007EA26:8", NVF_PLAY_TEST_CONSOLE = "4:player.addperk DemolitionExpert;player.getav health;4.6:close;14:player.getav health;14.4:close", NVF_PLAY_TEST_LOOK = "6:46:-70", NVF_PLAY_TEST_CONTROL = "7:weapon,10:fire" }
 args = ["--cell", "Goodsprings", "--play", "--no-voice", "--no-messages", "--pos=-67900,1400,8500", "--hour", "12"]
 run_seconds = 18
 expect = [
@@ -12476,10 +12868,10 @@ expect = [
 [[scenario]]
 name = "car-not-pushed"
 source = "owner's playtest list 7 item 37 (docs/spec-notes/physics.md §6.10): cars (MSTT Car01-Car03, Havok mass 600-1000) moved when the player ran into them; a character no longer pushes a body heavier than 250"
-note = "the Car02 0x0015206B south of Primm; the player 250 units west of it runs east into it for 3 s and slides round it. The car rises 3.4 and slides 2.5 units (4.1 in all) as it wakes and comes out of the ground it is placed a little into, the same with the character's contacts off (2026-10-23): something else wakes it, likely the raven 0x0017467E perched on it; a push moves it further"
+note = "the Car02 0x0015206B south of Primm; the player 250 units west of it runs east into it for 2.5 s and slides round it. The six radscorpions near it (0x00174BD9-0x00174BDE) are disabled at 1 s: since the aids' clock starts when the start's loading screen comes down (b8aa64a4f) they reach the player before the run ends, and a blow's knockback (124 units) carried the feet past the place the check reads (2026-11-07); 2.5 s and not the first 3 s because 3 s is reckoned to end about at that place's eastern edge (the feet at exit less the knockback, not measured apart). The car rises 3.4 and slides 2.5 units (4.1 in all) as it wakes and comes out of the ground it is placed a little into, the same with the character's contacts off (2026-10-23): something else wakes it, likely the raven 0x0017467E perched on it; a push moves it further"
 areas = ["physics"]
 paths = ["crates/fnv-phys/src/character.rs", "crates/fnv-phys/src/world.rs"]
-env = { NVF_PLAY_TEST_MOVE = "8:1:0,11:0:0" }
+env = { NVF_PLAY_TEST_MOVE = "8:1:0,10.5:0:0", NVF_PLAY_TEST_SCRIPT = "1:call:0x00174BD9:Disable,1:call:0x00174BDA:Disable,1:call:0x00174BDB:Disable,1:call:0x00174BDC:Disable,1:call:0x00174BDD:Disable,1:call:0x00174BDE:Disable" }
 args = ["--play", "--pos=-70720,-85587,6500", "--heading", "90", "--hour", "12", "--no-voice", "--no-messages"]
 run_seconds = 14
 expect = [
@@ -12810,6 +13202,24 @@ order = [[
 ]]
 
 [[scenario]]
+name = "pickpocket-plant-dynamite"
+source = "#1640 (docs/spec-notes/pickpocket.md §5): a stick of dynamite placed in a pocket while sneaking goes live; the victim panics (the idle tree's root naming GetPlantedExplosive) and stands; after fProjectileInventoryGrenadeTimer it goes off and kills him (its 75 points hurt anyone); the kill is the player's and no faction turns on the player"
+note = "Chet in the general store is held where he stands (SetRestrained 1 at 0.5 s, as in pickpocket-steal); the console sets the player's Sneak to 100 at 2 s (the placement's chance at its cap); the inventory is emptied at 6 s, after the pre-order packs' items have come, and given one stick of Dynamite at 6.5 s (value 25: a chance of 78% against Chet's Sneak 15; a Frag Grenade's value of 150 leaves 16%, and the seeded first roll, 64, would catch it); the player stands at him (NEAR), sneaks at 4 s, is put in front of him at 7 s (FACE), presses E at 8 s, moves to the player's side at 9.5 s (left), places the dynamite at 10 s (Enter; the roll is seeded by the victim, so it repeats) and closes the menu at 11 s (E); the fuse's 2 s run after. Chet, in front of the player, detects him, so the kill is seen by its victim (Goodsprings infamy, observed 2026-11-06); nobody else is in the store to turn"
+areas = ["activate", "menus", "crime", "idles"]
+paths = ["engine/nvf-play/src/pickpocket.rs", "crates/fnv-game/src/pickpocket.rs", "engine/nvforever/src/idles.rs", "crates/fnv-game/src/idles.rs"]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_NEAR = "00104C79", NVF_PLAY_TEST_FACE = "7:00104C79", NVF_PLAY_TEST_CONSOLE = "2:player.setav sneak 100;2.3:close", NVF_PLAY_TEST_SCRIPT = "0.5:call:GSChetRef:SetRestrained:1,6:call:player:RemoveAllItems,6.5:call:player:AddItem:WeapNVDynamite:1", NVF_PLAY_TEST_CONTROL = "4:sneak", NVF_PLAY_TEST_KEYS = "8:e,9.5:left,10:enter,11:e" }
+args = ["--cell", "GSGeneralStore", "--play", "--hour", "12", "--no-voice", "--no-messages"]
+run_seconds = 20
+order = [[
+  { re = 'pickpocket: open on 0x00104C79', label = "E opens his pocket" },
+  { re = 'pickpocket: planted Dynamite x1 \(live, explosion', label = "the dynamite goes live in his pocket" },
+  { re = 'idle: GSChetRef plays PanicGrenadePlant.*\(Panic\)', label = "he panics: the idle tree's panic idle plays" },
+  { re = "pickpocket: Dynamite explodes in 0x00104C79's pocket: it dies", label = "it goes off and kills him" },
+  { re = 'crime: murder against GSChetRef 0x00104C79; seen by \[.*\]; turned on the player: \[\]', label = "the kill is the player's murder; nobody turns" },
+]]
+forbid = [{ text = "crime: the player is now an enemy of", label = "no faction turns on the player" }]
+
+[[scenario]]
 name = "ragdoll-under-a-box"
 source = "#1049 (owner's playtest): a corpse falls even when a message box opens right after the kill (the faction reputation box after a fight's last kill); its calm and awake timers count physics time, which stands still under the box (engine/nvforever/src/ragdoll.rs)"
 note = "Chet in the general store is killed by a test-aid hit at 6 s; a script's message box (VCG04Message) opens at 6.05 s and stays 3 s (longer than the 1.5 s calm that sets a body at rest), then closes; the base game alone, so that no add-on's start-up boxes are held 3 s too"
@@ -13011,6 +13421,26 @@ env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_CONTROL = "3:view", NV
 args = ["--cell", "GSProspectorSaloonInterior", "--play", "--no-voice", "--no-messages"]
 run_seconds = 30
 expect = ["effect shader: Flames01 on "]
+
+[[scenario]]
+name = "burn-first-person"
+source = "issue #1772: the reporter sees the inside of the burning player's head and body in orange in first person [observed]; overlays and add-ons follow the camera's view of the third-person body [design: docs/spec-notes/effect-shaders.md §4, §8]"
+note = "The player starts in first person, starts Flames01 at 8 s and switches to third person at 13 s. Compare fp_no_fire.png, fp_on_fire.png and tp_on_fire.png: first person must stay clear, and third person must show the burn. The visibility logs must go from no covered meshes seen to some seen."
+areas = ["effect-shaders", "particles", "render"]
+paths = [
+  "engine/nvforever/src/effect_shaders.rs", "engine/nvforever/src/effect_particles.rs",
+  "engine/nvforever/src/player_body.rs", "engine/nvforever/src/shot_fx.rs", "engine/nvforever/src/particles.rs",
+  "docs/spec-notes/effect-shaders.md",
+]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_SCRIPT = "8:call:player:PlayMagicShaderVisuals:0x0005F9B6", NVF_PLAY_TEST_CONTROL = "13:view", NVF_PLAY_TEST_SHOTS = "7:fp_no_fire.png,11:fp_on_fire.png,17:tp_on_fire.png" }
+args = ["--cell", "GSProspectorSaloonInterior", "--play", "--no-voice", "--no-messages"]
+run_seconds = 22
+expect = [
+  "effect shader: Flames01 on ",
+  { re = 'effect shader: Flames01 on the player: the camera sees 0 of [1-9]\d* covered meshes', label = "the burning body is unseen in first person" },
+  { re = 'effect shader: Flames01 on the player: the camera sees (?P<n>[1-9]\d*) of [1-9]\d* covered meshes', range = [1, 1000], label = "the burning body is seen in third person" },
+  { gap = [ { re = 'effect shader: Flames01 on the player: the camera sees 0 of [1-9]\d* covered meshes' }, { re = 'effect shader: Flames01 on the player: the camera sees [1-9]\d* of [1-9]\d* covered meshes' } ], range = [0.1, 100], label = "the hidden burn precedes the visible burn" },
+]
 
 [[scenario]]
 name = "b29-spray-follows-sequence"
@@ -19139,6 +19569,24 @@ expect = [
 ]
 
 [[scenario]]
+name = "tfc-script-place"
+source = "[observed: sup3 cam.setpos, cam.setangle.wide] SUP batch 3 (#1008, ext-sup3.md §1): with the free camera on, a script's SetTFCPos and SetTFCAngle move it (nvf_play::free_cam takes Game::ui.camera.tfc) and read back as set, 400 not wrapped; [design] the camera starts where tfc leaves it"
+areas = ["camera", "scripts", "console"]
+paths = [
+  "crates/fnv-game/src/nvse_sup3.rs", "crates/fnv-game/src/functions/camera.rs",
+  "engine/nvf-play/src/free_cam.rs",
+]
+env = { NVF_PLAY_TEST_GOTO = "1:-68375:4800:8600", NVF_PLAY_TEST_CONSOLE = "10:tfc;10.5:close;12:SetTFCAngle Z 400;12.2:SetTFCPos X -68000;12.5:close;14:PrintC \"nvf tfc %g %g\", (GetTFCPos X), (GetTFCAngle Z);14.5:close;16:tfc;16.5:close" }
+args = ["--cell", "Goodsprings", "--play", "--pos=-68375,4800,8700", "--no-voice"]
+run_seconds = 18
+expect = [
+  { re = 'free camera: on \(mode 0', label = "tfc frees the camera" },
+  { re = 'free camera: a script put it at \(-68000, ', label = "the engine moves the camera where the script set it" },
+  { re = 'script: print "nvf tfc -68000 400"', label = "the place reads back as set, the heading not wrapped" },
+  { re = 'free camera: off', label = "tfc puts the camera back" },
+]
+
+[[scenario]]
 name = "ui-hud-code-traits"
 source = "[observed: hud.md §14] T4a: HUD places at 16:10 (visibility is in the unit tests: the console line runs with the console open, a PlayState::Menu that hides NVForever's HUD); [design] GetUIFloat through the console beside the current drawing"
 areas = ["ui", "scripts", "console"]
@@ -19665,7 +20113,7 @@ note = "positions at 1280 x 720 (screen 1706.67 x 960; CM_MainRect at 341.33, 80
 areas = ["ui", "menu", "items"]
 paths = [
   "engine/nvforever/src/imagespace.rs",
-  "engine/nvf-play/src/tiles/container_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/item_card.rs",
+  "engine/nvf-play/src/tiles/container_menu.rs", "engine/nvf-play/src/tiles/item_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/item_card.rs",
   "engine/nvf-play/src/tiles/menus.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/input.rs",
   "engine/nvf-play/src/tiles/layout.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs",
   "engine/nvf-play/src/menu.rs", "engine/nvf-play/src/menu/**", "engine/nvf-play/src/pad.rs",
@@ -19749,7 +20197,7 @@ source = "[design] barter-menu.md §8 (T15c, issue #1468): with [UI] TileMenus=C
 note = "at 1280 x 720 the prompt's box stands at x 483.33: the decrease arrow at x 635-652, y 452-487; OK ends at x 1170, y 492-543; the row clicked under the prompt stands above its box; the pointer goes to the box's first row after OK, so the log reads what the box holds"
 areas = ["ui", "menu", "items"]
 paths = [
-  "engine/nvf-play/src/tiles/container_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/input.rs",
+  "engine/nvf-play/src/tiles/container_menu.rs", "engine/nvf-play/src/tiles/item_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/input.rs",
   "engine/nvf-play/src/tiles/menus.rs", "engine/nvf-play/src/menu.rs", "engine/nvf-play/src/menu/**",
 ]
 env = { NVF_PLAY_TEST_TILE_MENUS = "ContainerMenu,QuantityMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_GIVE = "00004241:20", NVF_PLAY_TEST_KEYS = "12:f10", NVF_PLAY_TEST_POINTER = "14:600:186,15:600:186:click,17:600:238:click,18:644:470,18.5:644:470:click,19.5:1155:515,20:1155:515:click,20.5:1150:186,21:off", NVF_PLAY_TEST_SHOTS = "16:tiles_container_quantity.png" }
@@ -19778,7 +20226,7 @@ source = "[design] barter-menu.md §7 and §8: with [UI] TileMenus=ContainerMenu
 note = "the run and pointer steps of tiles-container-quantity, its positions at 1280 x 720"
 areas = ["ui", "menu", "items"]
 paths = [
-  "engine/nvf-play/src/tiles/container_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/input.rs",
+  "engine/nvf-play/src/tiles/container_menu.rs", "engine/nvf-play/src/tiles/item_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/input.rs",
   "engine/nvf-play/src/tiles/menus.rs", "engine/nvf-play/src/menu.rs", "engine/nvf-play/src/menu/**",
 ]
 env = { NVF_PLAY_TEST_TILE_MENUS = "ContainerMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_GIVE = "00004241:20", NVF_PLAY_TEST_KEYS = "12:f10", NVF_PLAY_TEST_POINTER = "14:600:186,15:600:186:click,17:600:238:click,18:644:470,18.5:644:470:click,19.5:1155:515,20:1155:515:click,20.5:1150:186,21:off", NVF_PLAY_TEST_SHOTS = "16:tiles_container_quantity_alone.png" }
@@ -19807,7 +20255,7 @@ name = "container-default-drawing"
 source = "barter-menu.md §5 and §8: without the switch the container menu is the hand-built drawing: nothing of the tile menu is written or drawn, and its keys act as before; the same views as tiles-container, for the pictures beside it"
 note = "the same give and times as tiles-container, by keys alone (the aid's pointer is the tiles'); the 20 rounds given join the start inventory's 50"
 areas = ["ui", "menu", "items"]
-paths = ["engine/nvforever/src/imagespace.rs", "engine/nvf-play/src/menu.rs", "engine/nvf-play/src/menu/**", "engine/nvf-play/src/tiles/container_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/pad.rs"]
+paths = ["engine/nvforever/src/imagespace.rs", "engine/nvf-play/src/menu.rs", "engine/nvf-play/src/menu/**", "engine/nvf-play/src/tiles/container_menu.rs", "engine/nvf-play/src/tiles/item_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/pad.rs"]
 env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_GIVE = "00004241:20,000E9C3B,0008F21A,0003307F,00015169:2,00022102,000E3778,00020423,00034045,0008C214,0008ED0B,0001519E", NVF_PLAY_TEST_EQUIP = "000E3778", NVF_PLAY_TEST_KEYS = "12:f10,14:a,16:enter,17.5:e,18:enter,18.5:a,20:d,22:a,22.2:down,22.4:down,22.6:down,22.8:down,23:down,23.2:down,23.4:down,23.6:down,25:wheel-down,25.5:wheel-up,33:r,35:f10,36.5:e", NVF_PLAY_TEST_SHOTS = "13:default_container_open.png,15:default_container_row.png,17:default_container_prompt.png,21:default_container_right.png,22.5:default_container_card_weapon.png,22.7:default_container_card_armour.png,23.1:default_container_card_aid.png,24:default_container_scrolled.png,27.5:default_container_paged.png,36:default_container_reopened.png" }
 args = ["--cell", "GSSchoolHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
 run_seconds = 40
@@ -19881,7 +20329,7 @@ name = "tiles-trait-pointer-done"
 source = "[design] chargen.md §4.1: with [UI] TileMenus=TraitMenu Done acts once by the pointer, a script's click on the file's tiles acts as the pointer's, the stages go on after it, and a menu opened again starts over"
 note = "positions as tiles-trait-menu; Done x 1277-1355, y 192-243 [observed: its place -78, 52 in the original's job trait]. A script's ClickMenuButton on id 5 is Reset, on id 6 Done; it goes through the script aid, as the console aid waits for the menu to close"
 areas = ["ui", "menus", "chargen"]
-paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/script.rs", "crates/fnv-ui/src/input.rs", "crates/fnv-game/src/functions/ui.rs", "crates/fnv-game/src/ui_functions.rs"]
+paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/tiles/list.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/script.rs", "crates/fnv-ui/src/input.rs", "crates/fnv-game/src/functions/ui.rs", "crates/fnv-game/src/ui_functions.rs", "engine/nvf-play/src/tiles/selection_menu.rs"]
 env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "TraitMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:menu:1084,25:call:-:ClickMenuButton:\"TraitMenu#5\",32:menu:1084", NVF_PLAY_TEST_CHARGEN = "23:pick:Kamikaze,34:pick:Small Frame", NVF_PLAY_TEST_POINTER = "27:1320:215,28:1320:215:click,36:1320:215,37:1320:215:click,38:off" }
 args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
 run_seconds = 42
@@ -19903,7 +20351,7 @@ name = "tiles-trait-default-drawing"
 source = "chargen.md §4 and §4.1: without the switch the trait menu is the hand-built drawing: nothing of the tile menu runs, and it acts as before; the same views as tiles-trait-menu, for the pictures beside it"
 note = "the same picks and times as tiles-trait-menu's, the keys alone"
 areas = ["ui", "menus", "chargen"]
-paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/chargen/draw.rs", "engine/nvf-play/src/tiles/input.rs"]
+paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/chargen/draw.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/selection_menu.rs"]
 env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_CONSOLE = "18:player.setav perception 10", NVF_PLAY_TEST_SCRIPT = "20:menu:1084", NVF_PLAY_TEST_CHARGEN = "23:pick:Four Eyes,24:pick:Kamikaze,25:pick:Small Frame,26:pick:Wild Wasteland,27:pick:Kamikaze,28:reset,29:pick:Small Frame", NVF_PLAY_TEST_KEYS = "39:down,48:down,52:a", NVF_PLAY_TEST_SHOTS = "22:tiles_trait_off_open.png,25.5:tiles_trait_off_taken.png" }
 args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
 run_seconds = 56
@@ -19924,7 +20372,7 @@ name = "tiles-trait-missing-file"
 source = "chargen.md §4.1: the switch on with the file missing: the whole hand-built menu, from the start, working, one warning"
 note = "the aid NVF_PLAY_TEST_TRAIT_TILES reads the file as not there, as nothing may be written to the game's folder; a tree with no menu is the unit test readiness_needs_the_whole_file"
 areas = ["ui", "menus", "chargen"]
-paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/tiles/draw.rs"]
+paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/selection_menu.rs"]
 env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "TraitMenu", NVF_PLAY_TEST_TRAIT_TILES = "0:missing", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:menu:1084", NVF_PLAY_TEST_CHARGEN = "23:pick:Kamikaze,24:pick:Small Frame,26:done", NVF_PLAY_TEST_SHOTS = "25:tiles_trait_missing.png" }
 args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
 run_seconds = 30
@@ -19941,7 +20389,7 @@ name = "tiles-trait-cut-file"
 source = "chargen.md §4.1: the switch on with a file cut down: the whole hand-built menu, with the reason"
 note = "the aid takes a tile the model writes out of the tree as the menu is built"
 areas = ["ui", "menus", "chargen"]
-paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/tiles/draw.rs"]
+paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/selection_menu.rs"]
 env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "TraitMenu", NVF_PLAY_TEST_TRAIT_TILES = "0:cut:LUM_PointCounter", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:menu:1084", NVF_PLAY_TEST_CHARGEN = "23:pick:Kamikaze,26:done" }
 args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
 run_seconds = 30
@@ -19957,7 +20405,7 @@ name = "tiles-trait-falls-back-open"
 source = "chargen.md §4.1: a tile the model needs going while the menu shows: the hand-built menu comes back whole with what was taken, without opening again or resetting its sheet, and the blur goes"
 note = "the aid takes the description out at 25 s, after Kamikaze was taken on the tile menu"
 areas = ["ui", "menus", "chargen"]
-paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/tiles/draw.rs"]
+paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/selection_menu.rs"]
 env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "TraitMenu", NVF_PLAY_TEST_TRAIT_TILES = "25:cut:TM_DescriptionText", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:menu:1084", NVF_PLAY_TEST_CHARGEN = "23:pick:Kamikaze,27:pick:Small Frame,30:done", NVF_PLAY_TEST_SHOTS = "24:tiles_trait_fallback_before.png,28:tiles_trait_fallback_after.png" }
 args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
 run_seconds = 34
@@ -19979,7 +20427,7 @@ name = "tiles-trait-stage-handover"
 source = "chargen.md §4.1, review of #1519's first round: a script putting the tag-skill menu in the tile-drawn trait menu's place: that menu is drawn by hand from the same frame, never a blank frame, and the blur goes with the tiles; then the same back again"
 note = "the shot at 27 must show the hand-built tag-skill menu whole, the one at 33 the tile trait menu with the taken mark"
 areas = ["ui", "menus", "chargen"]
-paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/chargen.rs", "crates/fnv-game/src/chargen.rs"]
+paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/chargen.rs", "crates/fnv-game/src/chargen.rs", "engine/nvf-play/src/tiles/selection_menu.rs"]
 env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "TraitMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:menu:1084,26:menu:1048,32:menu:1084", NVF_PLAY_TEST_CHARGEN = "23:pick:Kamikaze,28:pick:Guns,28.2:pick:Speech,28.4:pick:Survival,29:done,34:done", NVF_PLAY_TEST_SHOTS = "25:tiles_trait_handover_before.png,26.5:tiles_trait_handover_tags.png,33:tiles_trait_handover_back.png" }
 args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
 run_seconds = 38
@@ -19998,7 +20446,7 @@ name = "tiles-trait-fallback-reopen"
 source = "chargen.md §4.1, review of #1519's first round: a menu closed after falling back to hand-built, then opened again: it is drawn from a new tree's tiles from the top, nothing of how the last was left in it"
 note = "the aid's pick of the last row leaves the list at its end, 3 of 3; the cut is one tile of the first tree, and a new tree has it"
 areas = ["ui", "menus", "chargen"]
-paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs"]
+paths = ["engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/tiles/selection_menu.rs"]
 env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "TraitMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:menu:1084,32:menu:1084", NVF_PLAY_TEST_TRAIT_TILES = "25:cut:TM_DescriptionText", NVF_PLAY_TEST_CHARGEN = "23:pick:Wild Wasteland,27:done,35:done" }
 args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
 run_seconds = 38
@@ -20514,6 +20962,23 @@ expect = [
 order = [["nvf mcm install check 1", "tiles: a mod's tiles in StartMenu", "pause menu: mods page", "scripts: MenuMode 1013 blocks run", "pause menu: mods page closed", "nvf mcm install check 0"]]
 
 [[scenario]]
+name = "travel-skip-sun-shadows"
+source = "#1732: test aid NVF_PLAY_TEST_TRAVEL_SKIP_SUN_SHADOWS has a travel's screen not wait for the sun's shadow pipelines (engine/nvforever/src/pipeline_gate.rs), to compare both ways by measuring; their label alone cannot tell them from a camera's prepass, so this also checks that the test finds some"
+areas = ["renderer"]
+paths = ["engine/nvforever/src/pipeline_gate.rs"]
+env = { NVF_PLAY_TEST_TRAVEL_SKIP_SUN_SHADOWS = "1", NVF_PLAY_TEST_PIPELINE_LOG = "1", NVF_PLAY_TEST_SCRIPT_MENUS = "0.05", NVF_PLAY_TEST_CONSOLE = "2:cow WastelandNV -6 3;2.3:close" }
+args = ["--play", "--cell", "Goodsprings", "--no-voice", "--no-messages", "--hour", "12"]
+run_seconds = 12
+expect = [
+  { text = "test aid NVF_PLAY_TEST_TRAVEL_SKIP_SUN_SHADOWS: a travel's screen does not wait", label = "the aid is on" },
+  { re = 'pipeline \d+ asked: (pbr_)?prepass_pipeline \(sun shadow\)', label = "pipelines are found to be the sun's shadows" },
+  { re = 'pipeline \d+ asked: (pbr_)?prepass_pipeline$', label = "and the camera's prepass pipelines are not taken for them" },
+  { re = 'loading screen down after [\d.]+ s \(the start', label = "the start's screen comes down" },
+  { re = 'loading screen down after [\d.]+ s\s*$', label = "the travel's screen comes down" },
+]
+forbid = [{ text = "pipelines not ready after", label = "the pipelines' cap" }]
+
+[[scenario]]
 name = "start-conversation-walks-up"
 source = "issue #1544 (owner): the Legion explorers about Nelson greeted the player halfway to Novac. Their script (nvNelsonExplorerBarkSCRIPT) calls StartConversation Player once its GameMode runs, and the conversation opened at once from 10,099 units off. With the AI running, StartConversation's speaker now walks up first (fnv_game Game::walk_up_greet, fnv_ai Ai::walk_up_step)"
 note = "the player stands near Ranger Milo's post at (42000, -38000), noon; explorer 01 (0x0014F408) is placed at (51986, -38898). It runs over and opens the conversation once within 150 units, about 18 game minutes later"
@@ -20556,6 +21021,24 @@ expect = [
   { re = 'collision of dropped 0xFF00000[0-3] added: meshes.armor.\S+.go\.nif, 1 bodies \(dynamic\).*: the model.s [24] dynamic bodies joined into one', count = 4, label = "their bodies are joined into one" },
   { re = 'dropped 0xFF00000[0-3] came to rest at', count = 4, label = "each piece of clothing comes to rest" },
   { re = 'dropped 0xFF00000[0-4] came to rest at .*, (?P<n>[\d.]+) below where its collision was added', range = [60, 120], all = true, label = "on the ground, about 85 units below the drop point, as the pistol" },
+]
+
+[[scenario]]
+name = "wait-greeter-stops-short"
+source = "issue #1597 (owner): waiting while a force-greeter walks up put him inside the player (Malcolm Holmes). The wait walks the approach to its end, and its end was the player's own spot. The approach's way now ends within three quarters of the talking distance (fnv_ai approach: goal radius), and the walker stops at a widened goal radius however long its step (fnv_nav Walker)"
+note = "the first star cap enables Holmes and gives him his Dialogue package (the player, distance 100); at 4 s the console moves him 1,500 units east of the player; at 7-9 s the player waits one hour. Before the change he stood 30 units off when the wait ended (inside the player, then pushed aside)"
+areas = ["ai", "dialogue", "wait"]
+paths = ["crates/fnv-nav/src/follow.rs", "crates/fnv-ai/src/carry.rs"]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_GOD = "1", NVF_PLAY_TEST_SCRIPT = "1:call:player:AddItem:NVStarBottleCap:1", NVF_PLAY_TEST_CONSOLE = "4:sshqmalcolmholmesref.moveto player 1500 0 0;4.3:close", NVF_PLAY_TEST_WAIT = "7:open,8:hours=1,9:accept" }
+args = ["--play", "--pos=21000,-14450,7500", "--heading", "90", "--hour", "12", "--no-voice"]
+run_seconds = 30
+order = [[
+  { re = 'SSHQMalcolmHolmesREF: runs up to 0x00000014 to talk .*: 1500 units away', label = "Holmes runs at the player from 1,500 units" },
+  { re = 'an hour passed in the wait menu', label = "the player waits an hour" },
+  { re = 'SSHQMalcolmHolmesREF: starts a conversation with 0x00000014 from (?P<n>\d+) units', range = [50, 150], label = "after the wait he talks from his talking distance, not from inside the player" },
+]]
+forbid = [
+  { re = 'SSHQMalcolmHolmesREF: was pushed aside', label = "he was never on the player's spot to be pushed off it" },
 ]
 
 [[scenario]]
@@ -21071,8 +21554,10 @@ expect = [
   { text = "script runner: gr_nvfsmoke.txt ran (game restart)", count = 1 },
   "main menu: New Game",
   { text = "script runner: ln_nvfsmoke.txt ran (new game)", count = 1, label = "the ln_ file runs once the new game begins" },
+  { text = "main menu: open", label = "the menu opens" },
+  { text = "scripts ready in", label = "the script data is taken in" },
 ]
-order = [["script runner: gr_nvfsmoke.txt ran", "main menu: New Game", "script runner: ln_nvfsmoke.txt ran (new game)"]]
+order = [["script runner: gr_nvfsmoke.txt ran", "main menu: New Game", "script runner: ln_nvfsmoke.txt ran (new game)"], ["main menu: open", "scripts ready in"]]
 
 # ------------------------------------------------------------------ the dialogue menu from its file
 # What these prove: the pieces handed to the tile renderer (`tiles: DialogMenu painted`), the tile
@@ -21441,6 +21926,22 @@ expect = [
 forbid = [{ text = "pipelines not ready after", label = "the pipelines' cap" }, { text = "failed and will not be tried again", label = "a pipeline that failed for good" }, { text = "and no longer waited for", label = "a pipeline over the cap" }]
 
 [[scenario]]
+name = "start-times"
+source = "#1732: where a start's first seconds go, logged (engine/nvforever/src/start_times.rs); the radio's and the audio places' reads left the Startup schedule for threads of their own (engine/nvf-play/src/start_read.rs) and still arrive, with Goodsprings' music found from them"
+areas = ["renderer", "sound"]
+paths = ["engine/nvforever/src/start_times.rs", "engine/nvf-play/src/start_read.rs"]
+args = ["--play", "--cell", "Goodsprings", "--no-voice", "--no-messages", "--pos=-67900,1400,8500"]
+run_seconds = 2
+expect = [
+  { re = 'start: Startup [\d.]+ s; frame 1 [\d.]+ s: [\d.]+ s before Update, [\d.]+ s in Update, [\d.]+ s after it', count = 1, label = "the first frame's parts are timed" },
+  { re = 'start: first render frame finished [\d.]+ s after frame 1 ended', count = 1, label = "and the first render frame" },
+  { re = 'radio: \d+ stations .* read in \d+ ms', count = 1, label = "the radio's read arrives from its thread" },
+  { re = 'music: \d+ media sets, .* read in \d+ ms', count = 1, label = "the audio places' read arrives from its thread" },
+  { text = "music: in marker", label = "the music finds its place from them" },
+]
+forbid = [{ text = "a start-up read stopped with a panic", label = "a read that failed" }]
+
+[[scenario]]
 name = "sierra-madre-lobby-hologram"
 source = "#1424: in the Sierra Madre lobby the starlet hologram (NVDLC01StarletHologramLobby, its effect shader NVDLC01HologramNeutral) is drawn see-through; its boxing tape's skinned shapes, hung rigidly from the hand, had no skin, and every blended draw of them was a GPU validation error until the run stopped"
 note = "before the fix 4 of 5 runs stopped after 20 rendering errors right after `covers 21 meshes`; after it 3 of 3 ran clean with the effect on and the actor alpha switching"
@@ -21453,6 +21954,189 @@ expect = [
   { re = 'actor alpha: NVDLC01StarLobby', label = "the hologram is drawn see-through" },
 ]
 forbid = [{ text = "Caught rendering error", label = "a rendering (validation) error" }]
+
+[[scenario]]
+name = "tiles-tag-menu"
+source = "[design] chargen.md §3.1: open, take and give back a skill, refuse the limit, Reset, and Done dim then bright"
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "CharGenMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:SetTagSkills:3:0", NVF_PLAY_TEST_CHARGEN = "22:done,23:pick:Guns,24:pick:Guns,25:pick:Guns,26:pick:Speech,27:pick:Survival,28:pick:Barter,29:reset,30:pick:Guns,31:pick:Speech,32:pick:Survival,34:done", NVF_PLAY_TEST_SHOTS = "21:tiles_tag_open.png,26.5:tiles_tag_dim.png,27.5:tiles_tag_bright.png,29.5:tiles_tag_reset.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 38
+expect = [
+  { re = "tiles: CharGenMenu drawn from tiles \\(", count = 1, label = "tiles-tag-menu: check 1" },
+  { text = "chargen: tag-skill menu open", count = 1, label = "tiles-tag-menu: check 2" },
+  { text = "Guns given back", count = 1, label = "tiles-tag-menu: check 3" },
+  { text = "Barter refused", count = 1, label = "tiles-tag-menu: check 4" },
+  { text = "chargen: reset", count = 1, label = "tiles-tag-menu: check 5" },
+  { text = "chargen: Done refused: 0 of 3 skills tagged", count = 1, label = "tiles-tag-menu: check 6" },
+  { text = "tiles: CharGenMenu Done target 0", label = "tiles-tag-menu: check 7" },
+  { text = "tiles: CharGenMenu Done target 1", label = "tiles-tag-menu: check 8" },
+  { text = "chargen: done, tag skills: Guns, Speech, Survival", count = 1, label = "tiles-tag-menu: check 9" },
+  { text = "ui sounds: tag skills accepted: UIMenuOK", count = 1, label = "tiles-tag-menu: check 10" },
+  { text = "CharGenMenu drawn by hand", count = 0, label = "tiles-tag-menu: check 11" },
+  { re = "tiles: CharGenMenu .* drawn at .*not the", count = 0, label = "tiles-tag-menu: check 12" },
+]
+
+[[scenario]]
+name = "tiles-tag-pointer-done"
+source = "[design] chargen.md §3.1: script Reset and pointer Done act once after the first hand-over"
+note = "[hypothesis] Pointer coordinates follow chargen.md §3, in interface units; confirm against the pending original capture. The file places Done 52 below Reset."
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "CharGenMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:SetTagSkills:3:0,25:call:-:ClickMenuButton:\"CharGenMenu#5\"", NVF_PLAY_TEST_CHARGEN = "23:pick:Guns,24:pick:Speech,24.5:pick:Survival,26:pick:Guns,27:pick:Speech,28:pick:Survival", NVF_PLAY_TEST_POINTER = "22:600:166,22.2:600:166:click,22.5:600:166:click,29:1320:215,30:1320:215:click,31:off", NVF_PLAY_TEST_SHOTS = "28.5:tiles_tag_pointer_ready.png,31.5:tiles_tag_pointer_closed.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 35
+expect = [
+  { re = "tiles: CharGenMenu row .* clicked on its tiles", count = 2, label = "tag pointer takes and gives back one skill" },
+  { text = "tiles: CharGenMenu Reset on its tiles", count = 1, label = "tiles-tag-pointer-done: check 1" },
+  { text = "chargen: reset", count = 1, label = "tiles-tag-pointer-done: check 2" },
+  { text = "tiles: CharGenMenu Done on its tiles", count = 1, label = "tiles-tag-pointer-done: check 3" },
+  { text = "chargen: done, tag skills: Guns, Speech, Survival", count = 1, label = "tiles-tag-pointer-done: check 4" },
+  { text = "ui sounds: tag skills accepted: UIMenuOK", count = 1, label = "tiles-tag-pointer-done: check 5" },
+  { text = "CharGenMenu drawn by hand", count = 0, label = "tiles-tag-pointer-done: check 6" },
+  { re = "tiles: CharGenMenu .* drawn at .*not the", count = 0, label = "tiles-tag-pointer-done: check 7" },
+]
+
+[[scenario]]
+name = "tiles-tag-default-drawing"
+source = "[design] chargen.md §3.1: switch off: the same sheet still works and no tag tile code or aid runs"
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:SetTagSkills:3:0", NVF_PLAY_TEST_TAG_TILES = "0:missing", NVF_PLAY_TEST_CHARGEN = "23:pick:Guns,24:pick:Speech,25:pick:Survival,27:done", NVF_PLAY_TEST_SHOTS = "21:tiles_tag_off_open.png,26:tiles_tag_off_taken.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 31
+expect = [
+  { text = "tiles: CharGenMenu", count = 0, label = "tiles-tag-default-drawing: check 1" },
+  { text = "test aid: CharGenMenu", count = 0, label = "tiles-tag-default-drawing: check 2" },
+  { text = "CharGenMenu drawn by hand", count = 0, label = "tiles-tag-default-drawing: check 3" },
+  { text = "tile menu blur:", count = 0, label = "tiles-tag-default-drawing: check 4" },
+  { text = "chargen: done, tag skills: Guns, Speech, Survival", count = 1, label = "tiles-tag-default-drawing: check 5" },
+]
+
+[[scenario]]
+name = "tiles-tag-missing-file"
+source = "[design] chargen.md §3.1: missing or cut file keeps the whole hand-built menu and its sheet"
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "CharGenMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:SetTagSkills:3:0", NVF_PLAY_TEST_TAG_TILES = "0:missing", NVF_PLAY_TEST_CHARGEN = "23:pick:Guns,24:pick:Speech,25:pick:Survival,27:done", NVF_PLAY_TEST_SHOTS = "26:tiles_tag_missing-file.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 31
+expect = [
+  { re = "CharGenMenu drawn by hand: menus\\\\chargen\\\\char_gen_menu\\.xml missing", count = 1, label = "tiles-tag-missing-file: check 1" },
+  { text = "tiles: CharGenMenu drawn from tiles", count = 0, label = "tiles-tag-missing-file: check 2" },
+  { text = "tile menu blur: CharGenMenu", count = 0, label = "tiles-tag-missing-file: check 3" },
+  { text = "chargen: tag-skill menu open", count = 1, label = "tiles-tag-missing-file: check 4" },
+  { text = "chargen: done, tag skills: Guns, Speech, Survival", count = 1, label = "tiles-tag-missing-file: check 5" },
+]
+
+[[scenario]]
+name = "tiles-tag-cut-file"
+source = "[design] chargen.md §3.1: missing or cut file keeps the whole hand-built menu and its sheet"
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "CharGenMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:SetTagSkills:3:0", NVF_PLAY_TEST_TAG_TILES = "0:cut:CGM_PointCounter", NVF_PLAY_TEST_CHARGEN = "23:pick:Guns,24:pick:Speech,25:pick:Survival,27:done", NVF_PLAY_TEST_SHOTS = "26:tiles_tag_cut-file.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 31
+expect = [
+  { re = "CharGenMenu drawn by hand: .*CGM_PointCounter missing", count = 1, label = "tiles-tag-cut-file: check 1" },
+  { text = "tiles: CharGenMenu drawn from tiles", count = 0, label = "tiles-tag-cut-file: check 2" },
+  { text = "tile menu blur: CharGenMenu", count = 0, label = "tiles-tag-cut-file: check 3" },
+  { text = "chargen: tag-skill menu open", count = 1, label = "tiles-tag-cut-file: check 4" },
+  { text = "chargen: done, tag skills: Guns, Speech, Survival", count = 1, label = "tiles-tag-cut-file: check 5" },
+]
+
+[[scenario]]
+name = "tiles-tag-stage-handover"
+source = "[design] chargen.md §3.1: a script replaces the tiled tag menu with hand-built traits, then opens tag tiles again"
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "CharGenMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:SetTagSkills:3:0,26:menu:1084,32:call:-:SetTagSkills:3:0", NVF_PLAY_TEST_CHARGEN = "23:pick:Guns,28:pick:Kamikaze,29:done,33:pick:Guns,34:pick:Speech,35:pick:Survival,36:done", NVF_PLAY_TEST_SHOTS = "25:tiles_tag_handover_before.png,26.5:tiles_tag_handover_traits.png,35.5:tiles_tag_handover_back.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 40
+expect = [
+  { re = "tiles: CharGenMenu drawn from tiles \\(", count = 2, label = "tiles-tag-stage-handover: check 1" },
+  { text = "chargen: tag-skill menu open", count = 2, label = "tiles-tag-stage-handover: check 2" },
+  { text = "chargen: trait menu open", count = 1, label = "tiles-tag-stage-handover: check 3" },
+  { text = "tiles: TraitMenu drawn from tiles", count = 0, label = "tiles-tag-stage-handover: check 4" },
+  { text = "chargen: done, traits: Kamikaze", count = 1, label = "tiles-tag-stage-handover: check 5" },
+  { text = "chargen: done, tag skills: Guns, Speech, Survival", count = 1, label = "tiles-tag-stage-handover: check 6" },
+  { text = "tile menu blur: off", min = 2, label = "tiles-tag-stage-handover: check 7" },
+  { text = "CharGenMenu drawn by hand", count = 0, label = "tiles-tag-stage-handover: check 8" },
+  { re = "tiles: CharGenMenu .* drawn at .*not the", count = 0, label = "tiles-tag-stage-handover: check 9" },
+]
+
+[[scenario]]
+name = "tiles-tag-add-skills"
+source = "[design] chargen.md §3.1: AddTagSkills uses four total tags, locks the old three, and Reset restores them"
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "CharGenMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:SetTagSkills:3:0,28:call:-:AddTagSkills:1", NVF_PLAY_TEST_CHARGEN = "22:pick:Guns,23:pick:Speech,24:pick:Survival,25:done,30:pick:Guns,31:pick:Barter,32:pick:Medicine,33:reset,34:pick:Barter,35:done", NVF_PLAY_TEST_SHOTS = "29:tiles_tag_add_open.png,31.5:tiles_tag_add_four.png,33.5:tiles_tag_add_reset.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 39
+expect = [
+  { text = "Guns refused", count = 1, label = "tiles-tag-add-skills: check 1" },
+  { text = "Medicine refused", count = 1, label = "tiles-tag-add-skills: check 2" },
+  { text = "Choose skills: 3/4", label = "tiles-tag-add-skills: check 3" },
+  { text = "4 of 4 taken", label = "tiles-tag-add-skills: check 4" },
+  { text = "only add 1", label = "tiles-tag-add-skills: check 5" },
+  { text = "chargen: reset", count = 1, label = "tiles-tag-add-skills: check 6" },
+  { text = "chargen: done, tag skills: Barter, Guns, Speech, Survival", count = 1, label = "tiles-tag-add-skills: check 7" },
+  { text = "CharGenMenu drawn by hand", count = 0, label = "tiles-tag-add-skills: check 8" },
+  { re = "tiles: CharGenMenu .* drawn at .*not the", count = 0, label = "tiles-tag-add-skills: check 9" },
+]
+
+[[scenario]]
+name = "tiles-tag-special-fallback"
+source = "[design] chargen.md §3.1: AddSPECIALPoints uses the same menu code and keeps its hand-built attributes page"
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "CharGenMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:AddSPECIALPoints:1", NVF_PLAY_TEST_CHARGEN = "22:done,23:raise:Charisma,25:done", NVF_PLAY_TEST_SHOTS = "21:tiles_tag_special_open.png,24:tiles_tag_special_done.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 29
+expect = [
+  { text = "chargen: attributes menu open", count = 1, label = "tiles-tag-special-fallback: check 1" },
+  { text = "tiles: CharGenMenu", count = 0, label = "tiles-tag-special-fallback: check 2" },
+  { text = "CharGenMenu drawn by hand", count = 0, label = "tiles-tag-special-fallback: check 3" },
+  { text = "tile menu blur:", count = 0, label = "tiles-tag-special-fallback: check 4" },
+  { text = "chargen: Done refused: 1 points left", count = 1, label = "tiles-tag-special-fallback: check 5" },
+  { text = "chargen: Charisma raised; 0 points left", count = 1, label = "tiles-tag-special-fallback: check 6" },
+  { re = "chargen: done, attributes: Charisma \\d+ -> \\d+", count = 1, label = "tiles-tag-special-fallback: check 7" },
+]
+
+[[scenario]]
+name = "tiles-tag-long-description"
+source = "[design] chargen.md §3.1: the measured long description reaches its end and another skill starts at the top"
+note = "[design] The aid repeats AVIF text eight times on this path; it changes no files. Left/Right and the wheel scroll without a new visible scrollbar; no original behavior is asserted."
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "CharGenMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:SetTagSkills:3:0", NVF_PLAY_TEST_TAG_TILES = "0:long", NVF_PLAY_TEST_KEYS = "23.0:right,23.1:right,23.2:right,23.3:right,23.4:right,23.5:right,23.6:right,23.7:right,23.8:right,23.9:right,24.0:right,24.1:right,24.2:right,24.3:right,24.4:right,24.5:right,24.6:right,24.7:right,24.8:right,24.9:right,25.0:right,25.1:right,25.2:right,25.3:right,25.4:right,25.5:right,25.6:right,25.7:right,25.8:right,25.9:right,26.0:right,26.1:right,26.2:right,26.3:right,26.4:right,26.5:right,26.6:right,26.7:right,26.8:right,26.9:right,27.0:right,27.1:right,27.2:right,27.3:right,27.4:right,27.5:right,27.6:right,27.7:right,27.8:right,27.9:right,28.0:right,28.1:right,28.2:right,28.3:right,28.4:right,28.5:right,28.6:right,28.7:right,28.8:right,28.9:right,29.0:right,29.1:right,29.2:right,29.3:right,29.4:right,29.5:right,29.6:right,29.7:right,29.8:right,29.9:right,30.0:right,30.1:right,30.2:right,30.3:right,30.4:right,30.5:right,30.6:right,30.7:right,30.8:right,30.9:right,31.0:right,31.1:right,31.2:right,31.3:right,31.4:right,31.5:right,31.6:right,31.7:right,31.8:right,31.9:right,32.0:right,32.1:right,32.2:right,32.3:right,32.4:right,32.5:right,32.6:right,32.7:right,32.8:right,32.9:right,33.0:right,33.1:right,33.2:right,33.3:right,33.4:right,33.5:right,33.6:right,33.7:right,33.8:right,33.9:right,34.0:right,34.1:right,34.2:right,34.3:right,34.4:right,34.5:right,34.6:right,34.7:right,34.8:right,34.9:right,35.0:right,35.1:right,35.2:right,35.3:right,35.4:right,35.5:right,35.6:right,35.7:right,35.8:right,35.9:right,36.0:right,36.1:right,36.2:right,36.3:right,36.4:right,36.5:right,36.6:right,36.7:right,36.8:right,36.9:right,37.0:right,37.1:right,37.2:right,37.3:right,37.4:right,37.5:right,37.6:right,37.7:right,37.8:right,37.9:right,38.0:right,38.1:right,38.2:right,38.3:right,38.4:right,38.5:right,38.6:right,38.7:right,38.8:right,38.9:right,39.0:right,39.1:right,39.2:right,39.3:right,39.4:right,39.5:right,39.6:right,39.7:right,39.8:right,39.9:right,40.0:right,40.1:right,40.2:right,40.3:right,40.4:right,40.5:right,40.6:right,40.7:right,40.8:right,40.9:right,44:down", NVF_PLAY_TEST_SHOTS = "22:tiles_tag_long_start.png,42:tiles_tag_long_end.png,45:tiles_tag_long_next.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 48
+expect = [
+  { text = "test aid: CharGenMenu descriptions long", count = 1, label = "tiles-tag-long-description: check 1" },
+  { text = "tiles: CharGenMenu description end reached", min = 1, label = "tiles-tag-long-description: check 2" },
+  { re = "tiles: CharGenMenu drawn from tiles: .*text scrolls to ([1-9][0-9.]*)", range = [1, 10000], label = "tiles-tag-long-description: check 3" },
+  { re = "tiles: CharGenMenu list scrolled to .*text scrolled to 0 of", min = 2, label = "tiles-tag-long-description: check 4" },
+  { text = "CharGenMenu drawn by hand", count = 0, label = "tiles-tag-long-description: check 5" },
+  { re = "tiles: CharGenMenu .* drawn at .*not the", count = 0, label = "tiles-tag-long-description: check 6" },
+]
+
+[[scenario]]
+name = "tiles-tag-falls-back-open"
+source = "[design] chargen.md §3.1: a required tile disappears after a choice, without remaking or resetting the open sheet"
+areas = ["ui", "menus", "chargen"]
+paths = ["engine/nvf-play/src/tiles/tag_menu.rs", "engine/nvf-play/src/tiles/selection_menu.rs", "engine/nvf-play/src/tiles/trait_menu.rs", "engine/nvf-play/src/chargen.rs", "engine/nvf-play/src/chargen/lists.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/tiles/vanilla.rs", "engine/nvf-play/src/tiles/menus.rs", "engine/nvforever/src/imagespace.rs"]
+env = { NVF_PLAY_AIDS_FROM_SCRIPTS = "0", NVF_PLAY_TEST_TILE_MENUS = "CharGenMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "off", NVF_PLAY_TEST_SCRIPT = "20:call:-:SetTagSkills:3:0", NVF_PLAY_TEST_TAG_TILES = "25:cut:CGM_SelectionText", NVF_PLAY_TEST_CHARGEN = "23:pick:Guns,27:pick:Speech,28:pick:Survival,30:done", NVF_PLAY_TEST_SHOTS = "24:tiles_tag_fallback_before.png,29:tiles_tag_fallback_after.png" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 34
+expect = [
+  { re = "tiles: CharGenMenu drawn from tiles \\(", count = 1, label = "tiles-tag-falls-back-open: check 1" },
+  { re = "CharGenMenu drawn by hand: .*CGM_SelectionText missing", count = 1, label = "tiles-tag-falls-back-open: check 2" },
+  { text = "chargen: tag-skill menu open", count = 1, label = "tiles-tag-falls-back-open: check 3" },
+  { text = "chargen: done, tag skills: Guns, Speech, Survival", count = 1, label = "tiles-tag-falls-back-open: check 4" },
+  { text = "tile menu blur: off", min = 1, label = "tiles-tag-falls-back-open: check 5" },
+]
 
 [[scenario]]
 name = "occlusion-planes-sewers"
@@ -21626,3 +22310,159 @@ run_seconds = 18
 expect = ["FSR 3.1.4: NativeAa", { re = 'blended cut-outs: drawn alpha-tested for FSR \((\d+) materials changed\)', range = [1, 100000], label = "the corn rows' material cut when FSR comes on" }, { re = 'blended cut-outs: drawn blended \((\d+) materials changed\)', range = [1, 100000], label = "and blended again when it goes off" }]
 order = [["blended cut-outs: drawn alpha-tested", "blended cut-outs: drawn blended"]]
 forbid = ["FSR dispatch failed", "FSR 3.1 unavailable", "Shader validation error", "Validation Error"]
+
+# [design: issue #1803] Compare identical first raises with and without hidden draws.
+[[scenario]]
+name = "pipboy-first-open"
+source = "issue #1803; docs/spec-notes/pipboy.md section 8: hidden start warm-up and the first visible raise"
+areas = ["pipboy", "loading", "pipelines"]
+paths = ["engine/nvforever/src/pipboy_ready.rs", "engine/vendor/bevy_pbr/src/material.rs", "engine/nvforever/src/pipboy_arm.rs", "engine/nvforever/src/player_body.rs", "engine/nvforever/src/pipeline_gate.rs", "engine/nvf-play/src/pipboy.rs", "engine/nvf-play/src/loading.rs"]
+env = { NVF_PLAY_TEST_SCRIPT_MENUS = "0.25", NVF_PLAY_TEST_PIPELINE_LOG = "1", NVF_PLAY_TEST_PIPELINE_DEFS = "1", NVF_PLAY_TEST_PIPBOY_DRAW = "1", NVF_PLAY_TEST_PIPBOY = "5:open,8:page=stats,10:close", NVF_PLAY_TEST_SHOTS = "4.9:first_down.png,5.3:first_a.png,5.8:first_b.png,6.5:first_c.png,8.5:first_d.png,10.8:first_closed.png" }
+args = ["--play", "--cell", "Goodsprings", "--no-voice", "--hour", "12", "--size", "1280x720"]
+run_seconds = 11
+expect = [
+  { re = 'pipboy: warm-up asked (\d+) pipelines', label = "the total gate asks during hidden drawing (includes concurrent world work)" },
+  { re = 'pipboy: up: (\d+) pipelines asked since the raise began', range = [0, 0], count = 1, label = "the first visible raise asks no new pipeline" },
+  { re = 'pipboy draw: first=true, shapes=([1-9]\d*), queued=[1-9]\d*, opaque=[1-9]\d*, prepared=\1, bound=\1, ready=[1-9]\d*, missing=\d+ gpu_meshes=\1, slabs=\1', count = 1, label = "the first restored-pose frame has every rig shape prepared, bound and uploaded; shapes still out of view are not queued" },
+  { re = 'pipboy draw: first=false, shapes=([1-9]\d*), queued=(1[5-9]|[2-9]\d), opaque=[1-9]\d*, prepared=\1, bound=\1, ready=\2,', min = 1, label = "as the arm comes into view, the shapes are queued and ready" },
+  { re = 'pipboy: own rig pipelines \[', label = "the rig pipeline IDs, excluding concurrent world requests" },
+  { re = 'pipboy: first raise held \d+ ms for \d+ pipelines', count = 1, label = "the first real submission is checked after hidden teardown" },
+  "pipboy: STATS Status",
+  { text = "pipboy: screen camera off", count = 2, label = "camera off after warm-up and after the real close" },
+  "pipboy: down",
+]
+order = [["pipboy: warm-up start (covered=true", "pipboy: warm-up asked", "pipboy: warm-up teardown complete (screen camera off)", "loading screen down after", "pipboy: up, page ITEMS tab Weapons", "pipboy: raised"]]
+forbid = ["pipboy: first raise cap reached", "loading screen: pipelines not ready after", "pipeline_cap", "still being retried after", "up, but the menus are not on the arm", "menu request ignored"]
+manual = "Queue membership and bindings do not prove correct pixels. The assertion observes the first render after pose restoration. The first real raise has a short submission check (four render reports; about 70-100 ms at 60 Hz). Compare first_a through first_d with the no-warm twin: no world showing through, blue/brown split, silhouette or blur on the arm. first_down must show the normal view without a device. Check that the final close restores the view and leaves the screen camera inactive. The 5 s open follows the supplied issue run; the proposed 1 s open has no measured support. Compare three start times and a two-thread start. The start warm-up has a 250 ms budget plus teardown; the existing loading wait handles compilation. The own rig pipelines line names its actual IDs; the total count includes concurrent world keys. If the first hold lasts longer, inspect prepared/bound/queued and pipeline readiness, then the shots."
+
+[[scenario]]
+name = "pipboy-first-open-no-warm"
+source = "issue #1803 negative control: the same first raise with NVF_PLAY_TEST_NO_PIPBOY_WARM=1"
+areas = ["pipboy", "loading", "pipelines"]
+paths = ["engine/nvforever/src/pipboy_ready.rs", "engine/vendor/bevy_pbr/src/material.rs", "engine/nvforever/src/pipboy_arm.rs", "engine/nvforever/src/player_body.rs", "engine/nvforever/src/pipeline_gate.rs", "engine/nvf-play/src/pipboy.rs", "engine/nvf-play/src/loading.rs"]
+env = { NVF_PLAY_TEST_NO_PIPBOY_WARM = "1", NVF_PLAY_TEST_PIPBOY_DRAW = "1", NVF_PLAY_TEST_PIPELINE_DEFS = "1", NVF_PLAY_TEST_SCRIPT_MENUS = "0.25", NVF_PLAY_TEST_PIPELINE_LOG = "1", NVF_PLAY_TEST_PIPBOY = "5:open,8:page=stats,10:close", NVF_PLAY_TEST_SHOTS = "4.9:first_down.png,5.3:first_a.png,5.8:first_b.png,6.5:first_c.png,8.5:first_d.png,10.8:first_closed.png" }
+args = ["--play", "--cell", "Goodsprings", "--no-voice", "--hour", "12", "--size", "1280x720"]
+run_seconds = 11
+expect = [
+  "test aid NVF_PLAY_TEST_NO_PIPBOY_WARM: hidden warm-up disabled",
+  { re = 'pipboy: up: (\d+) pipelines asked since the raise began', range = [1, 1000], count = 1, label = "the control exposes first-raise specialisation" },
+  { re = 'pipeline \d+ shader-defs: .*PIPBOY_SCREEN', label = "the screen variant can be identified in the cold control" },
+  "loading screen down after",
+  "pipboy: raised",
+]
+forbid = ["pipboy: warm-up start", "pipboy: warm-up asked", "pipboy: first raise held", "menu request ignored"]
+manual = "This control must ask new pipelines at the first raise; otherwise the comparison is inconclusive. Compare its first_a through first_d with the warm run for the old screen fault. Pipeline compile durations and the last screen/glare ready lines determine the faulty interval; do not infer an unmeasured duration from the shot schedule. The shader-defs line for the last screen/glare pipeline to become ready identifies the candidate variant in the blue/brown depth fight; confirm against the corresponding shots."
+
+
+[[scenario]]
+name = "stress-comparison-inputs"
+source = "[design] docs/design/stress-comparisons.md: current frame-capture, profile and legacy stress log inputs used together by the comparison reader; log contract only, JSONL validation is in synthetic harness tests"
+areas = ["profiling"]
+paths = ["tools/stress/", "engine/nvforever/src/frame_telemetry/", "engine/nvforever/src/stress_sample.rs", "engine/nvforever/src/profile.rs"]
+env = { NVF_PLAY_TEST_FRAME_TELEMETRY = "18", NVF_PLAY_TEST_FRAME_TELEMETRY_RUN_ID = "stress_compare_smoke", NVF_PLAY_TEST_FRAME_TELEMETRY_SCENARIO_ID = "indoor_sample", NVF_PLAY_TEST_SAMPLE = "2", NVF_PLAY_TEST_PROFILE = "2" }
+args = ["--cell", "GSDocMitchellHouse", "--play", "--no-voice", "--no-messages"]
+run_seconds = 25
+expect = [
+  { re = 'frame telemetry: capturing 18 s to .* \(frames\)', count = 1, label = "one frames-only capture starts beside legacy sampling and profiling" },
+  { re = 'frame telemetry: .* complete \(duration_limit\), [1-9]\d* frames, gameplay p50 \d', count = 1, label = "the terminal summary confirms a complete gameplay capture" },
+  { re = 'frame telemetry: .*flush unconfirmed', max = 0, label = "the final flush is confirmed" },
+  { re = 'stress sample: t [\d.]+ s, frames [1-9]\d*, frame mean [\d.]+ ms, frame worst [\d.]+ ms, entities \d+', min = 1, label = "current coarse sample fields are present" },
+  { re = 'stress frames: [1-9]\d* frames, mean [\d.]+ ms, 1% low [\d.]+ ms \([\d.]+ fps\), worst [\d.]+ ms; \d+ behind loading screens left out', count = 1, label = "the unchanged release-budget population has its own exit summary" },
+  { re = 'profile: [\d.]+ s, [1-9]\d* frames, frame mean [\d.]+ ms(?:, cpu [\d.]+ ms a frame)?; ', min = 1, label = "current profile window format is present" },
+]
+
+[[scenario]]
+name = "pickpocket-save-write"
+source = "[design] issue #1592 finding 3; docs/spec-notes/pickpocket.md section 5: an active inventory fuse is saved on Game::time; run with pickpocket-save-load"
+note = "[design] Uses pickpocket-plant-dynamite's placement, then opens the console half a second after the pocket closes. Queries the live plant and saves; the console stays open until exit. The isolated fixture home supplies only an authored load hook. The fuse runs on through the console, so the save is taken inside it; the live query checks that."
+areas = ["save", "crime", "menus"]
+paths = ["crates/fnv-game/src/game.rs", "crates/fnv-game/src/pickpocket.rs", "crates/fnv-game/tests/factions.rs", "crates/fnv-game/tests/synthetic.rs", "engine/nvf-play/src/pickpocket.rs", "engine/nvf-play/src/save.rs", "tools/smoke/fixtures/pickpocket-save-home/"]
+env = { NVFOREVER_HOME = "{repo}/tools/smoke/fixtures/pickpocket-save-home", NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_NEAR = "00104C79", NVF_PLAY_TEST_FACE = "7:00104C79", NVF_PLAY_TEST_CONSOLE = "2:player.setav sneak 100;2.3:close;11.5:GSChetRef.GetPlantedExplosive;11.6:GSChetRef.GetDead;11.7:GSChetRef.GetItemCount WeapNVDynamite;12:save nvf-planted", NVF_PLAY_TEST_SCRIPT = "0.5:call:GSChetRef:SetRestrained:1,6:call:player:RemoveAllItems,6.5:call:player:AddItem:WeapNVDynamite:1", NVF_PLAY_TEST_CONTROL = "4:sneak", NVF_PLAY_TEST_KEYS = "8:e,9.5:left,10:enter,11:e" }
+args = ["--cell", "GSGeneralStore", "--play", "--hour", "12", "--no-voice", "--no-messages"]
+run_seconds = 17
+expect = [
+  { re = 'pickpocket: planted Dynamite x1 \(live, explosion', count = 1, label = "one live dynamite planted" },
+  { re = 'console: GetPlantedExplosive on GSChetRef >> 1\.00', count = 1, label = "the saved fuse is past freakout" },
+  { re = 'console: GetDead on GSChetRef >> 0\.00', count = 1, label = "Chet is alive at the save" },
+  { re = 'console: GetItemCount on GSChetRef >> 1\.00', count = 1, label = "one dynamite in his pocket" },
+  { re = 'save: wrote .*nvf-planted\.nvfsave \(manual, ', count = 1, label = "the active fuse is saved" },
+]
+order = [["pickpocket: planted Dynamite", "console: GetPlantedExplosive on GSChetRef >> 1.00", { re = 'save: wrote .*nvf-planted\.nvfsave' }]]
+
+[[scenario]]
+name = "pickpocket-save-load"
+source = "[design] issue #1592 finding 3; docs/spec-notes/pickpocket.md section 5: restore the plant before advancing time, then explode and kill exactly once"
+note = "[design] Run after pickpocket-save-write in the same isolated home. gl_nvfplant.txt queries GetPlantedExplosive, GetDead and GetItemCount before the first tick. Resuming must consume the saved dynamite and kill Chet once; later console queries check the final state."
+areas = ["save", "crime", "menus"]
+paths = ["crates/fnv-game/src/game.rs", "crates/fnv-game/src/pickpocket.rs", "crates/fnv-game/tests/factions.rs", "crates/fnv-game/tests/synthetic.rs", "engine/nvf-play/src/pickpocket.rs", "engine/nvf-play/src/save.rs", "tools/smoke/fixtures/pickpocket-save-home/"]
+env = { NVFOREVER_HOME = "{repo}/tools/smoke/fixtures/pickpocket-save-home", NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_CONSOLE = "12:GSChetRef.GetPlantedExplosive;12.2:GSChetRef.GetDead;12.4:GSChetRef.GetItemCount WeapNVDynamite;13:close" }
+args = ["--play", "--load", "nvf-planted", "--no-voice", "--no-messages"]
+run_seconds = 17
+expect = [
+  { text = 'script: print "nvf planted load live=1 dead=0 count=1"', count = 1, label = "the load hook sees a live saved plant before time advances" },
+  { text = "script runner: gl_nvfplant.txt ran (game load)", count = 1, label = "the authored load hook ran" },
+  { re = "pickpocket: Dynamite explodes in 0x00104C79's pocket: it dies", count = 1, label = "exactly one saved blast and death" },
+  { re = 'crime: murder against GSChetRef 0x00104C79;', count = 1, label = "one murder is judged" },
+  { re = 'console: GetPlantedExplosive on GSChetRef >> 0\.00', count = 1, label = "the plant has gone" },
+  { re = 'console: GetDead on GSChetRef >> 1\.00', count = 1, label = "Chet is dead" },
+  { re = 'console: GetItemCount on GSChetRef >> 0\.00', count = 1, label = "the dynamite was consumed" },
+]
+order = [[{ text = 'script: print "nvf planted load live=1 dead=0 count=1"' }, { re = "pickpocket: Dynamite explodes in 0x00104C79's pocket: it dies" }, "console: GetDead on GSChetRef >> 1.00"]]
+
+[[scenario]]
+name = "ui-string-dimensions"
+source = "[documented: GetStringUIDimensions] width, height and line-count output variables; [design: ui_more.rs, tiles/draw.rs] owned localized metrics are installed before the authored restart script; wrapping and explicit newlines share the renderer's layout"
+areas = ["ui", "scripts"]
+paths = ["crates/fnv-game/src/ui_more.rs", "crates/fnv-game/tests/ui_more.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "engine/nvf-play/src/interface.rs", "engine/nvf-play/src/script.rs", "tools/smoke/fixtures/ui-dimensions-home/"]
+env = { NVFOREVER_HOME = "{repo}/tools/smoke/fixtures/ui-dimensions-home", NVF_PLAY_TEST_SCRIPT_MENUS = "0.3" }
+args = ["--cell", "Goodsprings", "--play", "--no-voice", "--no-messages"]
+run_seconds = 14
+expect = [
+  { re = 'script: print "nvf dimensions single [1-9]\d*(?:\.\d+)? [1-9]\d*(?:\.\d+)? 1"', count = 1, label = "startup script replaces all sentinels with positive one-line metrics" },
+  { re = 'script: print "nvf dimensions newline [1-9]\d*(?:\.\d+)? [1-9]\d*(?:\.\d+)? 2"', count = 1 },
+  { text = 'script: print "nvf dimensions newline checks 1 1 1"', count = 1, label = "newline keeps width, increases height, gives two lines" },
+  { re = 'script: print "nvf dimensions wrap [1-9]\d*(?:\.\d+)? [1-9]\d*(?:\.\d+)? 2"', count = 1 },
+  { text = 'script: print "nvf dimensions wrap checks 1 1 1"', count = 1, label = "wrap at one word gives exactly two equal-width lines" },
+  { re = 'script: print "nvf dimensions alternate [1-9]\d*(?:\.\d+)? [1-9]\d*(?:\.\d+)? 1"', count = 1, label = "font 8 measures before any HUD tile requests it" },
+]
+
+[[scenario]]
+name = "ui-cursor-inspection"
+source = "[documented: GetUIElementType, DumpTileInfo] missing and nonexistent paths fall back to the cursor tile; [design: ui_more.rs] an authored frame callback inspects while the existing HUD pointer aid remains active"
+note = "No console is opened. The authored target covers x 120-380, y 300-420 in interface units; the explicit-path image control sits away from the pointer. DumpTileInfo uses toFile=1 so its output is logged directly while the HUD stays active."
+areas = ["ui", "scripts"]
+paths = ["crates/fnv-game/src/ui_more.rs", "crates/fnv-game/tests/ui_more.rs", "engine/nvf-play/src/tiles/input.rs", "engine/nvf-play/src/tiles/mod.rs", "tools/smoke/fixtures/ui-cursor-home/"]
+env = { NVFOREVER_HOME = "{repo}/tools/smoke/fixtures/ui-cursor-home", NVF_PLAY_TEST_TILE_MENUS = "HUDMainMenu", NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_POINTER = "6:220:360,12:off" }
+args = ["--cell", "Goodsprings", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 16
+expect = [
+  { text = 'script: print "nvf cursor injected 1"', count = 1 },
+  { re = 'tiles: pointer over HUDMainMenu/NVFCursorProbe \(id 977\)', label = "the aid actually highlights the authored image" },
+  { text = 'script: print "nvf cursor active HUDMainMenu/NVFCursorProbe"', count = 1 },
+  { text = 'script: print "nvf cursor types 2 2 2"', count = 1, label = "explicit image, missing-path probe image, invalid-path probe image" },
+  { text = '[ Tilename ] : Explicit', count = 1, label = "DumpTileInfo retains path argument 1" },
+  { text = '[ Tilename ] : NVFCursorProbe', count = 2, label = "both fallback dumps reach the cursor's tile" },
+]
+
+[[scenario]]
+name = "ui-typewriter-tile-script"
+source = "[documented: SetUITypewriter, SetTileScript, RemoveTileScript] authored XML links _TS0/_TA0 to visible text; [design: nvse_small.rs, tiles/draw.rs] frame callbacks change drawn colour traits, run only on nonzero traits, replace per trait and can be removed"
+note = "The authored controller samples stages on GetSessionTime: mid-fade after 3 s, enable at 3 s, suppress at 4 s, replace at 5 s, remove at 6 s, sample after in-flight work at 7 s, final after 8.5 s. No console opens."
+areas = ["ui", "scripts", "hud"]
+paths = ["crates/fnv-game/src/nvse_small.rs", "crates/fnv-game/tests/small_libs.rs", "engine/nvf-play/src/tiles/draw.rs", "engine/nvf-play/src/tiles/mod.rs", "tools/smoke/fixtures/ui-typewriter-home/"]
+env = { NVFOREVER_HOME = "{repo}/tools/smoke/fixtures/ui-typewriter-home", NVF_PLAY_TEST_SCRIPT_MENUS = "0.3", NVF_PLAY_TEST_SHOTS = "4.5:ui_typewriter_middle.png,12:ui_typewriter_final.png" }
+args = ["--cell", "Goodsprings", "--play", "--no-voice", "--no-messages", "--size", "1280x720"]
+run_seconds = 16
+expect = [
+  { text = 'script: print "nvf type injected 1"', count = 1 },
+  { re = 'script: print "nvf type middle (\d+)"', range = [1, 254], count = 1, label = "an intermediate alpha, neither invisible nor finished" },
+  { text = 'script: print "nvf type zero 0"', count = 1, label = "zero gate suppresses the original callback" },
+  { text = 'script: print "nvf type active 1"', count = 1 },
+  { text = 'script: print "nvf type suppressed 1"', count = 1, label = "returning to zero stops its counter" },
+  { text = 'script: print "nvf type replaced 1 1"', count = 1, label = "old counter stays still while replacement runs" },
+  { text = 'script: print "nvf type removed 1"', count = 1, label = "removed callback stays stopped with gate still nonzero" },
+  { text = 'script: print "nvf type final 255 A"', count = 1 },
+  { re = 'tiles: HUDMainMenu: 1 mod tiles drawn \(3 items\)', label = "the authored rect, bar and linked text enter rendering" },
+]
+order = [["nvf type middle", "nvf type active", "nvf type suppressed", "nvf type replaced", "nvf type removed", "nvf type final"]]
+manual = "ui_typewriter_middle.png: a partially faded letter A in the blue box above the amber bar; ui_typewriter_final.png: the same letter fully visible with the replacement callback's pink colour. Verify the text and alpha links affect the rendered result."

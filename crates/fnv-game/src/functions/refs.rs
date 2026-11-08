@@ -16,7 +16,12 @@ pub fn enable(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> {
     if has_enable_parent(g, r) {
         return none();
     }
-    let fade = a.num_or(0, 1.0) != 0.0;
+    enable_ref(g, r, a.num_or(0, 1.0) != 0.0)
+}
+
+/// Enable `r` (its own flag), fading in or not: Enable without the enable-parent test
+/// (ShowOff's EnableAlt, `nvse_showoff4`).
+pub fn enable_ref(g: &mut Game, r: FormId, fade: bool) -> Result<Value, String> {
     if g.script_looks.fading_out.remove(&r).is_some() {
         g.emit(EventKind::RefEnabled { reference: r, fade });
         return none();
@@ -52,7 +57,12 @@ pub fn disable(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> {
     if has_enable_parent(g, r) {
         return none();
     }
-    let fade = a.num_or(0, 0.0) != 0.0;
+    disable_ref(g, r, a.num_or(0, 0.0) != 0.0)
+}
+
+/// Disable `r` (its own flag), fading out or not: Disable without the enable-parent test
+/// (ShowOff's DisableAlt, `nvse_showoff4`).
+pub fn disable_ref(g: &mut Game, r: FormId, fade: bool) -> Result<Value, String> {
     let held = g.script_looks.fading_out.contains_key(&r);
     if fade && held {
         return none();
@@ -79,7 +89,7 @@ pub fn disable(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> {
 /// does not exist leaves the reference its own state (`World::is_enabled`), so it does
 /// not count.
 fn has_enable_parent(g: &Game, r: FormId) -> bool {
-    g.world.placed.get(r).and_then(|p| p.enable_parent).is_some_and(|ep| g.world.is_enabled(ep.reference).is_ok())
+    !g.world.keeps_own_enable(r) && g.world.enable_parent(r).is_some_and(|ep| g.world.is_enabled(ep.reference).is_ok())
 }
 
 pub fn get_disabled(g: &mut Game, ctx: &Ctx, _a: &Args) -> Result<Value, String> {
@@ -380,7 +390,7 @@ pub fn get_linked_ref(g: &mut Game, ctx: &Ctx, _a: &Args) -> Result<Value, Strin
 
 pub fn get_parent_ref(g: &mut Game, ctx: &Ctx, _a: &Args) -> Result<Value, String> {
     let r = ctx.subject()?;
-    Ok(g.world.placed.get(r).and_then(|p| p.enable_parent).map(|e| Value::Ref(e.reference.0)).unwrap_or(Value::NONE))
+    Ok(g.world.enable_parent(r).map(|e| Value::Ref(e.reference.0)).unwrap_or(Value::NONE))
 }
 
 /// The reference is removed (the engine removes it a few frames later; here at once

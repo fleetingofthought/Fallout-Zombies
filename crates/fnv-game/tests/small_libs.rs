@@ -118,7 +118,12 @@ fn files() {
     static WRITE: std::sync::Once = std::sync::Once::new();
     WRITE.call_once(|| {
         std::fs::create_dir_all(dir.join("NVSE/Plugins")).unwrap();
+        std::fs::create_dir_all(dir.join("NVSE/user_defined_functions")).unwrap();
         std::fs::create_dir_all(dir.join("Config/vheyes-nvse")).unwrap();
+        std::fs::write(
+            dir.join("NVSE/user_defined_functions/TileProbe.txt"),
+            "Begin Function { }\nSetUIFloat \"HUDMainMenu/Probe/_calls\" ((GetUIFloat \"HUDMainMenu/Probe/_calls\") + 1)\nEnd\n",
+        ).unwrap();
         std::fs::write(dir.join("NVSE/Plugins/nvse_stewie_tweaks.ini"), "[Tweaks]\r\nbJumpWhileAiming=1\r\n[Cookable Grenades]\r\nsSoundName=\"WPNGrenadeBeep\"\r\n").unwrap();
         std::fs::write(dir.join("Config/vheyes-nvse/QueuedCommand.txt"), "SetGlobalTimeMultiplier 2\r\n").unwrap();
     });
@@ -136,6 +141,35 @@ fn q(g: &mut Game, body: &str) -> XVal {
 
 fn n(v: f64) -> XVal {
     XVal::Num(v)
+}
+
+#[test]
+fn compile_script_from_loose_root_runs_as_a_tile_callback() {
+    files();
+    let f = fixture();
+    let mut g = game(&f);
+    // [design: script_input.rs, mod_files.rs] The home mods layer is a read root;
+    // the host VFS reader does not contain this loose callback.
+    assert!(fnv_game::mod_files::read_data("nvse\\user_defined_functions\\tileprobe.txt").is_none());
+    let src = MemSource::default().with(
+        "menus\\probe.xml",
+        r#"<menu name="HUDMainMenu"><rect name="Probe"><_probe>1</_probe><_calls>0</_calls></rect></menu>"#,
+    );
+    g.ui_tree.load_menu(&src, "menus\\probe.xml").unwrap();
+    g.ui_tree.update();
+    let callback = q(&mut g, "SetFunctionValue (CompileScript \"tileprobe.txt\")");
+    assert!(matches!(callback, XVal::Ref(id) if id != 0), "{callback:?}");
+    assert_eq!(q(&mut g, "SetFunctionValue (GetUDFFromFile \"TileProbe.txt\")"), callback);
+    assert_eq!(q(&mut g, "SetFunctionValue (CompileScript \"missing.txt\")"), XVal::Ref(0));
+    q(&mut g, "SetTileScript \"hudmainmenu/PROBE/_PROBE\" (CompileScript \"TileProbe.txt\")");
+    g.tick();
+    assert_eq!(g.ui_tree.get_float("HUDMainMenu/Probe/_calls"), Some(1.0));
+    g.ui_tree.set_float("HUDMainMenu\\Probe\\_probe", 0.0);
+    g.tick();
+    assert_eq!(g.ui_tree.get_float("HUDMainMenu/Probe/_calls"), Some(1.0));
+    g.ui_tree.set_float("HUDMainMenu/Probe/_probe", 1.0);
+    g.tick();
+    assert_eq!(g.ui_tree.get_float("HUDMainMenu/Probe/_calls"), Some(2.0));
 }
 
 fn s(v: &str) -> XVal {
@@ -206,17 +240,30 @@ fn jippp_runtime_nodes_effects_and_wear() {
     assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestBox \"Weapon\\BarrelDevice|Second_Barrel\" 1)"), n(1.0));
     assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestBox \"Weapon\\BarrelDevice|Second_Barrel\" 2)"), n(0.0));
     assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestBox \"Weapon|test\\scope.nif\" 2)"), n(1.0));
+    // Mode 0 reads the target path only, not the new node's name [observed: jipppln].
     assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestBox \"BarrelDevice\" 0)"), n(1.0));
-    // Copied (overwrite, then concatenate), attached as a whole form, cleared.
-    assert_eq!(q(&mut g, "SetFunctionValue (CopyRuntimeNodes TestGun TestBox 0)"), n(1.0));
+    assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestBox \"Second_Barrel\" 0)"), n(0.0));
+    // A query belongs to no plugin: it copies and clears nothing [observed: jipppln].
+    assert_eq!(q(&mut g, "SetFunctionValue (CopyRuntimeNodes TestGun TestBox 0)"), n(0.0));
+    assert_eq!(q(&mut g, "SetFunctionValue (ClearRuntimeNodes TestBox)"), n(0.0));
+    // A plugin's script: copied (overwrite, then concatenate), attached as a whole form,
+    // and only its own entries cleared.
+    let (gun, box_, light) = (Some(FormId(WEAPON)), XVal::Ref(BOX), XVal::Ref(LIGHT));
+    let as_mod = |g: &mut Game, name: &str, args: &[XVal]| fnv_game::nvse_jippp::call_as(g, "small.esp", name, None, args).unwrap().unwrap();
+    assert_eq!(as_mod(&mut g, "CopyRuntimeNodes", &[XVal::Ref(WEAPON), box_.clone(), n(0.0)]), n(1.0));
     assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestGun \"BarrelDevice\")"), n(1.0));
-    assert_eq!(q(&mut g, "SetFunctionValue (AttachFormModel TestLight TestBox 1 \"Root|*_X*\")"), n(1.0));
+    assert_eq!(as_mod(&mut g, "InsertNode", &[XVal::Ref(WEAPON), n(1.0), s("Bip01|Mine")]), n(0.0));
+    assert_eq!(as_mod(&mut g, "AttachFormModel", &[light.clone(), box_.clone(), n(1.0), s("Root|*_X*")]), n(1.0));
     assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestLight \"Root|Test\\Box.nif\" 2)"), n(1.0));
-    assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestLight \"_X\")"), n(1.0));
-    assert_eq!(q(&mut g, "SetFunctionValue (AttachFormModel TestLight TestBox 0 \"Root\")"), n(1.0));
+    assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestLight \"Weapon\\BarrelDevice|Second_Barrel*_X*\" 1)"), n(1.0));
+    // A remove succeeds again with nothing left to remove [observed: jipppln].
+    assert_eq!(as_mod(&mut g, "AttachFormModel", &[light.clone(), box_.clone(), n(0.0), s("Root")]), n(1.0));
+    assert_eq!(as_mod(&mut g, "AttachFormModel", &[light, box_, n(0.0), s("Root")]), n(1.0));
     assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestLight \"Root|Test\\Box.nif\" 2)"), n(0.0));
-    assert_eq!(q(&mut g, "SetFunctionValue (ClearRuntimeNodes TestGun)"), n(2.0));
-    assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestGun \"BarrelDevice\")"), n(0.0));
+    // The copied entries are the query's (no plugin), so only the mod's own one goes.
+    assert_eq!(fnv_game::nvse_jippp::call_as(&mut g, "small.esp", "ClearRuntimeNodes", gun, &[XVal::Ref(WEAPON)]).unwrap().unwrap(), n(1.0));
+    assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestGun \"Bip01\")"), n(0.0));
+    assert_eq!(q(&mut g, "SetFunctionValue (HasRuntimeNode TestGun \"BarrelDevice\")"), n(1.0));
     // Wear per shot: the record's override 0.5, times the ammunition's 3.
     assert_eq!(q(&mut g, "SetFunctionValue (GetCalculatedWeaponDegradation TestGun TestAmmo)"), n(1.5));
     // Active effects as maps, filtered and written back.
@@ -240,8 +287,9 @@ fn jippp_runtime_nodes_effects_and_wear() {
     let info = "array_var a\narray_var e\nlet a := PlayerREF.GetActiveEffectsInfo";
     assert_eq!(q(&mut g, &format!("{info}\nSetFunctionValue (ar_Size a)")), n(1.0));
     assert_eq!(q(&mut g, &format!("{info} 2\nlet e := a[0]\nSetFunctionValue e[\"TimeLeft\"]")), n(20.0));
-    assert_eq!(q(&mut g, &format!("{info} 3\nSetFunctionValue (ar_Size a)")), n(0.0));
-    assert_eq!(q(&mut g, &format!("{info} 0 0\nSetFunctionValue (ar_Size a)")), n(0.0));
+    // None to list: no array [observed: jipppln].
+    assert_eq!(q(&mut g, &format!("{info} 3\nSetFunctionValue (ar_Size a)")), n(-1.0));
+    assert_eq!(q(&mut g, &format!("{info} 0 0\nSetFunctionValue (ar_Size a)")), n(-1.0));
     assert_eq!(q(&mut g, &format!("{info} TestEffect\nlet e := a[0]\nSetFunctionValue e[\"MetaData\"]")), n(77.0));
     q(&mut g, &format!("{info}\nlet e := a[0]\nlet e[\"Magnitude\"] := 20\nlet e[\"TimeLeft\"] := 99\nPlayerREF.SetActiveEffectsInfo a"));
     let e = g.effects.iter().find(|e| e.id == 77).unwrap();
@@ -254,6 +302,14 @@ fn jippp_runtime_nodes_effects_and_wear() {
         q(&mut g, "TestBoxRef.ClampToGround");
     }
     assert_eq!(g.take_clamp_requests(), vec![FormId(BOX_REF)]);
+    assert_eq!(g.take_clamp_requests(), Vec::<FormId>::new());
+    // On a base form (a weapon is its own base) the call stops the script, in a
+    // non-strict run too [observed: jipppln clamp.base, "script call failed"].
+    let base = "Begin Function { }\nref r\nlet r := TestGun\nSetFunctionValue (r.ClampToGround)\nEnd\n";
+    let mut loose = Game::new(&f.data, World::new(&f.forms, &f.refs, SimConfig::default()), GameConfig::default());
+    for g in [&mut g, &mut loose] {
+        assert_eq!(g.run_query(base, Default::default()).unwrap_err(), "clamptoground called on no reference");
+    }
     assert_eq!(g.take_clamp_requests(), Vec::<FormId>::new());
     // Mode 2 removes [documented: InsertNode's addOrRemove table]: off the runtime list,
     // and nothing added to the list or the scene; a spec without `|` is not kept.

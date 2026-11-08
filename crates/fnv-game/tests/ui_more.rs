@@ -303,6 +303,37 @@ fn traits_added_and_value_and_element_types() {
 }
 
 #[test]
+fn cursor_inspection_resolves_missing_and_invalid_paths_and_rejects_unloaded_tiles() {
+    let f = fixture();
+    let mut g = game(&f);
+    for args in [vec![], vec![s("Missing/Tile")]] {
+        assert_eq!(run(&mut g, "GetUIElementType", &args), x(-1.0));
+    }
+    run(&mut g, "DumpTileInfo", &[]);
+    run(&mut g, "DumpTileInfo", &[x(0.0), s("Missing/Tile")]);
+    assert!(g.console_out.is_empty());
+    g.ui_pointer.over = g.ui_tree.find_tile("TestMenu/Box/Words");
+    assert_eq!(run(&mut g, "GetUIElementType", &[s("TestMenu/Box/Pic")]), x(2.0));
+    for path in [None, Some("Missing/Tile")] {
+        let args = path.map(|p| vec![s(p)]).unwrap_or_default();
+        assert_eq!(run(&mut g, "GetUIElementType", &args), x(3.0));
+        let args = path.map(|p| vec![x(0.0), s(p)]).unwrap_or_default();
+        run(&mut g, "DumpTileInfo", &args);
+        assert!(g.console_out.iter().any(|l| l == "[ Tilename ] : Words"));
+        g.console_out.clear();
+    }
+    run(&mut g, "DumpTileInfo", &[x(0.0), s("TestMenu/Box/Pic")]);
+    assert!(g.console_out.iter().any(|l| l == "[ Tilename ] : Pic"));
+    g.console_out.clear();
+    let tile = g.ui_pointer.over.unwrap();
+    g.ui_tree.unload_tile(tile);
+    assert_eq!(run(&mut g, "GetUIElementType", &[]), x(-1.0));
+    assert_eq!(run(&mut g, "GetUIElementType", &[s("TestMenu/Box/Words")]), x(-1.0));
+    run(&mut g, "DumpTileInfo", &[]);
+    assert!(g.console_out.is_empty());
+}
+
+#[test]
 fn sort_list_box_places_the_items_by_their_keys() {
     let f = fixture();
     let mut g = game(&f);
@@ -326,8 +357,12 @@ fn sort_list_box_places_the_items_by_their_keys() {
 fn string_dimensions_by_the_engines_measure() {
     let f = fixture();
     let mut g = game(&f);
-    // Headless, no measure: nothing to write.
-    assert_eq!(n(run(&mut g, "GetStringUIDimensions", &[s("some words"), x(3.0), x(80.0)])), 0.0);
+    // [design] Headless outputs are deterministic, including through compiled locals.
+    let r = run(&mut g, "GetStringUIDimensions", &[s("some words"), x(3.0), x(80.0)]);
+    assert_eq!(array(&g, &r).into_iter().map(|(_, v)| v).collect::<Vec<_>>(), vec![x(0.0); 4]);
+    let script = "float w\nfloat h\nfloat lines\nlet w := -11\nlet h := -22\nlet lines := -33\nGetStringUIDimensions \"some words\" 3 80 w h lines\nSetFunctionValue (w * 1000000 + h * 1000 + lines)";
+    // The outputs packed in one number: a function's own array is let go when it ends.
+    assert_eq!(query(&mut g, script), x(0.0), "the sentinels are overwritten with zeros");
     // A stub: 10 units a letter, wrapped at the width, 20 a line in font 3.
     g.ui_extra.measure = Some(Box::new(|font, text, wrap| {
         let w = text.chars().count() as f64 * 10.0;
@@ -337,6 +372,7 @@ fn string_dimensions_by_the_engines_measure() {
     let r = run(&mut g, "GetStringUIDimensions", &[s("some words"), x(3.0), x(80.0)]);
     let vals: Vec<XVal> = array(&g, &r).into_iter().map(|(_, v)| v).collect();
     assert_eq!(vals, vec![x(0.0), x(80.0), x(40.0), x(2.0)]);
+    assert_eq!(query(&mut g, script), x(80_040_002.0));
 }
 
 #[test]
@@ -361,7 +397,7 @@ fn dump_tile_info_to_the_console_and_an_array() {
 }
 
 #[test]
-fn dump_tile_info_flushes_only_when_argument_one_names_the_hud() {
+fn inspection_flushes_only_for_the_resolved_hud_tile() {
     use fnv_game::ui_hud::{self, Shown, Texts};
     let f = fixture();
     let mut g = game(&f);
@@ -372,7 +408,14 @@ fn dump_tile_info_flushes_only_when_argument_one_names_the_hud() {
         frame: Default::default(),
     };
     ui_hud::defer(&mut g, Shown { root: true, ..Default::default() }, texts, None);
+    g.ui_pointer.over = g.ui_tree.menu("HUDMainMenu");
+    run(&mut g, "GetUIElementType", &[s("TestMenu/Box")]);
     run(&mut g, "DumpTileInfo", &[x(0.0), s("TestMenu/Box")]);
+    assert!(g.ui_hud_pending.is_some(), "explicit other-menu path wins over the HUD cursor");
+    g.ui_pointer.over = g.ui_tree.find_tile("TestMenu/Box");
+    run(&mut g, "GetUIElementType", &[]);
+    run(&mut g, "GetUIElementType", &[s("HUDMainMenu/Missing")]);
+    run(&mut g, "DumpTileInfo", &[x(0.0), s("HUDMainMenu/Missing")]);
     assert!(g.ui_hud_pending.is_some());
     assert!(!g.ui_used);
     g.console_out.clear();
@@ -380,6 +423,21 @@ fn dump_tile_info_flushes_only_when_argument_one_names_the_hud() {
     assert!(g.ui_hud_pending.is_none());
     assert!(g.ui_used);
     assert!(g.console_out.iter().any(|line| line == "[ visible ] : 1.000000"));
+    for command in ["GetUIElementType", "DumpTileInfo"] {
+        let texts = Texts {
+            radiation_word: String::new(), radiation_value: String::new(),
+            xp_label: String::new(), xp_level_up: String::new(),
+            needs: Default::default(), sneak: None, prompt_key: None, prompt_verb: None,
+            frame: Default::default(),
+        };
+        ui_hud::defer(&mut g, Shown { root: true, ..Default::default() }, texts, None);
+        g.ui_used = false;
+        g.ui_pointer.over = g.ui_tree.menu("HUDMainMenu");
+        let args = if command == "DumpTileInfo" { vec![x(0.0), s("Missing/Tile")] } else { vec![] };
+        run(&mut g, command, &args);
+        assert!(g.ui_hud_pending.is_none(), "{command} resolved the HUD cursor");
+        assert!(g.ui_used);
+    }
 }
 
 /// Compiles and runs a query through the VM to the host (`Game::run_query`, `nvse::call`).
@@ -765,4 +823,25 @@ fn hud_bars_are_made_again_in_a_rebuilt_tree() {
     assert_eq!(g.ui_extra.bars.list.len(), 1);
     let path = g.ui_extra.bars.list[0].path();
     assert_eq!(float(&g, &format!("{path}/y")), 2.0);
+}
+
+#[test]
+fn authored_tile_smoke_scripts_compile_against_the_function_table() {
+    let f = fixture();
+    let g = game(&f);
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tools/smoke/fixtures");
+    for path in [
+        "ui-dimensions-home/mods/NVSE/plugins/Scripts/gr_nvf_dimensions.txt",
+        "ui-cursor-home/mods/NVSE/plugins/Scripts/gr_nvf_cursor.txt",
+        "ui-cursor-home/mods/NVSE/user_defined_functions/nvf_cursor_probe.txt",
+        "ui-typewriter-home/mods/NVSE/plugins/Scripts/gr_nvf_typewriter.txt",
+        "ui-typewriter-home/mods/NVSE/user_defined_functions/nvf_type_original.txt",
+        "ui-typewriter-home/mods/NVSE/user_defined_functions/nvf_type_replacement.txt",
+        "ui-typewriter-home/mods/NVSE/user_defined_functions/nvf_type_controller.txt",
+    ] {
+        let src = std::fs::read_to_string(root.join(path)).unwrap();
+        let compiled = fnv_script::compile::compile(&src, &g.data.table, &fnv_game::game::GameEnv { g: &g }, None);
+        let errors: Vec<_> = compiled.errors().collect();
+        assert!(errors.is_empty(), "{path}: {errors:?}");
+    }
 }

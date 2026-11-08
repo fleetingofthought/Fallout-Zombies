@@ -1,0 +1,228 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jip6b",
+ "title": "jip6b, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 0\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 100\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.100",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 101\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.101",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 120\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.120",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 200\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.200",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 255\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.255",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 256\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.256",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 -1\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.m1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 -5\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.m5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 -100\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.m100",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 0\nlet fRes := SetNthDestructionStageTrait rObj 1 0 1000\nlet fA := GetNthDestructionStageTrait rObj 1 0\nSetNthDestructionStageTrait rObj 1 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 0))\nEnd\n",
+   "label": "jip6b.dest.hp.1000",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 2\nlet fRes := SetNthDestructionStageTrait rObj 1 2 2\nlet fA := GetNthDestructionStageTrait rObj 1 2\nSetNthDestructionStageTrait rObj 1 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 2))\nEnd\n",
+   "label": "jip6b.dest.stage.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 2\nlet fRes := SetNthDestructionStageTrait rObj 1 2 3\nlet fA := GetNthDestructionStageTrait rObj 1 2\nSetNthDestructionStageTrait rObj 1 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 2))\nEnd\n",
+   "label": "jip6b.dest.stage.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 2\nlet fRes := SetNthDestructionStageTrait rObj 1 2 4\nlet fA := GetNthDestructionStageTrait rObj 1 2\nSetNthDestructionStageTrait rObj 1 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 2))\nEnd\n",
+   "label": "jip6b.dest.stage.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 2\nlet fRes := SetNthDestructionStageTrait rObj 1 2 10\nlet fA := GetNthDestructionStageTrait rObj 1 2\nSetNthDestructionStageTrait rObj 1 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 2))\nEnd\n",
+   "label": "jip6b.dest.stage.10",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 2\nlet fRes := SetNthDestructionStageTrait rObj 1 2 255\nlet fA := GetNthDestructionStageTrait rObj 1 2\nSetNthDestructionStageTrait rObj 1 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 2))\nEnd\n",
+   "label": "jip6b.dest.stage.255",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 2\nlet fRes := SetNthDestructionStageTrait rObj 1 2 256\nlet fA := GetNthDestructionStageTrait rObj 1 2\nSetNthDestructionStageTrait rObj 1 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 2))\nEnd\n",
+   "label": "jip6b.dest.stage.256",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 2\nlet fRes := SetNthDestructionStageTrait rObj 1 2 300\nlet fA := GetNthDestructionStageTrait rObj 1 2\nSetNthDestructionStageTrait rObj 1 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 2))\nEnd\n",
+   "label": "jip6b.dest.stage.300",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 2\nlet fRes := SetNthDestructionStageTrait rObj 1 2 -1\nlet fA := GetNthDestructionStageTrait rObj 1 2\nSetNthDestructionStageTrait rObj 1 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 2))\nEnd\n",
+   "label": "jip6b.dest.stage.m1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 1\nlet fRes := SetNthDestructionStageTrait rObj 1 1 7\nlet fA := GetNthDestructionStageTrait rObj 1 1\nSetNthDestructionStageTrait rObj 1 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 1))\nEnd\n",
+   "label": "jip6b.dest.selfdmg.7",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 1\nlet fRes := SetNthDestructionStageTrait rObj 1 1 -2\nlet fA := GetNthDestructionStageTrait rObj 1 1\nSetNthDestructionStageTrait rObj 1 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 1))\nEnd\n",
+   "label": "jip6b.dest.selfdmg.m2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 1\nlet fRes := SetNthDestructionStageTrait rObj 1 1 70000\nlet fA := GetNthDestructionStageTrait rObj 1 1\nSetNthDestructionStageTrait rObj 1 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 1))\nEnd\n",
+   "label": "jip6b.dest.selfdmg.70000",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 4\nlet fRes := SetNthDestructionStageTrait rObj 1 4 300\nlet fA := GetNthDestructionStageTrait rObj 1 4\nSetNthDestructionStageTrait rObj 1 4 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 4))\nEnd\n",
+   "label": "jip6b.dest.debris.300",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fSave := GetNthDestructionStageTrait rObj 1 4\nlet fRes := SetNthDestructionStageTrait rObj 1 4 -1\nlet fA := GetNthDestructionStageTrait rObj 1 4\nSetNthDestructionStageTrait rObj 1 4 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetNthDestructionStageTrait rObj 1 4))\nEnd\n",
+   "label": "jip6b.dest.debris.m1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet fRes := AddDestructionStage rObj 0 50 1\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fRes (GetDestructionDataNumStages rObj) (GetNthDestructionStageTrait rObj 0 0) (GetDestructionDataTargetable rObj))\nEnd\n",
+   "label": "jip6b.dest.add.none",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fA := GetDestructionDataNumStages rObj\nlet fRes := AddDestructionStage rObj fA 10 3\nlet fB := GetDestructionDataNumStages rObj\nlet fC := RemoveDestructionStage rObj fA\nSetFunctionValue (sv_Construct \"%g %g %g %g %g\" fA fRes fB fC (GetDestructionDataNumStages rObj))\nEnd\n",
+   "label": "jip6b.dest.add.end",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fRes := AddDestructionStage rObj 0 99 0\nlet fB := GetNthDestructionStageTrait rObj 0 0\nlet fC := RemoveDestructionStage rObj 0\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fRes fB fC (GetNthDestructionStageTrait rObj 0 0))\nEnd\n",
+   "label": "jip6b.dest.add.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17B587\"\nlet fSave := GetCreatureDamage rObj\nlet fRes := SetCreatureDamage 32767 rObj\nlet fA := GetCreatureDamage rObj\nSetCreatureDamage fSave rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetCreatureDamage rObj))\nEnd\n",
+   "label": "jip6b.cr.dmg.32767",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17B587\"\nlet fSave := GetCreatureDamage rObj\nlet fRes := SetCreatureDamage 65535 rObj\nlet fA := GetCreatureDamage rObj\nSetCreatureDamage fSave rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetCreatureDamage rObj))\nEnd\n",
+   "label": "jip6b.cr.dmg.65535",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17B587\"\nlet fSave := GetCreatureDamage rObj\nlet fRes := SetCreatureDamage 65536 rObj\nlet fA := GetCreatureDamage rObj\nSetCreatureDamage fSave rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetCreatureDamage rObj))\nEnd\n",
+   "label": "jip6b.cr.dmg.65536",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17B587\"\nlet fSave := GetCreatureDamage rObj\nlet fRes := SetCreatureDamage 70000 rObj\nlet fA := GetCreatureDamage rObj\nSetCreatureDamage fSave rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetCreatureDamage rObj))\nEnd\n",
+   "label": "jip6b.cr.dmg.70000",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17B587\"\nlet fSave := GetCreatureDamage rObj\nlet fRes := SetCreatureDamage -1 rObj\nlet fA := GetCreatureDamage rObj\nSetCreatureDamage fSave rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetCreatureDamage rObj))\nEnd\n",
+   "label": "jip6b.cr.dmg.m1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17AF62\"\nlet fRes := ToggleCreatureModel \"brahmin.nif\" 1 rObj\nlet fA := ar_Size (GetCreatureModels rObj)\nlet fB := CreatureHasModel \"brahmin.nif\" rObj\nlet fC := ToggleCreatureModel \"brahmin.nif\" 0 rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g %g\" fRes fA fB fC (ar_Size (GetCreatureModels rObj)))\nEnd\n",
+   "label": "jip6b.cr.toggle.add",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17AF62\"\nlet fA := ToggleCreatureModel \"smspinebreakerheavy.nif\" 0 rObj\nlet fB := ToggleCreatureModel \"smspinebreakerheavy.nif\" 0 rObj\nlet fC := ar_Size (GetCreatureModels rObj)\nlet fRes := ToggleCreatureModel \"smspinebreakerheavy.nif\" 1 rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fA fB fC fRes)\nEnd\n",
+   "label": "jip6b.cr.toggle.offagain",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := ToggleCraftingMessages 1\nlet fB := ToggleCraftingMessages 0\nlet fC := ToggleCraftingMessages 0\nlet fRes := ToggleCraftingMessages 1\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fA fB fC fRes)\nEnd\n",
+   "label": "jip6b.msg.crafting.twice",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"7015E\"\nlet fRes := SetNthDestructionStageExplosion rObj 2 rOther\nSetFunctionValue fRes\nEnd\n",
+   "label": "jip6b.dest.setexpl.result",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"81932\"\nlet fRes := SetDestructionDataTargetable rObj 1\nSetFunctionValue fRes\nEnd\n",
+   "label": "jip6b.dest.settarget.result",
+   "field": "value"
+  }
+ ]
+}

@@ -200,3 +200,85 @@ owner's screenshot of the original shows one lying on the floor.
   taken); the 1,570 REFR were not sorted by base type, so `XRGD` on other types is not
   posed.
 
+### 5.2 The sweep over every ragdoll-like placed reference [2026-11-05, issue #1400]
+
+`fnvtool world posed-clutter` (a new subcommand) lists every placed reference whose model
+has two or more dynamic collision objects or any constraint, or whose model path names a
+`skeleton`, or which carries `XRGD`, over a load order; `--summary` gives the counts only
+(the per-reference rows are game data and stay out of the repo). Run over FalloutNV.esm
+and the nine DLC masters [observed]:
+
+| Branch | References | What NVForever does |
+|---|---|---|
+| actor (ACHR/ACRE) | 7,681 (441 with `XRGD`) | the corpse path, not clutter (§3, §5) |
+| posed | 1,719 | `posable` type, `XRGD` fits (one entry per body, or a part's first entries) |
+| refused — does not fit | 452 | `posable` type, `XRGD` refused; see the reasons below |
+| not posable type | 309 | `XRGD` on a base type outside MSTT/STAT/MISC/CONT |
+| STAT fixed | 236 | STAT/SCOL, ragdoll-like, no `XRGD` (physics.md §4.3.2) |
+| no `XRGD`, jointed | 168 | held in the file's pose (`hold_jointed`) |
+| `skeleton` path, no ragdoll | 161 | a single static body or none (a skull, a ribcage) |
+
+The 452 refusals, by reason [observed]: 289 "a body's node is not in the model" (a body
+hung on the mesh root, whose name the drawing's below-root node list does not hold — the
+globes, the hanging office lights, some weapons), 151 "one body, but more XRGD entries
+than it can hold" (a single-body item with extra entries), 12 "the model has no bodies"
+(an `XRGD` on a model with no collision). The engine's `clutter_pose::pose` can also
+refuse with "fewer XRGD entries than bodies", "no XRGD entries", "a body's node is
+unnamed", "an entry is not finite" or "a node's parent comes after it"; none of those
+occur in the ten masters.
+
+The `not posable type` rows, by base type, with how many have a *fitting* `XRGD` (the
+count rule holds, every body on a named node below the root) [observed]:
+
+| Base type | References | Fitting | The models |
+|---|---|---|---|
+| ARMO | 139 | 138 | skinned ground objects (`…GO.NIF`, two bodies) and single-body hats/helmets |
+| WEAP | 111 | 87 | single-body weapons lying in the world |
+| ACTI | 37 | 33 | swinging traps (16/8 bodies) and single-body static plants/benches |
+| ALCH | 19 | 17 | single-body bottles |
+| PROJ | 3 | 0 | single-body mines (their body is on the mesh root) |
+
+The skeleton clutter itself [observed: `fnvtool collide ragdoll`, `world posed-clutter`]:
+
+- `skeletonwholebodyclothed.nif` (15 bodies, 14 constraints): 270 references, all posed
+  (269 MSTT/STAT/MISC and one placed as a CONT — now posed, CONT being a posable type).
+- `skeletontorsonaked.nif` (5 bodies): 249 references. 88 carry a 5-entry `XRGD` and pose;
+  161 carry a 15-entry `XRGD`. `skeletontorsomaleclothes.nif` and `…02.nif` add one each
+  of those 15-entry cases: 163 torso references in all.
+- The arm and leg parts (`skeletonleftarmnaked.nif` 3 bodies, `…leftleg…` 3, `…rightleg…` 4,
+  and their `maleclothes` copies) each carry an `XRGD` with one entry per body and pose.
+- `skeletonmale50scasual.nif` (16 bodies) and `skeletonfemale50scasual.nif` (17 bodies) pose.
+
+Every skeleton part now poses. The 163 torso references were refused before this change
+only because their `XRGD` has 15 entries for a five-body model; [observed: the torso's five
+body nodes — `Torso`, `Head`, `RightUpArm`, `RightForeArm`, `RightHand` — are, by name and
+order, the first five of the whole clothed skeleton's fifteen]. That the torso's `XRGD` was
+copied from the whole skeleton is a [hypothesis] for how the data came to be, not something
+needed to pose it.
+
+**The fix** [design, issue #1400]:
+
+- `posable` widens to the one base type the sweep shows carrying a fitting `XRGD` on a
+  ragdoll-like model: CONT joins MSTT, STAT and MISC (the whole clothed skeleton placed
+  as a container). ACTI is left out (a swinging trap's model is drawn by `swing_traps`,
+  its own rig, so posing its collision from `XRGD` would part it from the drawing), ARMO
+  too (its fitting references are skinned ground objects — case E), and the single-body
+  items ALCH, WEAP and PROJ (their one-entry `XRGD` is a single-body pose, a different
+  concern from the ragdoll-like clutter pose).
+- The drawing and the collision now share one pose condition: the `xrgd::matching` count
+  rule holds, every entry is finite, and every body hangs on a named node below the mesh
+  root (`clutter_pose::pose` on the drawing side, `NodeTree::pose_objects` on the
+  collision side). Before, the drawing refused a body on the root while the collision
+  posed it — the 289 references above were drawn and collided in different poses. A
+  reference whose `XRGD` has more entries than its model has bodies poses from the first
+  `bodies` entries when the model has at least two bodies (the torso case). A single body
+  with extra entries is refused, and so is fewer entries than bodies.
+- A refusal is logged once per model with the reason (`clutter pose: <model>: its XRGD
+  does not fit (…)`), instead of the drawing's silent `debug!` and the physics loader's
+  nothing.
+- A STAT with a usable `XRGD` is still posed (its bodies fixed by `static_base_fixed`
+  first, then posed, physics.md §4.3.2), as before.
+
+Not done here (compared against the original later): case C (a jointed model with no
+`XRGD` — settle as a ragdoll on load, or stay as authored), case D (a STAT skeleton with
+no usable `XRGD` stays fixed), and case E (skinned skeleton models placed as clutter).

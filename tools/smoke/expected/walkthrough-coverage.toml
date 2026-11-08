@@ -33,11 +33,15 @@ total = 5690
 # 1635 -> 1634: a Nightkin killed by come-fly-with-me no longer starts combat a frame after
 # its death, so REPCONDavisonSCRIPT's OnStartCombat (run on a corpse) is not counted. #1282's
 # runner did it on c665a84b; main a1dcaa54 (after #1287) reads 1634 and info.run 1638 too.
-run = 1651
+# 1651 -> 1652 (lines.said 2481 -> 2490, info.run 1659 -> 1662): #1767 (8c994614) lets a
+# script's Say/SayTo say a fixed speaker's line when no line passes the speaker check, so
+# the Dead Money narrator and the Old World Blues intercoms say Elijah's (+2), Borous's
+# (+4) and Mobius's (+3) lines, and NVDLC03MobiusIntercomSCRIPT runs one more block.
+run = 1652
 
 [summary.lines]
 total = 28896
-said = 2481
+said = 2490
 
 [summary.actors]
 with_lines = 704
@@ -45,7 +49,7 @@ touched = 268
 
 [summary.results.info]
 total = 8639
-run = 1659
+run = 1662
 
 [summary.results.package]
 total = 558

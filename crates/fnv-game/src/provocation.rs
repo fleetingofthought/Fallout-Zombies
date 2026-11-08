@@ -418,6 +418,12 @@ impl Game<'_> {
             }
         }
         let mut assistance_of: HashMap<FormId, i64> = HashMap::new();
+        // Who would attack whom, worked out once per pair while no grudge is added: a
+        // grudge is the only thing this loop changes that it depends on (`Game::would_attack`),
+        // so the memo is emptied when one is. Asked again for every victim, it was 10 ms of
+        // a 50-a-side battle's measurement: ~12,000 asks for ~2,500 pairs [observed
+        // 2026-11-07, #1799].
+        let mut attacks: HashMap<(FormId, FormId), bool> = HashMap::new();
         for (victim, foes) in fights {
             let watchers = watching.get(&victim).cloned().unwrap_or_default();
             for helper in watchers {
@@ -439,7 +445,18 @@ impl Game<'_> {
                     continue;
                 }
                 for &(attacker, at) in &foes {
-                    if attacker == helper || self.provocations.holds(helper, attacker) || self.would_attack(helper, attacker) {
+                    if attacker == helper || self.provocations.holds(helper, attacker) {
+                        continue;
+                    }
+                    let would = match attacks.get(&(helper, attacker)) {
+                        Some(&w) => w,
+                        None => {
+                            let w = self.would_attack(helper, attacker);
+                            attacks.insert((helper, attacker), w);
+                            w
+                        }
+                    };
+                    if would {
                         continue;
                     }
                     // Never against its own allies and friends [documented: they "cannot
@@ -449,6 +466,7 @@ impl Game<'_> {
                     }
                     let now = self.time;
                     self.provocations.grudges.insert((helper, attacker), Grudge { why: Why::Assist { victim }, since: now });
+                    attacks.clear();
                     self.provocations.notes.push(Note::Assists { helper, victim, attacker });
                     let t = self.awareness.timers.unwrap_or_default();
                     self.awareness.actors.entry(helper).or_default().alarm(attacker, at, 0.0, Cause::Ally, now, &t);
@@ -553,9 +571,18 @@ impl Game<'_> {
             .flat_map(|(id, a)| a.targets.keys().map(move |t| (*id, *t)))
             .collect();
         let mut joined = 0;
+        // Each attacker's watchers in the pairs' order, from one pass over the pairs: a
+        // pass per fight was 7.5-10.6 ms of a 50-a-side battle's measurement [observed
+        // 2026-11-07, #1799]. Nothing below changes the pairs.
+        let mut watching: HashMap<FormId, Vec<FormId>> = HashMap::new();
+        for ((w, t), (d, _)) in &self.detection.pairs {
+            if d.band == Band::Detected {
+                watching.entry(*t).or_default().push(*w);
+            }
+        }
         for (attacker, victim) in fights {
             let Some(at) = self.world.peek(attacker).map(|s| s.pos).or_else(|| self.world.placed.get(attacker).map(|p| p.pos)) else { continue };
-            let watchers: Vec<FormId> = self.detection.pairs.iter().filter(|((_, t), (d, _))| *t == attacker && d.band == Band::Detected).map(|((w, _), _)| *w).collect();
+            let watchers = watching.get(&attacker).cloned().unwrap_or_default();
             for helper in watchers {
                 // Another actor's fight counts only when it is the watcher's own.
                 if victim != FormId::PLAYER_REF && helper != victim {

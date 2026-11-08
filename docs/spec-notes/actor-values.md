@@ -49,9 +49,22 @@ An actor value is a base value and three pools added to it [documented: ActorVal
   to Charisma lowers Barter while it lasts [hypothesis; the wiki does not say which
   value feeds them]. Health's maximum is the exception: it reads permanent Endurance, as
   it did before this note (combat-rules.md §9).
-- Not modelled: `UnsetAV` and `UnforceAV`, and the wiki's remark that the player's
-  spent skill points sit in a SetAV override that is *added* to the derived base.
-  `SetActorValue` on a player skill replaces the formula's result here.
+- `SetActorValue` on a player skill sets the part beside the attributes' formula: the
+  value and the base read the number given plus the formula's result. From the console
+  and from a script alike; set twice it stays (no compounding); `SetAV 0` leaves the
+  formula's part; a `ModAV` stays on top [observed: o26_setav, 2026-11-06, save
+  `nvfdoc`, level 1, every skill 17 from the attributes: `player.setav repair 35` read
+  52 (GetBaseAV 52), Guns 50 read 67, Science 0 read 17, Barter ModAV +10 then SetAV 35
+  read 62 with base 52; gaps6 saw the same, Guns 17 to 67 after SetActorValue 50; issue
+  #1575]. This matches the wiki's remark that the player's skill points sit in a SetAV
+  override added to the derived base. The points spent go: on `nvfLanius` (level 50,
+  Intelligence read 20 and counted as 10, 27 from the attributes) Repair 127 read 62
+  after SetAV 35 and Science 127 read 27 after SetAV 0; Guns 142 read 92 after SetAV
+  50, 15 more than the rest [observed: o26_setav, 2026-11-06]. Here the 15 is taken
+  for Guns' tag bonus (fAVDTagSkillBonus), which stays: SetActorValue sets the number
+  plus the formula plus the tag bonus (`functions::actor::set_actor_value`)
+  [hypothesis: the save's tagged skills were not read].
+- Not modelled: `UnsetAV` and `UnforceAV`.
 
 Where the numbers live: the permanent value of S.P.E.C.I.A.L. is in the Layer 4 world
 (`World::actor_value`), because the carry weight rule and the menus read and write it
@@ -243,7 +256,7 @@ actors, it answers:
    Barter and Speech.
 6. The pools: Barter after `ModActorValue 5` (current, base, permanent), and Carry
    Weight after Strength is modified.
-7. `SetActorValue` on a player skill: the number itself, or added to the formula (§1).
+7. `SetActorValue` on a player skill: answered (§1, o26_setav): added to the formula.
 
 Not covered: an NPC whose level follows the player's (§3.2), and the template rule for
 actors whose template is a leveled list (§2).

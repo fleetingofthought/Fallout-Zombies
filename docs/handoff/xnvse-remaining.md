@@ -123,6 +123,36 @@ ShowOff batch 3: 38 (#1010, ext-showoff.md §6: the equipped-item family, the se
 randomizer, aux timer start and update handlers, temporary faction relations, a
 reference's radiation; from the pages, not probed). Census after it, with Lutana batch 1
 and #1775's TTW functions merged: 718 (ShowOff 111 → 73).
+JIP batch 8: 47 (#1006, jip-records-8.md: actor base data, actor effects, ingestibles and
+base effects, weapons, idles, body parts, cells and water; probe set jip8 282 rows, 281 match
+after the fixes, the one left explained). Census after it: 634 (JIP 248 → 201).
+SUP batch 2: 16 (#1008, ext-sup2.md: the dialogue setters of SUP with JohnnyGuitar's related
+topics, said-once and parent-topic functions and ShowOff's response-text setters, read by the
+dialogue through `crate::dialogue_edits`; probed, lab L5.ext.sup2 37 of 38). Census after it:
+702 (SUP 122 → 114, JohnnyGuitar 222 → 216, ShowOff 73 → 71).
+SUP batch 3: 21 (#1008, ext-sup3.md: the fly camera's place, the angles to a point, positions at
+an angle and distance, the INI readers; probed, lab L5.ext.sup3 29 of 35, the rest explained; an
+axis argument beside a reference named `Z` fixed in the compiler). Census after it: 697 (SUP
+122 → 101), with batch 2 merged: 681 (SUP 114 → 93).
+JohnnyGuitar batch 5: 32 (#1007, ext-jg5.md: alternate textures, FaceGen model flags and
+icons, worldspace map textures and zones, region map names (REGN RDMP added to the schema)
+and the location name, camera shots, body part strings, explosion and projectile sounds,
+equip types, recipe and weapon mod lookups, actor effect types, the time played, GetRGBColor;
+probed, lab L5.ext.jg5 88 of 88).
+Census after it: 649 (JohnnyGuitar 216 → 184).
+With JIP batch 8 merged: 602 (JIP 201, JohnnyGuitar 184) [observed: the extender_census
+test, 2026-11-08].
+ShowOff batch 4: 34 (#1010, ext-showoff.md §7: matrices and quaternions, SayTo topics, the INI cache,
+JSON files and folders through NVForever's layer, the pickpocket, quest-message and ammo-regen
+switches, the corner-message handler, ResetInteriorAlt, SetOwnershipTemp, the enable-parent
+functions; from the pages, not probed). Census after it: 568 (ShowOff 71 → 37).
+SUP batch 5: 42 (#1008, ext-sup5.md: Excel workbooks (an .xls reader and writer of our own,
+MS-CFB/MS-XLS), JSON files, file sizes and times, the load-order dump, screenshots through the
+engine and QR codes; the network, desktop, clipboard and system-font functions give their
+nothing values by the owner's decisions of 2026-11-08; not probed yet, set sup5). Census after
+it: 560 (SUP 93 → 51).
+With both ShowOff batch 4 and SUP batch 5 merged: 526 (ShowOff 37, SUP 51) [hypothesis: 602 − 34 − 42;
+the extender_census test decides].
 
 **The plugin libraries: 1,519 left** (recounted with #1022's census). JIP LN 349,
 JohnnyGuitar 313, SUP 184, LU 145, ShowOff 139, ITR 119, One111 51, CacheUI 45, PP 42,

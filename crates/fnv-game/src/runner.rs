@@ -1527,8 +1527,8 @@ fn step(g: &mut Game, st: &mut RunState, a: &Action) -> Result<Observed, String>
             let mut why = Vec::new();
             for name in infos {
                 let i = resolve(g, name)?;
-                let data = g.data;
-                let def = data.infos.get(&i).ok_or_else(|| format!("{name} is not a dialogue line"))?;
+                let dv = g.dialogue_view();
+                let def = dv.info(&i).ok_or_else(|| format!("{name} is not a dialogue line"))?;
                 let sp = s.or(def.speaker);
                 let pass = g.conditions_pass(&def.conditions, sp, Some(FormId::PLAYER_REF), &format!("INFO {i}"));
                 if pass {

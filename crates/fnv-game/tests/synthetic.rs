@@ -2172,6 +2172,38 @@ fn weapon_out_and_weapon_animation_type() {
 }
 
 #[test]
+fn player_limb_losses_fit_the_10mm_capture_at_200_maximum_health() {
+    use fnv_game::actor_values::HEALTH;
+    use fnv_game::combat::{HitInfo, LimbHit, HEAD, LEFT_ARM, LEFT_MOBILITY, RIGHT_ARM, RIGHT_MOBILITY, TORSO};
+    use fnv_game::functions::set_actor_value_current;
+    let f = fixture();
+    let p = FormId::PLAYER_REF;
+    // [observed: o17_air limbs_10mm, check 3] The losses below; maximum Health 200
+    // remains [hypothesis], since that run did not record its base Health.
+    for (condition, share, health_damage, limb_damage, loss) in [
+        (LEFT_ARM, 25.0, 16.06, 16.06, 16.06),
+        (RIGHT_ARM, 25.0, 16.06, 16.06, 16.06),
+        (LEFT_MOBILITY, 25.0, 16.06, 16.06, 16.06),
+        (RIGHT_MOBILITY, 25.0, 16.06, 16.06, 16.06),
+        (TORSO, 60.0, 16.06, 16.06, 6.69),
+        (HEAD, 20.0, 32.12, 16.06, 20.075),
+        (HEAD, 20.0, 76.12, 38.06, 47.575),
+    ] {
+        let mut g = game(&f);
+        g.new_game();
+        set_actor_value_current(&mut g, p, HEALTH, 200.0).unwrap();
+        let info = HitInfo { attacker: Some(FormId(NPC_REF)), limb: Some(LimbHit { condition, health_percent: share, damage: limb_damage, points: false }), ..Default::default() };
+        let r = g.hit(p, health_damage, info);
+        assert_eq!(r.max_health, 200.0);
+        assert!((r.dealt - health_damage).abs() < 1e-9);
+        let (code, after) = r.limb.unwrap();
+        assert_eq!(code, condition);
+        assert!((100.0 - after - loss).abs() < 0.005, "condition {condition}: loss {} against {loss}", 100.0 - after);
+        assert!(!r.crippled);
+    }
+}
+
+#[test]
 fn limb_hits_lower_conditions_and_cripple() {
     use fnv_game::combat::{HitInfo, LimbHit};
     let f = fixture();
@@ -4131,4 +4163,68 @@ fn extra_misc_stats_music_states_eaten_corpses_and_terminal_art() {
     assert_eq!(g.terminal_ui_model(FormId(0x0000_0901)), Some("Terminals\\TerminalInterface02.NIF"));
     run(&mut g, "SetTerminalUIModel TestAdd");
     assert_eq!(g.terminal_ui_model(FormId(0x0000_0901)), None);
+}
+
+#[test]
+fn planted_forms_remap_and_missing_dependencies_are_dropped() {
+    use fnv_game::game::GameSnapshot;
+    use fnv_game::pickpocket::{Explosive, Planted};
+    let f = fixture();
+    let mut g = game(&f);
+    g.new_game();
+    let victim = FormId(NPC_REF);
+    g.world.get(victim).unwrap();
+    let mut snap = g.snapshot();
+    let extra = FormId(0x01000800);
+    let base_gone = FormId(0xFF000090);
+    let cell_gone = FormId(0xFF000091);
+    let mut reference = snap.sim.refs[&victim].clone();
+    reference.base = extra;
+    snap.sim.refs.insert(base_gone, reference);
+    let mut reference = snap.sim.refs[&victim].clone();
+    reference.cell = Some(extra);
+    snap.sim.refs.insert(cell_gone, reference);
+    let plant = Planted { victim, item: FormId(ACTIVATOR), at: 12.5, blast: Explosive { damage: 3.0, resist: Some(19), enchantment: Some(FormId(ACTIVATOR)) }, seen_by: vec![victim, extra, base_gone, cell_gone] };
+    snap.planted = vec![
+        plant.clone(),
+        Planted { victim: extra, ..plant.clone() },
+        Planted { item: extra, ..plant.clone() },
+        Planted { blast: Explosive { enchantment: Some(extra), ..plant.blast }, ..plant.clone() },
+        Planted { victim: base_gone, ..plant.clone() },
+        Planted { victim: cell_gone, ..plant.clone() },
+    ];
+    let entry = |name: &str| fnv_save::PluginEntry { name: name.into(), size: 0 };
+    let before = [entry("Test.esm"), entry("Extra.esm")];
+    let after = [entry("Extra.esm"), entry("Test.esm")];
+    let mut value = serde_json::to_value(&snap).unwrap();
+    fnv_save::remap_json(&mut value, &fnv_save::PluginRemap::new(&before, &after));
+    let mut moved: GameSnapshot = serde_json::from_value(value.clone()).unwrap();
+    assert_eq!(moved.drop_gone(|id| fnv_save::is_gone(id.0)), 0);
+    assert_eq!(moved.planted[0].victim, FormId(NPC_REF | 0x01000000));
+    assert_eq!(moved.planted[0].item, FormId(ACTIVATOR | 0x01000000));
+    assert_eq!(moved.planted[0].blast.enchantment, Some(FormId(ACTIVATOR | 0x01000000)));
+    assert_eq!(moved.planted[0].seen_by, vec![FormId(NPC_REF | 0x01000000), FormId(0x800), base_gone, cell_gone]);
+    assert_eq!(moved.planted[0].at, 12.5);
+    // Moving the plugin back restores every serialized field exactly.
+    fnv_save::remap_json(&mut value, &fnv_save::PluginRemap::new(&after, &before));
+    let back: GameSnapshot = serde_json::from_value(value).unwrap();
+    assert_eq!(back, snap);
+    let world = World::restore(&f.forms, &f.refs, &back.sim).unwrap();
+    let h = Game::restore(&f.data, world, g.cfg, &back).unwrap();
+    assert_eq!(h.pickpocket.planted, snap.planted);
+    assert!(h.pickpocket.blast_witnesses.is_empty());
+
+    let mut value = serde_json::to_value(&snap).unwrap();
+    fnv_save::remap_json(&mut value, &fnv_save::PluginRemap::new(&before, &[entry("Test.esm")]));
+    let mut back: GameSnapshot = serde_json::from_value(value).unwrap();
+    assert_eq!(back.drop_gone(|id| fnv_save::is_gone(id.0)), 7, "two removed references and five plants");
+    assert_eq!(back.planted, vec![Planted { seen_by: vec![victim], ..plant }]);
+    assert!(!back.sim.refs.contains_key(&base_gone) && !back.sim.refs.contains_key(&cell_gone));
+    let world = World::restore(&f.forms, &f.refs, &back.sim).unwrap();
+    let h = Game::restore(&f.data, world, g.cfg, &back).unwrap();
+    assert_eq!(h.pickpocket.planted, back.planted);
+    // Cleanup also handles a gone witness supplied directly in a record field.
+    back.planted[0].seen_by.push(extra);
+    assert_eq!(back.drop_gone(|id| id == extra), 0);
+    assert_eq!(back.planted[0].seen_by, vec![victim]);
 }

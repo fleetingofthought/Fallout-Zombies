@@ -173,8 +173,9 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
             XVal::Num(1.0)
         }
         // `cell`: its encounter zone [documented: GetCellEncounterZone, alias GetCellZone].
-        // SetCellEncounterZone's change first (`nvse_jg2`).
-        "getcellencounterzone" | "getcellzone" => XVal::Ref(form(args, 0).and_then(|c| g.other.cell_zones.get(&c).copied().unwrap_or_else(|| g.world.placed.cell_zone(c))).map_or(0, |z| z.0)),
+        // SetCellEncounterZone's and SetWorldspaceEncounterZone's changes first
+        // (`nvse_jg5::cell_zone`).
+        "getcellencounterzone" | "getcellzone" => XVal::Ref(form(args, 0).and_then(|c| crate::nvse_jg5::cell_zone(g, c)).map_or(0, |z| z.0)),
         // `zone`: whether its cells respawn, so not "Never Resets" [documented:
         // GetZoneRespawns; the ECZN flag, encounter-zones.md §1].
         "getzonerespawns" => yes(form(args, 0).and_then(|z| g.world.forms.zones.get(&z)).is_some_and(|d| !d.never_resets)),

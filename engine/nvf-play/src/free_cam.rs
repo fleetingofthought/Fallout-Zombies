@@ -23,6 +23,12 @@
 //!
 //! Test aid `NVF_PLAY_TEST_FLY=<units per second>`: the free camera flies forward (level)
 //! at that speed while it flies.
+//!
+//! **SUP's TFC functions** (`fnv_game::nvse_sup3`) read and set the camera's place in
+//! `Game::ui.camera.tfc`: [`take_requests`] writes the camera's own place there when it
+//! turns on and whenever the viewer has moved it since, and puts the camera where a
+//! script set it (`tfc_set`). A place a script set is kept exactly: the pitch is held to
+//! ±1.55 rad only while the mouse moves it.
 
 use crate::console::Console;
 use crate::control::{PlayerControl, Pov};
@@ -63,6 +69,28 @@ pub struct FreeCam {
     /// camera and the pointer, and the world stands still; off, the player plays. The
     /// console's `tfc` does nothing here.
     pub editor: bool,
+    /// The place last written to or taken from the game's TFC pose: position, yaw,
+    /// pitch (Bevy). A different place is the viewer's move, written back.
+    shared: Option<(Vec3, f32, f32)>,
+}
+
+/// The game's TFC pose as the free camera's position, yaw and pitch (Bevy space): the
+/// heading turns the other way round Bevy's Y, and angle X looks down where Bevy's
+/// pitch looks up (`space::look_rotation`).
+fn from_tfc(t: &fnv_game::functions::camera::TfcPose) -> (Vec3, f32, f32) {
+    let p = t.pos.map(|v| v as f32);
+    (space::to_bevy(p), -(t.angle_z.to_radians() as f32), -(t.angle_x.to_radians() as f32))
+}
+
+/// The free camera's place as the game's TFC pose.
+fn to_tfc(pos: Vec3, yaw: f32, pitch: f32) -> fnv_game::functions::camera::TfcPose {
+    let p = space::to_game(pos);
+    fnv_game::functions::camera::TfcPose {
+        pos: p.map(f64::from),
+        angle_x: -f64::from(pitch).to_degrees(),
+        angle_z: -f64::from(yaw).to_degrees(),
+    }
+}
 }
 
 impl FreeCam {
@@ -153,6 +181,10 @@ fn take_requests(
             let f = &mut *free;
             (f.on, f.mode, f.pos, f.yaw, f.pitch, f.start, f.feet, f.pov) = (true, mode, t.translation, yaw, pitch, t.translation, feet, control.pov);
             control.pov = Pov::Third;
+            // The camera's own place, for the TFC getters [observed: sup3 cam.on.pos, the
+            // eye; cam.on.angles, the view's angles].
+            asked.tfc = to_tfc(free.pos, free.yaw, free.pitch);
+            free.shared = Some((free.pos, free.yaw, free.pitch));
             let at = space::to_game(t.translation);
             let what = if free.holds_world() { "the world stands still" } else { "the world goes on" };
             info!("free camera: on (mode {mode}, {what}) at ({:.0}, {:.0}, {:.0})", at[0], at[1], at[2]);
@@ -166,6 +198,19 @@ fn take_requests(
                 free.pos.distance(free.start),
                 moved(feet, free.feet)
             );
+        }
+    }
+    if free.on {
+        // A script's change wins over the viewer's move of the same frame.
+        if std::mem::take(&mut asked.tfc_set) {
+            let (pos, yaw, pitch) = from_tfc(&asked.tfc);
+            (free.pos, free.yaw, free.pitch) = (pos, yaw, pitch);
+            free.shared = Some((pos, yaw, pitch));
+            let t = &asked.tfc;
+            info!("free camera: a script put it at ({:.0}, {:.0}, {:.0}), angle X {:.1}°, heading {:.1}°", t.pos[0], t.pos[1], t.pos[2], t.angle_x, t.angle_z);
+        } else if free.shared != Some((free.pos, free.yaw, free.pitch)) {
+            asked.tfc = to_tfc(free.pos, free.yaw, free.pitch);
+            free.shared = Some((free.pos, free.yaw, free.pitch));
         }
     }
     if let Some((world, first_deg)) = fov {
@@ -208,7 +253,9 @@ fn fly(
     if free.active {
         let f = &mut *free;
         f.yaw -= motion.delta.x * LOOK_PER_PIXEL;
-        f.pitch = (f.pitch - motion.delta.y * LOOK_PER_PIXEL).clamp(-1.55, 1.55);
+        if motion.delta.y != 0.0 {
+            f.pitch = (f.pitch - motion.delta.y * LOOK_PER_PIXEL).clamp(-1.55, 1.55);
+        }
         if scroll.delta.y != 0.0 {
             f.wheel = (f.wheel * 1.2f32.powf(scroll.delta.y)).clamp(50.0 / FLY_SPEED, 50_000.0 / FLY_SPEED);
         }

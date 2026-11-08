@@ -49,7 +49,7 @@ const BOB_DIP: f32 = 0.9;
 const BOB_SWAY: f32 = 0.6;
 const BOB_ROLL: f32 = 1.2 * std::f32::consts::PI / 180.0;
 /// The first footfall's place in the movement cycle (0.40 s of 1.2 s).
-const FOOTFALL_PHASE: f32 = 0.33;
+pub const FOOTFALL_PHASE: f32 = 0.33;
 /// Movement lag: how far behind the velocity the weapon's own trails (seconds), units
 /// of offset per unit/s of difference, and most offset.
 const MOVE_LAG_SECONDS: f32 = 0.18;

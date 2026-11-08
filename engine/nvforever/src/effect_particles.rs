@@ -138,6 +138,7 @@ pub fn draw(
     globals: Query<&GlobalTransform>,
     bounds: Query<&Aabb>,
     shown: Query<&InheritedVisibility>,
+    layers: Query<&bevy::camera::visibility::RenderLayers>,
     camera: Query<&Transform, (With<Camera3d>, Without<crate::reflection::ReflectionCamera>)>,
 ) {
     let Ok((root, root_at)) = root.single() else { return };
@@ -217,8 +218,9 @@ pub fn draw(
         let mut bones: Vec<Entity> = Vec::new();
         let mut boxes: Vec<(Entity, Aabb)> = Vec::new();
         for &e in a.covered.keys() {
-            // A hidden mesh (the player's body in first person) gives off none.
-            if shown.get(e).is_ok_and(|v| !v.get()) {
+            // [design: player_body::show_rigs] Hidden meshes still give off none;
+            // the player's shadow-only meshes also have no births in the camera.
+            if shown.get(e).is_ok_and(|v| !v.get()) || (a.on == FormId::PLAYER_REF.0 && !crate::effect_shaders::player_mesh_seen(layers.get(e).ok())) {
                 continue;
             }
             match skins.get(e) {

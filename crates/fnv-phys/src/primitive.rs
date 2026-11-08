@@ -120,6 +120,7 @@ pub fn primitive_object(p: &Primitive, meaning: BoundsMeaning) -> Option<Collisi
         // No Havok radius is known for placed primitives [hypothesis: 0].
         shell: 0.0,
         material: None,
+        wind: false,
     })
 }
 

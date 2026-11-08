@@ -116,6 +116,12 @@ const LEATHER: u32 = 0x11B; // upper body; BIPL LEATHER_GLOVES
 const GLOVE_L: u32 = 0x11C; // ARMA, left hand, a glove model
 const LEATHER_GLOVES: u32 = 0x11D; // FLST: GLOVE_L
 const RANGER: u32 = 0x208; // leather + Pip-Boy Glove
+const FIST_HAND: u32 = 0x11E; // ARMA, right hand, the power fist's metal hand
+const FIST_LIST: u32 = 0x11F; // FLST: FIST_HAND
+const POWER_FIST: u32 = 0x120; // WEAP, BIPL FIST_LIST
+const MITTENS: u32 = 0x121; // ARMA, both hands, one glove model
+const MITTEN_LIST: u32 = 0x122; // FLST: MITTENS
+const PARKA: u32 = 0x123; // upper body; BIPL MITTEN_LIST
 const BASE: u32 = 0x200; // man: outfit + armour + gloves, beard
 const HATTED: u32 = 0x201; // cowboy hat
 const HELMETED: u32 = 0x202;
@@ -181,15 +187,21 @@ fn plugin_bytes() -> Vec<u8> {
         &armo_with(b"ARMO", VAULT_SUIT, "VaultSuit", slot::UPPER_BODY, 0.0, "armor\\vaultsuit.nif", None, Some(BARE_HANDS)),
         &armo(PIPBOY_GLOVE, "PipBoyGlove", slot::LEFT_HAND, 0.0, "characters\\_male\\lefthandpipboyglove.nif", None),
         &armo_with(b"ARMO", LEATHER, "Leather", slot::UPPER_BODY, 3.0, "armor\\leather.nif", None, Some(LEATHER_GLOVES)),
+        &armo_with(b"ARMO", PARKA, "Parka", slot::UPPER_BODY, 1.0, "armor\\parka.nif", None, Some(MITTEN_LIST)),
     ]);
     let arma = cat(&[
         &armo_with(b"ARMA", HAND_R, "BaseGloveR", slot::RIGHT_HAND, 0.0, "characters\\_male\\righthand.nif", None, None),
         &armo_with(b"ARMA", HAND_L, "BaseGloveL", slot::LEFT_HAND, 0.0, "characters\\_male\\lefthand.nif", None, None),
         &armo_with(b"ARMA", GLOVE_L, "LeatherGloveL", slot::LEFT_HAND, 0.0, "armor\\leather\\glovel.nif", None, None),
+        &armo_with(b"ARMA", FIST_HAND, "ARMAPowerfist", slot::RIGHT_HAND, 0.0, "weapons\\hand2hand\\powerfist.nif", None, None),
+        &armo_with(b"ARMA", MITTENS, "ParkaMittens", slot::LEFT_HAND | slot::RIGHT_HAND, 0.0, "armor\\parka\\mittens.nif", None, None),
     ]);
+    let weap = record(b"WEAP", POWER_FIST, &[sub(b"EDID", z("WeapPowerFist")), sub(b"MODL", z("weapons\\hand2hand\\powerfistrigid.nif")), sub(b"BIPL", fid(FIST_LIST))]);
     let flst = cat(&[
         &record(b"FLST", BARE_HANDS, &[sub(b"EDID", z("BaseHands")), sub(b"LNAM", fid(HAND_R)), sub(b"LNAM", fid(HAND_L))]),
         &record(b"FLST", LEATHER_GLOVES, &[sub(b"EDID", z("LeatherGloves")), sub(b"LNAM", fid(GLOVE_L))]),
+        &record(b"FLST", FIST_LIST, &[sub(b"EDID", z("WeaponPowerfist")), sub(b"LNAM", fid(FIST_HAND))]),
+        &record(b"FLST", MITTEN_LIST, &[sub(b"EDID", z("ParkaMittens")), sub(b"LNAM", fid(MITTENS))]),
     ]);
     let cnto = |item: u32| sub(b"CNTO", cat(&[&fid(item), &1i32.to_le_bytes()]));
     let npc = |id: u32, edid: &str, flags: u32, tf: u16, extra: Vec<Subrecord>| {
@@ -235,6 +247,7 @@ fn plugin_bytes() -> Vec<u8> {
         &top(b"ARMO", &armo),
         &top(b"ARMA", &arma),
         &top(b"FLST", &flst),
+        &top(b"WEAP", &weap),
         &top(b"NPC_", &npcs),
         &top(b"LVLN", &lvln),
     ])
@@ -331,6 +344,30 @@ fn an_addon_gives_way_to_a_worn_item_in_its_slot() {
     let a = r.resolve(FormId(RANGER), FormId(0x905)).unwrap();
     let armor: Vec<String> = roles(&a).into_iter().filter(|p| !p.starts_with("head") && !p.starts_with("hair")).collect();
     assert_eq!(armor, vec!["body:right_hand righthand.nif", "armor leather.nif", "armor glovel.nif"]);
+}
+
+#[test]
+fn a_held_weapons_addon_takes_the_hand() {
+    // WEAP BIPL (the power fist's `ARMAPowerfist`, Right Hand): held, its hand model is
+    // drawn and the bare right hand is not, whether the race's or a worn addon's (#1586).
+    let f = fixture();
+    assert!(f.actors.issues.is_empty(), "{:?}", f.actors.issues.to_json());
+    assert_eq!(f.actors.weapons[&FormId(POWER_FIST)].addons, vec![FormId(FIST_HAND)]);
+    let r = Resolver { actors: &f.actors, forms: &f.forms };
+    let body = |a: &fnv_actor::Appearance| roles(a).into_iter().filter(|p| !p.starts_with("head") && !p.starts_with("hair")).collect::<Vec<_>>();
+    let a = r.resolve_wearing(FormId(DWELLER), FormId(0x906), Some(&[FormId(VAULT_SUIT), FormId(POWER_FIST)])).unwrap();
+    assert_eq!(body(&a), vec!["armor vaultsuit.nif", "armor lefthand.nif", "armor powerfist.nif"]);
+    let a = r.resolve_wearing(FormId(RANGER), FormId(0x907), Some(&[FormId(LEATHER), FormId(POWER_FIST)])).unwrap();
+    assert_eq!(body(&a), vec!["armor leather.nif", "armor glovel.nif", "armor powerfist.nif"]);
+    // Not held: the bare hand as before.
+    let a = r.resolve_wearing(FormId(RANGER), FormId(0x907), Some(&[FormId(LEATHER)])).unwrap();
+    assert_eq!(body(&a), vec!["body:right_hand righthand.nif", "armor leather.nif", "armor glovel.nif"]);
+    // An outfit's addon that covers both hands gives way too, so the right hand is not
+    // drawn twice; the race's bare left hand shows in its place.
+    let a = r.resolve_wearing(FormId(RANGER), FormId(0x907), Some(&[FormId(PARKA)])).unwrap();
+    assert_eq!(body(&a), vec!["armor parka.nif", "armor mittens.nif"]);
+    let a = r.resolve_wearing(FormId(RANGER), FormId(0x907), Some(&[FormId(PARKA), FormId(POWER_FIST)])).unwrap();
+    assert_eq!(body(&a), vec!["body:left_hand lefthand.nif", "armor parka.nif", "armor powerfist.nif"]);
 }
 
 #[test]

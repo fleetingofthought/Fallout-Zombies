@@ -76,6 +76,7 @@ impl Game<'_> {
     /// (module notes). The reset, if any, is also kept for [`Game::take_cell_resets`].
     pub(crate) fn cell_entered(&mut self, cell: FormId) -> Option<CellReset> {
         let expired = self.forms.expired_cells.remove(&cell);
+        let full = self.forms.expired_cells_full.remove(&cell);
         let since = self.world.detached_since(cell);
         let now = self.world.calendar().ok().map(|c| c.days_passed);
         let containers = self.world.attach_cell(cell).unwrap_or_default();
@@ -83,6 +84,12 @@ impl Game<'_> {
         // The same slack as `World::attach_cell` (GameDaysPassed is an f32). An encounter
         // zone with "Never Resets" is never reset (docs/spec-notes/encounter-zones.md §4).
         let timed = away.filter(|h| h + 1e-3 >= self.world.respawn_hours() as f64 && !self.world.cell_never_resets(cell));
+        // ResetInteriorAlt's reset brings the dead respawning actors back as a timed one
+        // [documented: ResetInteriorAlt, "will also let dead actors that were set to
+        // respawn be resurrected"].
+        let by_time = timed.is_some();
+        let timed = timed.or_else(|| full.then(|| away.unwrap_or(0.0)));
+        let containers = if by_time || timed.is_none() { containers } else { self.world.reset_containers(cell) };
         let Some(hours_away) = timed else {
             if !expired {
                 return None;

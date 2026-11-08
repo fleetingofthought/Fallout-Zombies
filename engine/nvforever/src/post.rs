@@ -72,12 +72,17 @@ pub struct ImageSpaceGlow;
 /// the original's frames at night, docs/spec-notes/world.md §6 "HDR and bloom"]; the
 /// strength follows the image space ([`glow_intensity`]).
 pub fn glow_bloom() -> bevy::post_process::bloom::Bloom {
-    bevy::post_process::bloom::Bloom { intensity: glow_intensity(&fnv_world::imagespace::Hdr::default()), ..bevy::post_process::bloom::Bloom::NATURAL }
+    bevy::post_process::bloom::Bloom { intensity: glow_intensity(&fnv_world::imagespace::Hdr::default()), low_frequency_boost: GLOW_LOW_FREQUENCY_BOOST, ..bevy::post_process::bloom::Bloom::NATURAL }
 }
 
 /// Light glow strength at the image space's "Bright Scale" 2 (the Mojave's
-/// NVDefaultExterior) [engineering choice, by eye against the original's frames].
-pub const GLOW_INTENSITY: f32 = 0.15;
+/// NVDefaultExterior) [engineering choice, by eye against the original's frames; 0.15 until
+/// 2026-11-07, when the Lucky 38's and the Tops' letters ran together at it, #1540].
+pub const GLOW_INTENSITY: f32 = 0.09;
+/// The light glow's boost of its widest blur levels: none, where Bevy's preset has 0.7 and
+/// the Strip's night sky turned from near black to a grey-brown haze [observed 2026-11-07:
+/// the sky with the glow off, and the original's frames, are dark; world.md section 6].
+pub const GLOW_LOW_FREQUENCY_BOOST: f32 = 0.0;
 
 /// The bloom strength for an image space's HDR values: [`GLOW_INTENSITY`] scaled by its
 /// "Bright Scale" over 2, held to half and twice [engineering choice: the name says how
@@ -95,19 +100,27 @@ pub fn glow_intensity(hdr: &fnv_world::imagespace::Hdr) -> f32 {
 /// (NVDefaultExterior's, the Mojave's) [observed: IMGS 0x0008809D].
 pub const BRIGHT_SCALE_BASE: f32 = 2.0;
 /// Bright pass strength per unit of "Bright Scale" above [`BRIGHT_SCALE_BASE`], and the
-/// most it reaches [engineering choice, fitted to the original's Strip frames and the
-/// owner's judgement, 2026-10-25: 0.4 on the Strip at night].
-pub const BRIGHT_PASS_PER_SCALE: f32 = 0.08;
-pub const BRIGHT_PASS_MAX: f32 = 1.0;
+/// most it reaches [engineering choice, fitted to the original's frames 2026-11-07, #1540:
+/// 2 on the Strip at night, on what the threshold below lets through].
+pub const BRIGHT_PASS_PER_SCALE: f32 = 0.4;
+pub const BRIGHT_PASS_MAX: f32 = 2.0;
 /// The HDR value (brightest channel, linear, before the tonemapper) over which a pixel
-/// feeds the bright pass, and the soft knee around it [engineering choice: neon, bulbs and
-/// glowing signs, drawn at their emissive multipliers, are far over it; lit surfaces and
-/// the sky stay under].
-pub const BRIGHT_PASS_THRESHOLD: f32 = 1.0;
+/// feeds the bright pass, and the soft knee around it [engineering choice, 2026-11-07,
+/// #1540: neon tubes such as Gomorrah's are far over it, held to 16 at the pass's input;
+/// cut-out signs stay under it (the Lucky 38's letters at 6), so their letters stay apart].
+pub const BRIGHT_PASS_THRESHOLD: f32 = 7.0;
 pub const BRIGHT_PASS_KNEE: f32 = 0.25;
-/// The bright pass's blur step: a Gaussian about 17 × this quarter-size texels wide
-/// [engineering choice: owner, 2026-10-25, the halo a bit smaller than at 1].
-pub const BRIGHT_PASS_STEP: f32 = 0.5;
+/// The bright pass's blur step: a Gaussian about 17 x this quarter-size texels wide
+/// [engineering choice, 2026-11-07: with only tubes feeding it, 1 gives them the width they
+/// had; 0.5 from the owner's 2026-10-25 choice stays for a modifier's lower clamp below].
+pub const BRIGHT_PASS_STEP: f32 = 1.0;
+/// The bright pass while a modifier lowers Bright Clamp ([`modified_bright_pass`]): lamps
+/// bloom over a sharp picture, as in the birth scene, so it takes all that is over white
+/// [engineering choice, the owner's frames 2026-10-25 and 2026-11-02].
+pub const CLAMPED_PASS_PER_SCALE: f32 = 0.08;
+pub const CLAMPED_PASS_MAX: f32 = 1.0;
+pub const CLAMPED_PASS_THRESHOLD: f32 = 1.0;
+pub const CLAMPED_PASS_STEP: f32 = 0.5;
 
 /// The strength of the bright pass ([`BrightPass`]) added to the light glow for a "Bright
 /// Scale" above the Mojave's: none up to [`BRIGHT_SCALE_BASE`], then
@@ -124,7 +137,8 @@ pub fn bright_pass(scale: f32) -> f32 {
 /// The bright pass of the light glow's HDR view: what is brighter than a threshold, blurred
 /// wide and added back before the tonemapper (`bright_pass_hdr`), so a thin neon tube far
 /// over white still throws a halo. Same layout as [`PostEffects`]: x threshold, y knee,
-/// z strength (0 none), w the blur's step in quarter-size texels ([`BRIGHT_PASS_STEP`]).
+/// z strength (0 none), w minus the blur's step in quarter-size texels ([`BRIGHT_PASS_STEP`]):
+/// negative because the composite this shares with [`PostEffects`] sharpens by a positive w.
 #[derive(Component, ExtractComponent, Clone, Copy, ShaderType)]
 #[extract_app(bevy::render::RenderApp)]
 pub struct BrightPass {
@@ -133,7 +147,7 @@ pub struct BrightPass {
 
 impl Default for BrightPass {
     fn default() -> Self {
-        BrightPass { params: Vec4::new(BRIGHT_PASS_THRESHOLD, BRIGHT_PASS_KNEE, 0.0, BRIGHT_PASS_STEP) }
+        BrightPass { params: Vec4::new(BRIGHT_PASS_THRESHOLD, BRIGHT_PASS_KNEE, 0.0, -BRIGHT_PASS_STEP) }
     }
 }
 
@@ -158,13 +172,25 @@ pub fn modified_glow(base: f32, scale_ratio: f32) -> f32 {
     (base * scale_ratio).clamp(0.0, GLOW_MODIFIED_MAX.max(base))
 }
 
+/// What the bright pass does this frame: its strength, threshold and blur step.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PassShape {
+    pub strength: f32,
+    pub threshold: f32,
+    pub step: f32,
+}
+
 /// The bright pass ([`bright_pass`]) with the modifiers on the screen: the image space's
 /// Bright Scale times the modifiers' change to it, divided by their change to Bright Clamp
 /// ("the clamp for which lum levels bloom": a lower clamp lets more glow [documented: GECK
-/// wiki ImageSpace]; the division is ours [hypothesis]). Only what is brighter than
-/// [`BRIGHT_PASS_THRESHOLD`] feeds it, so the rest of the picture stays sharp.
-pub fn modified_bright_pass(scale: f32, scale_ratio: f32, clamp_ratio: f32) -> f32 {
-    bright_pass(scale * scale_ratio / clamp_ratio.max(0.01))
+/// wiki ImageSpace]; the division is ours [hypothesis]). A lowered clamp also takes the
+/// lower threshold ([`CLAMPED_PASS_THRESHOLD`]); the rest of the picture stays sharp.
+pub fn modified_bright_pass(scale: f32, scale_ratio: f32, clamp_ratio: f32) -> PassShape {
+    let s = scale * scale_ratio / clamp_ratio.max(0.01);
+    if clamp_ratio < 1.0 - 1e-4 {
+        return PassShape { strength: (CLAMPED_PASS_PER_SCALE * (s - BRIGHT_SCALE_BASE)).clamp(0.0, CLAMPED_PASS_MAX), threshold: CLAMPED_PASS_THRESHOLD, step: CLAMPED_PASS_STEP };
+    }
+    PassShape { strength: bright_pass(s), threshold: BRIGHT_PASS_THRESHOLD, step: BRIGHT_PASS_STEP }
 }
 
 /// Set the light glow's strength on [`ImageSpaceGlow`] cameras from the image space now,
@@ -180,17 +206,18 @@ fn image_space_glow(
     let hdr = &sky.cinematic().hdr;
     let intensity = modified_glow(glow_intensity(hdr), ratio(fnv_world::imagespace::HDR_BRIGHT_SCALE));
     let pass = modified_bright_pass(hdr.v[fnv_world::imagespace::HDR_BRIGHT_SCALE], ratio(fnv_world::imagespace::HDR_BRIGHT_SCALE), ratio(fnv_world::imagespace::HDR_BRIGHT_CLAMP));
-    if (pass - *told).abs() > 0.05 {
-        info!("light glow: bright pass {pass:.2} (Bright Scale {:.1})", hdr.v[fnv_world::imagespace::HDR_BRIGHT_SCALE]);
-        *told = pass;
+    if (pass.strength - *told).abs() > 0.05 {
+        info!("light glow: bright pass {:.2} (Bright Scale {:.1})", pass.strength, hdr.v[fnv_world::imagespace::HDR_BRIGHT_SCALE]);
+        *told = pass.strength;
     }
     for (mut b, effects) in &mut cams {
         if b.intensity != intensity {
             b.intensity = intensity;
         }
         if let Some(mut e) = effects {
-            if e.params.z != pass {
-                e.params.z = pass;
+            let params = Vec4::new(pass.threshold, e.params.y, pass.strength, -pass.step);
+            if e.params != params {
+                e.params = params;
             }
         }
     }
@@ -454,7 +481,7 @@ mod tests {
         assert_eq!(bright_pass(2.0), 0.0);
         assert_eq!(bright_pass(1.0), 0.0);
         // The Strip's night adapter, Bright Scale 7.
-        assert!((bright_pass(7.0) - 0.4).abs() < 1e-6);
+        assert!((bright_pass(7.0) - 2.0).abs() < 1e-6);
         assert_eq!(bright_pass(1000.0), BRIGHT_PASS_MAX);
     }
 
@@ -463,9 +490,9 @@ mod tests {
         // The birth scene: the room's Bright Scale 1.6, CG00BirthBaseISFX ×2 and clamp ×0.2.
         let base = GLOW_INTENSITY * 0.8;
         assert!((modified_glow(base, 2.0) - base * 2.0).abs() < 1e-6);
-        assert_eq!(modified_bright_pass(1.6, 2.0, 0.2), BRIGHT_PASS_MAX);
+        assert_eq!(modified_bright_pass(1.6, 2.0, 0.2), PassShape { strength: CLAMPED_PASS_MAX, threshold: CLAMPED_PASS_THRESHOLD, step: CLAMPED_PASS_STEP });
         // No modifier: as the image space has it.
         assert_eq!(modified_glow(base, 1.0), base);
-        assert_eq!(modified_bright_pass(7.0, 1.0, 1.0), bright_pass(7.0));
+        assert_eq!(modified_bright_pass(7.0, 1.0, 1.0), PassShape { strength: bright_pass(7.0), threshold: BRIGHT_PASS_THRESHOLD, step: BRIGHT_PASS_STEP });
     }
 }

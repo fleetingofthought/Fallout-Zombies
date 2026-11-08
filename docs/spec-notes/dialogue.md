@@ -362,6 +362,25 @@ radio.md §5):
 
 ### 3.6 Run Immediately
 
+[documented] The [GECK Dialogue page](https://geckwiki.com/index.php?title=Dialogue)
+places Run Immediately results at conversation generation. It does not define the precise
+selection point used here.
+
+[design] NVForever runs begin, then the flagged end, when the selected line starts:
+player conversation (`crates/fnv-game/src/dialogue.rs`, `speak`), actor conversation,
+Say/SayTo and hello (`crates/fnv-game/src/game.rs`, `say_line`), and radio
+(`crates/fnv-game/src/radio.rs`, `radio_line_begins`). Line/state publication and response
+idles keep their existing order before those results. `say_line` sets `Speech::end_ran`
+before either callback, so a result that finishes or replaces its own speech cannot mark
+the replacement. Completion, interruption and snapshot/load do not repeat that end.
+Radio completion still dispatches its line-end notification, but skips the flagged end
+script; interruption has no completion call (`engine/nvf-play/src/radio.rs`). These are
+shared runtime timing choices, not a claim of an observed original selection point.
+
+[design] Synthetic ordering, completion, interruption, replacement and saved speech
+coverage is in `crates/fnv-game/tests/dialogue.rs`; existing Goodbye coverage remains there.
+Radio has an unflagged control as well.
+
 All 765 lines with the flag are Radio (673) or Conversation (92) lines; no Topic line
 has it [observed: scratch parse; the real-data test asserts it].
 

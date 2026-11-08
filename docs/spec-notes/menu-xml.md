@@ -860,7 +860,8 @@ What the original can settle (copied to docs/handoff/observer-checks.md):
 (CacheUI), `ui_hudbar` (SUP's bars); tests `crates/fnv-game/tests/ui_more.rs`, the
 units in those files, and `fnv_ui` `a_trait_by_a_path_under_a_tile`
 (`Ui::find_trait_in`). Every page is the GECK wiki export of 2026-10-28; the tags per
-rule are in the code beside it. Smoke: `ui-gradual-in-game`.
+rule are in the code beside it. Smoke: `ui-gradual-in-game`, `ui-string-dimensions`,
+`ui-cursor-inspection`, `ui-typewriter-tile-script`.
 
 | Functions | Page(s) | What NVForever does | Open |
 |---|---|---|---|
@@ -868,15 +869,15 @@ rule are in the code beside it. Smoke: `ui-gradual-in-game`.
 | GetUIFloatGradualActiveForTile, …ForTileTrait, …Mode, …Timer | the four SUP pages [documented] | read JIP's table; Mode -1 when none [documented] | Timer -1 when none, a repeating change's time left is its round's [hypothesis] |
 | SetUIStringReveal, CacheUIStringReveal(Alt) | SetUIStringReveal, CacheUIStringReveal [documented] | letters by the time's share, from the left or right, inverted, ease in as the square [hypothesis for the rounding, the right and the ease] | none |
 | SetUIFloatMultiple | SetUIFloatMultiple [documented] | every tile inside of the type, that has the trait; the count back [design] | whether it makes the trait [hypothesis: not] |
-| AttachUIXML, AttachUIComponent | AttachUIXML, AttachUIComponent [documented] | a single `rect` into `HUDMainMenu`'s root, kept in `UiExtra::attached` with the reference and node; 1 or 0; the VM formats the component. Replaces the one attached before to the same (reference, node, rect name), keeps it hidden until placed, drops it when the reference is deleted, disabled or outside the loaded cells [design] | **placing the component at the node on screen** (the engine's 3D projection), and checking the node exists |
+| AttachUIXML, AttachUIComponent | AttachUIXML, AttachUIComponent [documented] | a single `rect` into `HUDMainMenu`'s root, kept in `UiExtra::attached` with the reference and node; 1 or 0; the VM formats the component. Replaces the one attached before to the same (reference, node, rect name), keeps it hidden until placed, drops it when the reference is deleted, disabled or outside the loaded cells [design] | node validation, animated transforms and screen projection: its own issue, **Project attached UI components onto model nodes** |
 | AddTraitToTile | AddTraitToTile [documented] | makes or sets the trait; an empty name makes none (0) [design] | the original's list of trait ids it allows is not known: any other name taken [hypothesis] |
-| GetUIValueType, GetUIElementType | the SUP pages [documented] | 1/2/3 and -1; 1-5 by tile kind, `nif` 4 [hypothesis], other kinds 0 [hypothesis] | no path means the cursor's tile: T8, -1 here |
+| GetUIValueType, GetUIElementType | the SUP pages [documented] | 1/2/3 and -1; 1-5 by tile kind; GetUIElementType uses the live cursor tile for a missing or nonexistent path, -1 with none [design: `ui_more::inspection_tile`] | `nif` 4, other kinds 0 [hypothesis] |
 | SortUIListBox | SortUIListBox [documented] | keys `-`, `#`, `@`; `$destination$increment` (default `_y`, `height`); numeric keys in a total order, NaN keys at the ends (`total_cmp`) [design] | which children are items (those with the destination), the first value (the smallest), the case [hypothesis each] |
-| GetStringUIDimensions | GetStringUIDimensions [documented] | `string_dimensions` over a measure; outputs through the VM's out_call | **the engine does not yet set `UiExtra::measure`** (its fonts are in `tiles::draw::TileFonts`): in game the outputs stay unwritten |
-| DumpTileInfo, DumpTileInfoALL, DumpTileInfoToArray | the three SUP pages [documented] | `[ Tilename ] : name` and `[ trait ] : value` lines (the ToArray page's example output) to the console, or to NVForever's log for DumpToFile (never `SUPNVSE.log` in the game folder); ToArray a string map | no path means the cursor's tile (T8); ALL lists the menus, no cursor tile exists |
-| CacheUI, …Float, …String, …ModFloat, …GetFloat, …GetString, …Range, …RangeMod, …Erase, …Dump, …Gradual, …RangeGradual, …GradualDelay, …RangeGradualDelay, each with its Alt | the CacheUI pages (CacheUIModFloat's is `CacheUIMod`) [documented] | caches per calling plugin, Alt per key; delay pulls the value then, flags 0/1/2 and the lock, `match` ends a delay; modes 0-3, 5, 6 | mode 4 (rumble) refused: its shake and decay are not given; RangeMod's page and example differ in argument order, both taken [design]; the script runners' shared cache |
+| GetStringUIDimensions | GetStringUIDimensions [documented] | width, height and actual `Font::lines` count through the VM's output variables; owned metrics installed before startup/load scripts (`tiles::MenuFiles`, `script.rs`), using the renderer's localized `font_file`, font selection and wrapping [design] | unavailable metrics write three zeros; failed reads retry at most once a second on query, successful metrics are cached without GPU atlas uploads [design: NVForever policy, not documented original behavior] |
+| DumpTileInfo, DumpTileInfoALL, DumpTileInfoToArray | the three SUP pages [documented] | `[ Tilename ] : name` and `[ trait ] : value` lines (the ToArray page's example output) to the console, or to NVForever's log for DumpToFile (never `SUPNVSE.log` in the game folder); ToArray a string map; DumpTileInfo uses the live cursor tile for a missing or nonexistent path (path argument 1); ALL lists menus; ToArray still requires a path [design: `ui_more`] | none |
+| CacheUI, …Float, …String, …ModFloat, …GetFloat, …GetString, …Range, …RangeMod, …Erase, …Dump, …Gradual, …RangeGradual, …GradualDelay, …RangeGradualDelay, each with its Alt | the CacheUI pages (CacheUIModFloat's is `CacheUIMod`) [documented] | caches per calling plugin, Alt per key; delay pulls the value then, flags 0/1/2 and the lock, `match` ends a delay; modes 0-3, 5, 6 | mode 4 (rumble) mentioned but insufficiently specified: waveform, frequency, randomness, decay curve and final value are not given; remains refused (`ui_gradients::mode_built`); RangeMod's page and example differ in argument order, both taken [design]; the script runners' shared cache |
 | CUICreateQueue, CUIGetQueue, CUIGetQueueSize, CUIQueueCycle, CUIQueueFloat | the five pages [documented] | per plugin; toggle, forced add and remove, duplicates | cycle direction 0 [hypothesis] |
-| HudBar… (35 functions) | SUP HUD Bar Functions and each HudBar page [documented] | a `rect NVFHudBar<n>` with `Meter`, `Frame`, `Text`, `ImageEx` in `HUDMainMenu`, per plugin (console: first of the name), written after each change and after a load; types 0-5, value/max/percentage, text with prefix, postfix and max, alpha, colour, system colour, depth, zoom, rotation, size, indent, alt size, texture, text font and justify, auto position, bar and meter traits, all-bars arrays, element paths, debug lines to the log | **not built**: HudBarSetValueScriptVar and HudBarSetValueUDF (the VM passes a variable's value, not the variable), the visibility conditions and gradual vanishing (bar traits 0, 21-27, 41-64 kept, not acted on), reading a texture's size (`iCalculateSize`), the rotation on screen (the traits are written, the tile renderer turns no tile yet); the meter's width as indent plus the share of the rest, type 4 without a built-in `%`, the default max 100 and which elements show by default [hypothesis] |
+| HudBar… (35 functions) | SUP HUD Bar Functions and each HudBar page [documented] | a `rect NVFHudBar<n>` with `Meter`, `Frame`, `Text`, `ImageEx` in `HUDMainMenu`, per plugin (console: first of the name), written after each change and after a load; types 0-5, value/max/percentage, text with prefix, postfix and max, alpha, colour, system colour, depth, zoom, rotation, size, indent, alt size, texture, text font and justify, auto position, bar and meter traits, all-bars arrays, element paths, debug lines to the log | live bindings, condition visibility and fades: its own issue, **HudBar live value bindings and conditional visibility**. ScriptVar needs retained variable identity (`fnv-script/src/vm.rs`, `host_function`); UDFs already have a callable representation but lack timed evaluation. Conditions and fade traits are stored, not evaluated (`ui_hudbar.rs`); reading a texture's size (`iCalculateSize`), the rotation on screen (the traits are written, the tile renderer turns no tile yet); the meter's width as indent plus the share of the rest, type 4 without a built-in `%`, the default max 100 and which elements show by default [hypothesis] |
 
 [design] Numbers that are not numbers: SetUIFloatMultiple, AddTraitToTile, CacheUIFloat /
 ModFloat / Range / RangeMod (and their Alt forms), a HUD bar's place at creation and its
@@ -884,22 +885,54 @@ element, bar, meter and text setters write 0 for a NaN or an infinity (`ui_more:
 a CacheUI sum that is one too); HudBarSetValueFloat, …Max and …Percentage refuse one with
 -1. The pages say nothing about such numbers; these are NVForever's own safeguards.
 
-[design] DumpTileInfo reads its path from the second argument (`toFile path`), so the HUD's
-kept-back writes are made before a dump of a `HUDMainMenu` path; a dump of another menu
-leaves them kept back.
+[design] `ui_more::inspection_tile` resolves GetUIElementType and DumpTileInfo before
+flushing deferred HUD writes. The resolved tile's menu controls the flush, including a
+cursor fallback from an invalid path; another menu or no live tile leaves writes pending.
+DumpTileInfo retains `toFile path`, with the path at argument 1. `Pointer::active`
+(`fnv-ui/src/input.rs`) rejects unloaded tiles.
 
-Not built, with why:
+Implemented consumers and remaining exclusions:
 
-- **SetUITexOffset, SetUIAlphaMap** [documented: their ITR pages]: texture sampling
-  and a shader stage, the renderer's; nothing in the tree to write.
-- **SetUITypewriter** [documented: SetUITypewriter]: per-letter `_TS?`/`_TA?` traits
-  with fades and Fisher-Yates orders; the page's XML example is cut off and does not say
-  how the text splits into the traits or which random order.
-- **SetTileScript, RemoveTileScript** (CacheUI): a script called each frame while a
-  trait is non-zero; a per-frame script hook, outside this task.
-- **The cursor's tile** for GetUIElementType and DumpTileInfo without a path, and the
-  menu events: T8's pointer (`Game::ui_pointer`, #957) is on main now; these functions
-  do not read it yet.
+- **SetUITypewriter** [documented: [SetUITypewriter](https://geckwiki.com/index.php?title=SetUITypewriter)]
+  requires authored XML linking `_TSn`/`_TAn` into text/alpha. [design: `nvse_small.rs`,
+  `Game::small_tick`; `game.rs`, `Game::tick`] Letters and fades advance each frame;
+  ordinary tile evaluation and drawing consume linked text/alpha (`tiles/mod.rs`,
+  `tiles/draw.rs`). The command generates no XML. Ordering modes retain the hypotheses
+  beside `typewriter_rank` and `typewriter_tick`.
+- **SetTileScript, RemoveTileScript** [documented: [SetTileScript](https://geckwiki.com/index.php?title=SetTileScript)]
+  register/replace/remove a callback per trait. [design: `nvse_small.rs`, `small_tick`]
+  The callback runs each frame while the trait is nonzero and can change drawn traits;
+  registration itself draws nothing. Menu mouseover/click events also have consumers
+  (`ui_input.rs`, `step`), rather than a blanket menu-events exclusion.
+- **SetUITexOffset, SetUIAlphaMap** [design: `nvse_itr1.rs`, dispatch] store offsets and
+  alpha-map paths; the renderer has no consumers. Success does not establish texture
+  loading or rendering. Drawing needs its own issue, **Render tile UV offsets and alpha
+  masks**: wrapping, independent mask sampling, loading failures, canonical tile identity
+  and cleanup, radial/repeated/cropped tiles and batching, with authored-texture regressions.
+- **Attached components** [documented: [AttachUIComponent](https://geckwiki.com/index.php?title=AttachUIComponent)]
+  require a loaded, case-sensitive model node and one parent rect under HUDMainMenu.
+  [design: `ui_more.rs`, `attach`; `tiles/mod.rs`, update] Attachments remain hidden until
+  placed. **Project attached UI components onto model nodes** needs its own issue for
+  animated node transforms, camera projection/interface units and lifetime. Occlusion,
+  clipping, distance scaling and offscreen behavior are not settled by that page.
+- **HudBar live value bindings and conditional visibility** needs its own issue.
+  [documented: [ScriptVar](https://geckwiki.com/index.php?title=HudBarSetValueScriptVar),
+  [UDF](https://geckwiki.com/index.php?title=HudBarSetValueUDF),
+  [bar traits](https://geckwiki.com/index.php?title=HudBarSetBarTrait),
+  [GetVisible](https://geckwiki.com/index.php?title=HudBarGetVisible)] Values update on a
+  timer with optional normalization; UDFs take no arguments and an optional caller.
+  Conditions 21-27 cover movement, sneak, combat, aim, equipment, weapon and camera;
+  41-44/61-64 describe fades/movement/timing for 21-26. Trait 1 concerns removal on load,
+  trait 0 menu mode. GetVisible distinguishes condition-hidden -1, manually hidden 0,
+  visible 1. [design: `ui_hudbar.rs`, binding/visibility dispatch] Timers, safe callbacks,
+  variable lifetime, destruction/reentrancy and condition fades remain to implement.
+  [hypothesis] Menu-mode polarity (the page repeats 1), contradictory combination prose,
+  item/list precedence, empty lists, timer catch-up, fade easing/reversal, callback failures
+  and full save persistence need explicit choices and tests, not silent assumptions.
+- **CacheUI mode 4** [documented: [CacheUIRangeGradual](https://geckwiki.com/index.php?title=CacheUIRangeGradual)]
+  mentions bounded, decaying rumble but is insufficiently specified: no waveform,
+  frequency, randomness, decay curve or final value. [design: `ui_gradients.rs`,
+  `mode_built`] It remains unimplemented; no waveform is invented.
 
 ## 10. MCM: its places and its menu scripts (tasks T7, T11; issue #976)
 

@@ -238,7 +238,11 @@ pub(crate) fn call(g: &mut Game, name: &str, subject: Option<FormId>, args: &[XV
 pub fn skeleton_model(g: &Game, f: FormId) -> String {
     let base = crate::functions::base_of(g, f).unwrap_or(f);
     let b = g.template_source(base, f, |d| d.template_model).map_or(base, |(s, _)| s);
-    g.data.record_field(b, "MODL", "").and_then(serde_json::Value::as_str).unwrap_or_default().to_string()
+    // SetCRESkeletonModel's and SetNPCSkeletonModel's change first (`crate::nvse_jip8`).
+    match crate::nvse::record_value(g, b, "MODL", "") {
+        Some(XVal::Str(s)) => s,
+        _ => String::new(),
+    }
 }
 
 /// Whether the actor of a reference is a creature, by its own record: its base, or the

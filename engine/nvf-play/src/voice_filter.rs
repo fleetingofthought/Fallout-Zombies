@@ -1,17 +1,18 @@
-//! The voice filter: dialogue said through a helmet or a speaker (docs/spec-notes/audio.md
-//! §15.5).
+//! The voice filter: dialogue said through a helmet (docs/spec-notes/audio.md §15.5).
 //!
 //! - **Who** [documented: xEdit ARMO/ARMA DNAM flag "Modulates Voice"; GECK wiki Armor,
 //!   "Checked if the item modulates the actor's voice", and ArmorAddon, "distorts the
 //!   character's voice (like Power Armor helmets do, for example)"]: a speaker wearing an
 //!   armour with the flag (38 of FalloutNV.esm's armours, all helmets and masks: the power
 //!   armour helmets, the NCR Ranger combat helmet, the Legion helmets, gas, welding and
-//!   surgical masks [observed]). A talking activator
-//!   (TACT) talks through it unless its record header has "No Voice Filter" (bit 13)
-//!   [documented: GECK wiki GetFormFlag; hypothesis: the flag's name says the filter is
-//!   the rule for talking activators]: 85 of FalloutNV.esm's 87 TACTs do (intercoms,
-//!   speakers, Lucky 38's mainframe), the two that set the flag are radios [observed]
-//!   ([`speaker_filtered`]).
+//!   surgical masks [observed]).
+//! - **Not talking activators** [observed 2026-11-06, observer batch o28, issue #992]: the
+//!   original plays a line said through an intercom as its file. Benny's line through the
+//!   Tops' security intercom (a TACT without "No Voice Filter") came out of the original
+//!   with the file's spectrum, within 4 dB of it from 200 Hz to 6 kHz (no band at 350 or
+//!   3,200 Hz), and the intercom lines' voice files are already band-limited
+//!   (docs/spec-notes/audio.md §15.5). So a talking activator's lines are not filtered again, whatever
+//!   its "No Voice Filter" flag says.
 //! - **How it sounds** [hypothesis: the game's filter is not documented; NVForever's is a
 //!   radio-like one]: a band from [`LOW_CUT_HZ`] to [`HIGH_CUT_HZ`] (two second-order
 //!   high-pass and low-pass sections, the Audio EQ Cookbook's biquads), a mild soft
@@ -35,11 +36,9 @@ pub const RING_FEEDBACK: f32 = 0.35;
 /// The level after the filter, to make up for the band taken away [hypothesis].
 pub const MAKEUP: f32 = 1.6;
 
-/// Whether `speaker`'s lines go through the voice filter (module notes).
+/// Whether `speaker`'s lines go through the voice filter (module notes): a speaker
+/// wearing an armour that modulates the voice. A talking activator never is.
 pub fn speaker_filtered(sim: &SimState, speaker: FormId) -> bool {
-    if sim.base_of(speaker.0).and_then(|b| sim.forms.get(b)).is_some_and(|b| b.voice_filter) {
-        return true;
-    }
     sim.world.equipment(speaker).is_some_and(|items| items.iter().any(|&i| sim.forms.item(i).is_some_and(|it| it.modulates_voice)))
 }
 

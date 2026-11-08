@@ -33,6 +33,9 @@ pub enum Steer {
     OffPath,
 }
 
+/// A follower's default goal radius: the end of the way is reached within it.
+pub const GOAL_RADIUS: f32 = 1.0;
+
 /// Where along a path an actor is.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Follower {
@@ -115,7 +118,7 @@ pub fn goal_height_fits(feet: [f32; 3], goal: [f32; 3]) -> bool {
 
 impl Follower {
     pub fn new(path: Path) -> Follower {
-        Follower { path, leg: 0, next: 1, arrive_radius: 16.0, goal_radius: 1.0, door_radius: 48.0, stop: 0, holding: false }
+        Follower { path, leg: 0, next: 1, arrive_radius: 16.0, goal_radius: GOAL_RADIUS, door_radius: 48.0, stop: 0, holding: false }
     }
 
     /// The space of the leg being walked.
@@ -157,7 +160,8 @@ impl Follower {
                 let (sx, sy) = (q[0] - p[0], q[1] - p[1]);
                 (feet[0] - q[0]) * sx + (feet[1] - q[1]) * sy >= 0.0
             };
-            if d <= radius || passed {
+            // A hair over, from a step that stopped at the radius (`Walker::update_with`).
+            if d <= radius + 1e-3 || passed {
                 if let Some(s) = stop {
                     self.holding = true;
                     return Steer::OpenDoor { door: s.door, at: q };
@@ -932,7 +936,15 @@ impl Walker {
                     // It slows while its heading catches up (on the navmesh it keeps
                     // to the path itself; the character controller walks the arc).
                     let slow = turn_slowdown(heading_delta(self.heading, want).abs());
-                    let step = (budget * slow).min(to_target);
+                    // Towards the end of a way whose goal radius a caller widened, it stops
+                    // at that radius, not past it: a long step (a wait's time passing)
+                    // would otherwise end inside it, on the spot of the actor it was
+                    // walking up to (issue #1597). With the default radius it walks onto
+                    // the end, as before.
+                    let to_goal = f.goal_radius > GOAL_RADIUS
+                        && f.leg + 1 == f.path.legs.len() && f.path.legs[f.leg].door.is_none() && f.next + 1 == f.path.legs[f.leg].points.len();
+                    let reach = if to_goal { (to_target - f.goal_radius).max(0.0) } else { to_target };
+                    let step = (budget * slow).min(reach);
                     let start = self.feet;
                     let mut p = [start[0] + dir[0] * step, start[1] + dir[1] * step, start[2]];
                     // Height: the navmesh under the new point, else along the segment.

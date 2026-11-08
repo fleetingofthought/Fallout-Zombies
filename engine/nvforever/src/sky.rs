@@ -784,6 +784,19 @@ impl SkyState {
         }
     }
 
+    /// A colour type now as stored (0..255 per channel, blended on the bytes;
+    /// `fnv_world::sky::Weather::color_bytes`), blended across a weather fade.
+    pub fn color_bytes(&self, ty: ColorType) -> [f32; 3] {
+        let cur = self.weather.color_bytes(&self.climate, ty, self.hour);
+        match &self.prev {
+            Some(p) => {
+                let old = p.color_bytes(&self.climate, ty, self.hour);
+                std::array::from_fn(|i| old[i] + (cur[i] - old[i]) * self.fade)
+            }
+            None => cur,
+        }
+    }
+
     /// The image-space grade now: the base image space with the weather's adapters for
     /// the time of day, blended across a weather fade; none indoors yet [interim].
     pub fn cinematic(&self) -> Cinematic {
@@ -1796,11 +1809,7 @@ pub fn update_sky(
         ambient.color = crate::lights::display_ambient(shown(l.ambient));
         ambient.brightness = unit * INTERIOR_AMBIENT_SHARE;
         if let Ok((mut light, mut t)) = sun.single_mut() {
-            // XCLL directional rotation: xy = azimuth about z, z = elevation, in degrees
-            // [hypothesis].
-            let (az, el) = ((l.directional_rotation_xy as f32).to_radians(), (l.directional_rotation_z as f32).to_radians());
-            let from_game = Vec3::new(az.sin() * el.cos(), az.cos() * el.cos(), el.sin());
-            let from = game_to_bevy().rotation * from_game;
+            let from = game_to_bevy().rotation * interior_light_from(l.directional_rotation_xy, l.directional_rotation_z);
             *t = Transform::IDENTITY.looking_to(-from, Vec3::Y);
             light.color = crate::lights::display_color(shown(l.directional));
             light.illuminance = PI * unit * l.directional_fade.clamp(0.0, 1.0) * INTERIOR_DIRECTIONAL_SHARE;
@@ -1928,9 +1937,33 @@ pub fn initial_fog() -> DistanceFog {
     DistanceFog { color: Color::WHITE, falloff: FogFalloff::Linear { start: 8_000.0, end: 20_000.0 }, ..default() }
 }
 
+/// The direction towards an interior's directional light, in game axes, from its XCLL
+/// (or lighting template) rotation in degrees: `xy` an azimuth about z, `z` a pitch,
+/// together the direction the light shines in (270 straight down) [hypothesis, world.md
+/// §8 "Interior cells"; observer-checks 101].
+pub fn interior_light_from(xy: i32, z: i32) -> Vec3 {
+    let (az, el) = ((xy as f32).to_radians(), (z as f32).to_radians());
+    -Vec3::new(az.sin() * el.cos(), az.cos() * el.cos(), el.sin())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The common template pitch (z = 270) puts the light straight overhead, and the Gas
+    /// Station's (xy 180, z 250, #1645) puts it high above, not below the floor.
+    #[test]
+    fn interior_light_comes_from_above() {
+        let overhead = interior_light_from(0, 270);
+        assert!((overhead - Vec3::Z).length() < 1e-5, "{overhead:?}");
+        let gas_station = interior_light_from(180, 250);
+        assert!(gas_station.z > 0.9, "{gas_station:?}");
+        assert!((gas_station.length() - 1.0).abs() < 1e-5);
+        // In Bevy's axes (y up) the light shines downwards.
+        let from = game_to_bevy().rotation * gas_station;
+        let shines = Transform::IDENTITY.looking_to(-from, Vec3::Y).forward();
+        assert!(shines.y < -0.9, "{shines:?}");
+    }
 
     /// The rolls made once a sky that started on `sky_day` follows a restored game on day
     /// 25, half a game minute on from the save's noon, with a saved weather its list holds

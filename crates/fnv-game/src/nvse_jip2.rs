@@ -450,6 +450,7 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
                     // AuxTimerTimeToCountdown and the update handlers, then the start
                     // handlers [documented: AuxTimerStart; SetOnAuxTimerStartHandler].
                     g.showoff.countdowns.insert(key.clone(), (num(args, 1, 0.0), num(args, 2, 7.0) as i64 as u32));
+                    g.showoff.timer_mods.insert(key.clone(), g.other.plugin.to_ascii_lowercase());
                     g.aux_timer_started(key.0, &key.1);
                     XVal::Num(1.0)
                 }

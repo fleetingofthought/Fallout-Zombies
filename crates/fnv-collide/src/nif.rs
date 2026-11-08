@@ -91,6 +91,9 @@ pub struct RawCollision {
     pub mass: Option<f32>,
     pub friction: Option<f32>,
     pub restitution: Option<f32>,
+    /// The rigid body's Body Flags; bit 0 "respond to wind" [documented: nif.xml
+    /// bhkRigidBody "Body Flags", "1 = respond to wind"].
+    pub body_flags: Option<i64>,
     /// Body translation (xyz of the stored vec4) and rotation quaternion as stored (x, y, z, w).
     pub body_translation: [f32; 3],
     pub body_rotation: [f32; 4],
@@ -543,6 +546,7 @@ fn extract_with(file: &NifFile, dec: &Decoded, render: bool) -> Extracted {
             mass: info.and_then(|s| s.float("mass")),
             friction: info.and_then(|s| s.float("friction")),
             restitution: info.and_then(|s| s.float("restitution")),
+            body_flags: body.int("body_flags"),
             body_translation: [t[0], t[1], t[2]],
             body_rotation: f4("rotation").unwrap_or([0.0, 0.0, 0.0, 1.0]),
             shape,
@@ -614,10 +618,12 @@ impl NodeTree {
     /// file's, and each object's node transform is worked out again along the chain (its
     /// body offset and shapes unchanged; node scales are not touched, so the shapes' baked
     /// scale still holds). Nothing changes and `false` is returned when the counts differ,
-    /// there are none, or an object's node is unnamed or not in the tree (the drawing's
-    /// rule: `clutter_pose.rs`).
+    /// there are none, or an object's node is unnamed, not in the tree, or the mesh root
+    /// itself (the drawing's rule: `clutter_pose.rs`, whose `pose` only finds a body's node
+    /// among the nodes below the root).
     pub fn pose_objects(&self, objects: &mut [crate::shape::CollisionObject], locals: &[Iso]) -> bool {
-        if objects.is_empty() || objects.len() != locals.len() || objects.iter().any(|o| o.node.is_none()) {
+        let on_a_root = |o: &crate::shape::CollisionObject| self.nodes.get(&o.node_block).is_none_or(|(parent, _)| parent.is_none());
+        if objects.is_empty() || objects.len() != locals.len() || objects.iter().any(|o| o.node.is_none() || on_a_root(o)) {
             return false;
         }
         let by_node: HashMap<usize, Iso> = objects.iter().zip(locals).map(|(o, l)| (o.node_block, *l)).collect();
@@ -675,6 +681,7 @@ impl RawCollision {
             shape: self.shape.scaled(f).into(),
             shell: self.shell * f,
             material: self.convex_material,
+            wind: self.body_flags.is_some_and(|b| b & 1 != 0),
         }
     }
 
@@ -825,6 +832,7 @@ mod tests {
             shape: crate::shape::Shape::Sphere { radius: 1.0 }.into(),
             shell: 0.0,
             material: None,
+            wind: false,
         }
     }
 
@@ -861,6 +869,15 @@ mod tests {
         let moved = Iso { translation: [0.0, 20.0, 0.0], rotation: Iso::IDENTITY.rotation };
         assert!(tree.pose_objects(&mut objs, &[moved]));
         assert_eq!(objs[0].node_transform.translation, [0.0, 10.0, 0.0]);
+    }
+
+    #[test]
+    fn a_body_on_the_mesh_root_is_not_posed() {
+        // A single body hung on the mesh root itself: the drawing's nodes (below the root)
+        // have no entry for it, so the collision must refuse it too (issue #1400).
+        let tree = NodeTree::from_nodes([(0, None, Similarity::IDENTITY)]);
+        let mut objs = vec![object(0, [0.0; 3])];
+        assert!(!tree.pose_objects(&mut objs, &[Iso::IDENTITY]));
     }
 
     #[test]
@@ -925,6 +942,7 @@ mod tests {
             mass: Some(0.0),
             friction: Some(0.5),
             restitution: Some(0.4),
+            body_flags: Some(0),
             body_translation: [1.0, 0.0, 0.0],
             body_rotation: [0.0, 0.0, 0.0, 1.0],
             shape: Shape::Box { half_extents: [1.0, 2.0, 3.0] },

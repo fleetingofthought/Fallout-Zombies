@@ -523,8 +523,12 @@ fn start_loading(d: PlayData, refs: &'static RefTable) -> Receiver<Loaded> {
         let r = (|| {
             let text = std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
             let json: serde_json::Value = serde_json::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))?;
+            info!("script build: functions.json read and parsed: {:.0} ms", t.elapsed().as_secs_f64() * 1e3);
+            let step = Instant::now();
             let table = FunctionTable::load(&path).map_err(|e| e.to_string())?;
+            info!("script build: function table: {:.0} ms", step.elapsed().as_secs_f64() * 1e3);
             let data: &'static GameData = Box::leak(Box::new(GameData::build(d.lo, d.schema, table, &json, refs)));
+            info!("script build: the whole thread: {:.0} ms", t.elapsed().as_secs_f64() * 1e3);
             Ok((data, t.elapsed().as_secs_f64()))
         })();
         let _ = tx.send(r);
@@ -1693,14 +1697,25 @@ pub(crate) fn start_world_aids(
 }
 
 /// [`run_scripts`]'s loading screen, keys, menu files, the pause menu's page and the
-/// count of MenuMode frames under its Mods page (`crate::tiles::mods`).
+/// count of MenuMode frames under its Mods page (`crate::tiles::mods`), and the main menu
+/// still to open (`--menu`).
 type ScreenAndMenus<'w, 's> = (
     ResMut<'w, crate::loading::Loading>,
     Option<Res<'w, crate::bindings::Bindings>>,
     crate::tiles::MenuFiles<'w, 's>,
     Res<'w, crate::pause::Page>,
     Local<'s, u64>,
+    Option<Res<'w, crate::main_menu::MainMenuStart>>,
 );
+
+/// Whether the runtime waits, its data ready or not: held, or with the main menu still to
+/// open. `--menu` opens the menu in [`PlaySet::Ui`](crate::PlaySet), after the scripts in the
+/// same first frame, and that frame takes seconds. Data ready within it would otherwise
+/// start the runtime unpaused and run one frame of a new game behind the menu: its `ln_` files
+/// and its opening, before New Game (#1548, #1732; the build used to finish well after it).
+fn runtime_waits(held: bool, menu_to_open: bool) -> bool {
+    held || menu_to_open
+}
 
 /// One frame of scripts, then their effects.
 #[allow(clippy::too_many_arguments)]
@@ -1720,14 +1735,14 @@ pub(crate) fn run_scripts(
     mut used: MessageReader<ItemUsed>,
     (mut sit, mut terminals, mut doors, mut refused): (MessageWriter<crate::furniture::UseFurniture>, MessageWriter<crate::terminal::OpenTerminal>, Option<ResMut<crate::doors::Doors>>, MessageWriter<crate::save::LoadRefused>),
     paused: Res<crate::pause::Paused>,
-    (mut screen, bindings, tiles, page, mut mods_ticks): ScreenAndMenus,
+    (mut screen, bindings, tiles, page, mut mods_ticks, menu_to_open): ScreenAndMenus,
 ) {
     // Items the player used up in the inventory menu (the menu already removed them),
     // kept until the runtime runs.
     let st = &mut *script;
     st.used.extend(used.read().map(|u| (FormId(u.item), u.limb)));
     if st.rt.is_none() {
-        if st.held {
+        if runtime_waits(st.held, menu_to_open.is_some()) {
             return;
         }
         let Some(rx) = st.loader.as_ref() else { return };
@@ -1744,6 +1759,7 @@ pub(crate) fn run_scripts(
                 st.loader = None;
                 let mut rt = Runtime::new(data, &mut sim, st.new_game, play.0.packages);
                 rt.start = st.start.clone();
+                tiles.install_measure(&mut rt.game);
                 let mut restored = false;
                 if let Some(PendingGame(snap, path)) = st.pending_game.take() {
                     // Test aid: `save::read_for_load` lets no save through that fails here.
@@ -2118,6 +2134,8 @@ pub(crate) fn run_scripts(
                 info!("on screen: {}", note.text.trim().replace('\n', " / "));
                 corner.push(note);
             }
+            // ShowOff's ToggleQuestMessages 0: no quest line is shown (`UiRequests::quest_messages_off`).
+            ScriptEffect::Quest(n) if rt.game.ui.quest_messages_off => info!("quest message dropped (ToggleQuestMessages 0): {}", crate::quest_messages::describe(&n)),
             ScriptEffect::Quest(n) => {
                 info!("quest message: {}", crate::quest_messages::describe(&n));
                 quest_lines.push(n);
@@ -2472,5 +2490,17 @@ mod no_messages_tests {
     fn a_box_of_one_button_asks_nothing() {
         assert!(asks_nothing(0) && asks_nothing(1));
         assert!(!asks_nothing(2));
+    }
+}
+
+#[cfg(test)]
+mod runtime_start_tests {
+    use super::runtime_waits;
+
+    #[test]
+    fn the_runtime_waits_for_the_main_menu_to_open() {
+        assert!(runtime_waits(false, true), "the menu opens later this frame");
+        assert!(runtime_waits(true, false));
+        assert!(!runtime_waits(false, false), "the menu is open, paused, or was never asked for");
     }
 }

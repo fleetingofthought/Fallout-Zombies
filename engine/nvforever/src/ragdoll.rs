@@ -74,6 +74,14 @@ pub const MAX_AWAKE: f32 = 3.0;
 /// takes about 10 s].
 pub const MAX_AWAKE_IN_WATER: f32 = 30.0;
 
+/// [`MAX_AWAKE`] for a corpse at rest that a hit's shove roused (`ActorPush`): a shot's or
+/// blow's shove moves one body 140-350 units a second, and it has fallen back within half
+/// a second [design: owner-review item 51, decided 2026-11-08; in the 50-a-side battle
+/// such re-wakes were a third of the seconds corpses moved, and with 3 s they cost the
+/// solver as long as a fresh death]. A blast's rouse, a fresh death and a body in water
+/// keep their own limits.
+pub const MAX_AWAKE_SHOVED: f32 = 1.0;
+
 pub const FELL_THROUGH: f32 = 150.0;
 pub const LIFT_ABOVE: f32 = 20.0;
 pub const MAX_LIFTS: u8 = 3;
@@ -96,8 +104,13 @@ pub struct Ragdolls {
     /// whose stored pose did not fit their skeleton.
     pub authored: usize,
     pub authored_skipped: usize,
-    /// Ragdolls set at rest by [`MAX_AWAKE`] while still moving.
+    /// Ragdolls set at rest by [`MAX_AWAKE`] (or [`MAX_AWAKE_SHOVED`]) while still moving.
     pub held: usize,
+    /// Corpses at rest roused by a hit's shove ([`MAX_AWAKE_SHOVED`]).
+    pub shoved_awake: usize,
+    /// Corpses at rest that a hit shoved since [`pose`] last ran: they get
+    /// [`MAX_AWAKE_SHOVED`] when it finds them roused.
+    shoved_at_rest: HashSet<u32>,
     /// Ragdolls that came to rest in water (floating).
     pub floated: usize,
     /// `PhysWorld::steps` when [`pose`] last ran: the calm and awake timers count the
@@ -226,7 +239,7 @@ impl Ragdolls {
         for (b, &n) in bones.iter().enumerate() {
             body_of[n] = Some(b);
         }
-        Some(Corpse { data: rag, bones, body_of, live: false, velocity: [0.0; 3], settled: false, lifts: 0, calm: 0.0, since: Vec::new(), window: 0.0, awake: 0.0 })
+        Some(Corpse { data: rag, bones, body_of, live: false, velocity: [0.0; 3], settled: false, lifts: 0, calm: 0.0, since: Vec::new(), window: 0.0, awake: 0.0, limit: MAX_AWAKE })
     }
 }
 
@@ -277,8 +290,10 @@ pub struct Corpse {
     /// the seconds since.
     since: Vec<Option<Iso>>,
     window: f32,
-    /// Seconds awake since it started or was roused ([`MAX_AWAKE`]).
+    /// Seconds awake since it started or was roused, and the most it may be awake
+    /// ([`MAX_AWAKE`], [`MAX_AWAKE_SHOVED`]).
     awake: f32,
+    limit: f32,
 }
 
 impl Corpse {
@@ -398,6 +413,7 @@ fn start(
         c.since.clear();
         c.window = 0.0;
         c.awake = 0.0;
+        c.limit = MAX_AWAKE;
         if asleep {
             ragdolls.restored += 1;
         } else {
@@ -409,8 +425,12 @@ fn start(
         }
     }
     for p in pushes.read() {
+        let at_rest = phys.world.ragdoll_asleep(p.form_id);
         if phys.world.push_ragdoll(p.form_id, p.point, p.dv) {
             ragdolls.pushes += 1;
+            if at_rest {
+                ragdolls.shoved_at_rest.insert(p.form_id);
+            }
         }
     }
 }
@@ -502,16 +522,21 @@ pub(crate) fn pose(
         if phys.world.ragdoll_held(id) {
             // Carried by the player's grab: never held at rest (its held body would stop
             // following the crosshair); calm and the awake guard count again from the drop.
-            (c.calm, c.awake, c.window, c.settled) = (0.0, 0.0, 0.0, false);
+            (c.calm, c.awake, c.window, c.settled, c.limit) = (0.0, 0.0, 0.0, false, MAX_AWAKE);
             c.since.clear();
             write_bones(rig, &c, &nodes, &globals, &mut transforms);
             continue;
         }
         if c.settled && !phys.world.ragdoll_asleep(id) {
-            // Roused by a hit or a blast: calm from scratch.
+            // Roused by a hit or a blast: calm from scratch; a hit's shove alone moves it
+            // for less long.
             c.calm = 0.0;
             c.since.clear();
             c.awake = 0.0;
+            c.limit = if ragdolls.shoved_at_rest.contains(&id) { MAX_AWAKE_SHOVED } else { MAX_AWAKE };
+            if c.limit < MAX_AWAKE {
+                ragdolls.shoved_awake += 1;
+            }
         }
         c.awake += dt;
         c.window += dt;
@@ -537,7 +562,7 @@ pub(crate) fn pose(
         }
         if c.calm >= CALM_TIME || phys.world.ragdoll_asleep(id) {
             phys.world.set_ragdoll_at_rest(id);
-        } else if c.awake >= MAX_AWAKE && (c.awake >= MAX_AWAKE_IN_WATER || !phys.world.ragdoll_in_water(id)) {
+        } else if c.awake >= c.limit && (c.awake >= MAX_AWAKE_IN_WATER || !phys.world.ragdoll_in_water(id)) {
             phys.world.set_ragdoll_at_rest(id);
             ragdolls.held += 1;
             info!("ragdoll: actor {id:08X} held at rest still moving after {:.0} s (calm for {:.2} s)", c.awake, c.calm);
@@ -571,6 +596,7 @@ pub(crate) fn pose(
         }
         phys.world.remove_ragdoll(id);
     }
+    ragdolls.shoved_at_rest.clear();
 }
 
 /// Set the local transforms of the bones that have a body so that they stand where their
@@ -611,8 +637,8 @@ fn report(mut exit: MessageReader<AppExit>, ragdolls: Res<Ragdolls>, phys: Optio
     }
     let (live, asleep) = phys.as_deref().map_or((0, 0), |p| (p.world.ragdolls().count(), p.world.ragdolls().filter(|&id| p.world.ragdoll_asleep(id)).count()));
     info!(
-        "ragdolls: {} started, {} put back at rest, {} came to rest ({} held at rest still moving after {MAX_AWAKE} s, {} floating in water), {} shoved by hits, {} lifted back above the terrain; {live} in the world at exit ({asleep} at rest); {} laid in the pose their reference stores ({} stored poses did not fit)",
-        ragdolls.started, ragdolls.restored, ragdolls.rested, ragdolls.held, ragdolls.floated, ragdolls.pushes, ragdolls.lifted, ragdolls.authored, ragdolls.authored_skipped
+        "ragdolls: {} started, {} put back at rest, {} came to rest ({} held at rest still moving after {MAX_AWAKE} s or {MAX_AWAKE_SHOVED} s, {} floating in water), {} shoved by hits ({} roused from rest), {} lifted back above the terrain; {live} in the world at exit ({asleep} at rest); {} laid in the pose their reference stores ({} stored poses did not fit)",
+        ragdolls.started, ragdolls.restored, ragdolls.rested, ragdolls.held, ragdolls.floated, ragdolls.pushes, ragdolls.shoved_awake, ragdolls.lifted, ragdolls.authored, ragdolls.authored_skipped
     );
     // Those still moving: how fast, and how near they came to resting.
     if let Some(p) = phys.as_deref() {

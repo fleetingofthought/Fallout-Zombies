@@ -226,13 +226,13 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // `info`: its choices (TCLT) [documented: TopicInfoGetAllChoices, …ChoiceCount];
         // `info topic`: 1 when the topic is one [documented: TopicInfoHasChoice].
         "topicinfogetallchoices" => {
-            let choices: Vec<XVal> = form(args, 0).and_then(|i| g.data.infos.get(&i)).map(|d| d.choices.iter().map(|c| XVal::Ref(c.0)).collect()).unwrap_or_default();
+            let choices: Vec<XVal> = form(args, 0).and_then(|i| g.dialogue_view().info(&i).map(|d| d.choices.iter().map(|c| XVal::Ref(c.0)).collect())).unwrap_or_default();
             list(g, choices)
         }
-        "topicinfogetchoicecount" => XVal::Num(form(args, 0).and_then(|i| g.data.infos.get(&i)).map_or(0.0, |d| d.choices.len() as f64)),
+        "topicinfogetchoicecount" => XVal::Num(form(args, 0).and_then(|i| g.dialogue_view().info(&i).map(|d| d.choices.len() as f64)).unwrap_or(0.0)),
         "topicinfohaschoice" => {
             let t = form(args, 1);
-            yes(t.is_some() && form(args, 0).and_then(|i| g.data.infos.get(&i)).is_some_and(|d| d.choices.iter().any(|c| Some(*c) == t)))
+            yes(t.is_some() && form(args, 0).is_some_and(|i| g.dialogue_view().info(&i).is_some_and(|d| d.choices.iter().any(|c| Some(*c) == t))))
         }
         _ => return None,
     };

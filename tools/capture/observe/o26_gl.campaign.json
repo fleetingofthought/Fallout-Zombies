@@ -1,0 +1,426 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o26_gl",
+ "title": "Issue #1471: the Grenade Launcher's round (and a thrown frag grenade) on the airport runway, first person, along the runway (heading 75); the newest live projectile's position, lifetime and distance travelled every game loop (GetFirstRef 51, JIP GetProjectileRef*), in the player's Variable01-06",
+ "save": "nvfairport",
+ "defaults": {
+  "fields": "fight",
+  "every": 1,
+  "depth": 0,
+  "settle_frames": 200,
+  "hours": 0.06,
+  "max_actors": 1,
+  "console_first": [
+   "CloseAllMenus",
+   "tgm",
+   "DisablePlayerControls 0 0 0 1 0 0 0"
+  ],
+  "do_first": [
+   [
+    "player.MoveTo {0} 851 228 40",
+    "0x0013DA13"
+   ],
+   {
+    "frames": 120
+   }
+  ],
+  "extra_header": [
+   [
+    "pitch",
+    "num",
+    "player.GetAngle X"
+   ],
+   [
+    "weapon_out",
+    "num",
+    "player.IsWeaponOut"
+   ],
+   [
+    "first",
+    "num",
+    "IsPC1stPerson"
+   ],
+   [
+    "px",
+    "num",
+    "player.GetAV Variable01"
+   ],
+   [
+    "py",
+    "num",
+    "player.GetAV Variable02"
+   ],
+   [
+    "pz",
+    "num",
+    "player.GetAV Variable03"
+   ],
+   [
+    "plife",
+    "num",
+    "player.GetAV Variable04"
+   ],
+   [
+    "pn",
+    "num",
+    "player.GetAV Variable05"
+   ],
+   [
+    "pdist",
+    "num",
+    "player.GetAV Variable06"
+   ]
+  ]
+ },
+ "sessions": [
+  {
+   "name": "x0",
+   "do": [
+    "player.additem 0007EA25 1",
+    "player.additem 0007EA26 50",
+    "player.equipitem 0007EA25",
+    {
+     "frames": 60
+    },
+    [
+     "player.SetWeaponOut 1"
+    ],
+    {
+     "frames": 120
+    },
+    "player.setangle z 75",
+    "player.setangle x 0",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rP",
+       "ref rQ",
+       "float fA",
+       "float fN"
+      ],
+      "lines": [
+       "let fN := 0",
+       "let rP := GetFirstRef 51 1",
+       "while rP != 0",
+       "  let fN := fN + 1",
+       "  let rQ := rP",
+       "  let rP := GetNextRef",
+       "loop",
+       "player.SetAV Variable05 fN",
+       "if fN > 0",
+       "  let fA := rQ.GetPos X",
+       "  player.SetAV Variable01 fA",
+       "  let fA := rQ.GetPos Y",
+       "  player.SetAV Variable02 fA",
+       "  let fA := rQ.GetPos Z",
+       "  player.SetAV Variable03 fA",
+       "  let fA := rQ.GetProjectileRefLifeTime",
+       "  player.SetAV Variable04 fA",
+       "  let fA := rQ.GetProjectileRefDistanceTraveled",
+       "  player.SetAV Variable06 fA",
+       "endif"
+      ]
+     }
+    },
+    {
+     "after": 30,
+     "do": [
+      "HoldControl 4"
+     ]
+    },
+    {
+     "after": 34,
+     "do": [
+      "ReleaseControl 4"
+     ]
+    }
+   ],
+   "note": "level aim, attack held 4 loops"
+  },
+  {
+   "name": "up15",
+   "do": [
+    "player.additem 0007EA25 1",
+    "player.additem 0007EA26 50",
+    "player.equipitem 0007EA25",
+    {
+     "frames": 60
+    },
+    [
+     "player.SetWeaponOut 1"
+    ],
+    {
+     "frames": 120
+    },
+    "player.setangle z 75",
+    "player.setangle x -15",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rP",
+       "ref rQ",
+       "float fA",
+       "float fN"
+      ],
+      "lines": [
+       "let fN := 0",
+       "let rP := GetFirstRef 51 1",
+       "while rP != 0",
+       "  let fN := fN + 1",
+       "  let rQ := rP",
+       "  let rP := GetNextRef",
+       "loop",
+       "player.SetAV Variable05 fN",
+       "if fN > 0",
+       "  let fA := rQ.GetPos X",
+       "  player.SetAV Variable01 fA",
+       "  let fA := rQ.GetPos Y",
+       "  player.SetAV Variable02 fA",
+       "  let fA := rQ.GetPos Z",
+       "  player.SetAV Variable03 fA",
+       "  let fA := rQ.GetProjectileRefLifeTime",
+       "  player.SetAV Variable04 fA",
+       "  let fA := rQ.GetProjectileRefDistanceTraveled",
+       "  player.SetAV Variable06 fA",
+       "endif"
+      ]
+     }
+    },
+    {
+     "after": 30,
+     "do": [
+      "HoldControl 4"
+     ]
+    },
+    {
+     "after": 34,
+     "do": [
+      "ReleaseControl 4"
+     ]
+    }
+   ],
+   "note": "GetAngle X -15"
+  },
+  {
+   "name": "up30",
+   "do": [
+    "player.additem 0007EA25 1",
+    "player.additem 0007EA26 50",
+    "player.equipitem 0007EA25",
+    {
+     "frames": 60
+    },
+    [
+     "player.SetWeaponOut 1"
+    ],
+    {
+     "frames": 120
+    },
+    "player.setangle z 75",
+    "player.setangle x -30",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rP",
+       "ref rQ",
+       "float fA",
+       "float fN"
+      ],
+      "lines": [
+       "let fN := 0",
+       "let rP := GetFirstRef 51 1",
+       "while rP != 0",
+       "  let fN := fN + 1",
+       "  let rQ := rP",
+       "  let rP := GetNextRef",
+       "loop",
+       "player.SetAV Variable05 fN",
+       "if fN > 0",
+       "  let fA := rQ.GetPos X",
+       "  player.SetAV Variable01 fA",
+       "  let fA := rQ.GetPos Y",
+       "  player.SetAV Variable02 fA",
+       "  let fA := rQ.GetPos Z",
+       "  player.SetAV Variable03 fA",
+       "  let fA := rQ.GetProjectileRefLifeTime",
+       "  player.SetAV Variable04 fA",
+       "  let fA := rQ.GetProjectileRefDistanceTraveled",
+       "  player.SetAV Variable06 fA",
+       "endif"
+      ]
+     }
+    },
+    {
+     "after": 30,
+     "do": [
+      "HoldControl 4"
+     ]
+    },
+    {
+     "after": 34,
+     "do": [
+      "ReleaseControl 4"
+     ]
+    }
+   ],
+   "note": "GetAngle X -30"
+  },
+  {
+   "name": "fire0",
+   "do": [
+    "player.additem 0007EA25 1",
+    "player.additem 0007EA26 50",
+    "player.equipitem 0007EA25",
+    {
+     "frames": 60
+    },
+    [
+     "player.SetWeaponOut 1"
+    ],
+    {
+     "frames": 120
+    },
+    "player.setangle z 75",
+    "player.setangle x 0",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rP",
+       "ref rQ",
+       "float fA",
+       "float fN"
+      ],
+      "lines": [
+       "let fN := 0",
+       "let rP := GetFirstRef 51 1",
+       "while rP != 0",
+       "  let fN := fN + 1",
+       "  let rQ := rP",
+       "  let rP := GetNextRef",
+       "loop",
+       "player.SetAV Variable05 fN",
+       "if fN > 0",
+       "  let fA := rQ.GetPos X",
+       "  player.SetAV Variable01 fA",
+       "  let fA := rQ.GetPos Y",
+       "  player.SetAV Variable02 fA",
+       "  let fA := rQ.GetPos Z",
+       "  player.SetAV Variable03 fA",
+       "  let fA := rQ.GetProjectileRefLifeTime",
+       "  player.SetAV Variable04 fA",
+       "  let fA := rQ.GetProjectileRefDistanceTraveled",
+       "  player.SetAV Variable06 fA",
+       "endif"
+      ]
+     }
+    },
+    {
+     "after": 30,
+     "do": [
+      "player.FireWeapon {0}",
+      "0x0007EA25"
+     ]
+    }
+   ],
+   "note": "FireWeapon from the player, level"
+  },
+  {
+   "name": "frag0",
+   "do": [
+    "player.additem 00004330 1",
+    "player.equipitem 00004330",
+    {
+     "frames": 60
+    },
+    [
+     "player.SetWeaponOut 1"
+    ],
+    {
+     "frames": 120
+    },
+    "player.setangle z 75",
+    "player.setangle x 0",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rP",
+       "ref rQ",
+       "float fA",
+       "float fN"
+      ],
+      "lines": [
+       "let fN := 0",
+       "let rP := GetFirstRef 51 1",
+       "while rP != 0",
+       "  let fN := fN + 1",
+       "  let rQ := rP",
+       "  let rP := GetNextRef",
+       "loop",
+       "player.SetAV Variable05 fN",
+       "if fN > 0",
+       "  let fA := rQ.GetPos X",
+       "  player.SetAV Variable01 fA",
+       "  let fA := rQ.GetPos Y",
+       "  player.SetAV Variable02 fA",
+       "  let fA := rQ.GetPos Z",
+       "  player.SetAV Variable03 fA",
+       "  let fA := rQ.GetProjectileRefLifeTime",
+       "  player.SetAV Variable04 fA",
+       "  let fA := rQ.GetProjectileRefDistanceTraveled",
+       "  player.SetAV Variable06 fA",
+       "endif"
+      ]
+     }
+    },
+    {
+     "after": 30,
+     "do": [
+      "HoldControl 4"
+     ]
+    },
+    {
+     "after": 60,
+     "do": [
+      "ReleaseControl 4"
+     ]
+    }
+   ],
+   "note": "frag grenade, attack held 30 loops"
+  }
+ ]
+}

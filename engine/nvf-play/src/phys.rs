@@ -1509,6 +1509,8 @@ impl PhysState {
         let start = [feet[0], feet[1], hit.point[2] + params.rest_gap(hit.shell)];
         let mut ch = self.world.add_character(id, params, start);
         ch.ignore_layers = fnv_phys::layers::character_ignores().union(fnv_phys::layers::actor_volumes());
+        // A stuck actor's move is not swept again every step (`fnv_phys` `Held`, issue #1797).
+        ch.hold_when_stuck = true;
         let mut b = NpcBody { prev_feet: ch.feet, ch, velocity: [0.0, 0.0], jump: false, sink: 0.0, lift: Default::default() };
         b.sink = drawn_sink(&b.ch, self.drawn_ground(&b.ch));
         self.npcs.insert(id, b);
@@ -1950,6 +1952,8 @@ fn report(mut exit: MessageReader<AppExit>, phys: Res<PhysState>, f: Res<FrameTi
         // Steps and bumps the drawn body and view climbed smoothly (`step_lift`).
         let l = &phys.player_lift;
         info!("physics: the player's drawn height took up {} steps and bumps, lifted {:.1} units at most", l.taken_up, l.most);
+        let (feet, drawn) = l.rough.rms();
+        info!("physics: walking on the ground for {} steps, vertical acceleration {feet:.0} units/s2 of the feet and {drawn:.0} of the drawn height (rms), drawn/feet {:.2}", l.rough.steps, drawn / feet.max(1.0));
     }
     // Loose items in water (`fnv_phys::buoyancy`): floating at the surface or sunk.
     let wet = phys.world.loose_in_water();

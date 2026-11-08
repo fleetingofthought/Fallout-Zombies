@@ -351,8 +351,15 @@ fn hold_jointed(objects: &mut [fnv_collide::CollisionObject], tallies: &mut Vec<
 /// A jointed clutter object its designer left posed (`XRGD`, a fallen skeleton: dead-on-spawn.md
 /// §5.1): its collision objects put where the drawing puts their nodes
 /// (`nvforever::clutter_pose`), entry k on object k's node under its parent, the other nodes
-/// as in the file. `false` (objects untouched) when the entries do not fit.
+/// as in the file. The same count rule as the drawing (`fnv_world::xrgd::matching`, so a
+/// skeleton part copied with a whole skeleton's `XRGD` poses from the first entries).
+/// `false` (objects untouched) when the entries do not fit.
 pub(super) fn pose_stored(tree: &NodeTree, bones: &[fnv_world::xrgd::Bone], objects: &mut [CollisionObject]) -> bool {
+    let Ok(n) = fnv_world::xrgd::matching(bones.len(), objects.len()) else { return false };
+    let bones = &bones[..n];
+    if !bones.iter().all(|b| b.position.iter().chain(&b.angles).all(|v| v.is_finite())) {
+        return false;
+    }
     let locals: Vec<Iso> = bones.iter().map(|b| Iso { translation: b.position, rotation: b.rotation() }).collect();
     tree.pose_objects(objects, &locals)
 }

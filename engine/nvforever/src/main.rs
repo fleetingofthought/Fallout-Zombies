@@ -31,6 +31,7 @@ mod activators;
 mod nif_mirror;
 mod anim_paths;
 mod actor_feet;
+mod tumble;
 mod actor_jumps;
 mod actor_materials;
 mod anim_objects;
@@ -45,6 +46,7 @@ mod clutter_pose;
 mod cell_resets;
 mod alert;
 mod anim_sounds;
+mod cpu_placement;
 mod crash;
 mod creature_pace;
 mod creature_stance;
@@ -83,6 +85,7 @@ mod lights;
 mod limbs;
 mod lips;
 mod memory_budget;
+mod gpu_poll;
 mod pipeline_gate;
 mod lockpick_view;
 mod roulette_view;
@@ -112,6 +115,7 @@ mod outfits;
 mod own_sounds;
 mod pipboy_arm;
 mod pipboy_controls;
+mod pipboy_ready;
 mod player_body;
 mod stealth_field;
 mod stray_commands;
@@ -132,6 +136,7 @@ mod script_look;
 mod ripples;
 mod settings;
 mod iron_sights;
+mod head_bob;
 mod view_sway;
 mod weapon_lower;
 mod setup;
@@ -141,6 +146,7 @@ mod shafts;
 mod imagespace;
 mod imposters;
 mod sky;
+mod start_times;
 mod weather_fx;
 mod limping;
 mod sneaking;
@@ -420,6 +426,12 @@ struct Args {
     /// --overlay is given).
     #[arg(long)]
     no_overlay: bool,
+    /// Where the game's threads run on a processor whose L3 cache is split into domains
+    /// of different sizes (dual-CCD X3D Ryzens): `auto` puts them on the largest L3,
+    /// `off` leaves them on every processor (cpu_placement.rs). Wins over NVForever.ini's
+    /// `[Settings] cpu-cache-placement` for this run; without either, `auto`.
+    #[arg(long, value_enum)]
+    cpu_cache_placement: Option<cpu_placement::Mode>,
     /// Show the frame rate counter in the top-right corner (fps_counter.rs; a switch on the
     /// settings page too). Once any setting is saved, NVForever.ini's Frame rate counter
     /// switch wins over this flag, as for every switch.
@@ -667,6 +679,10 @@ struct Args {
     /// bob (view_sway.rs); a switch of the settings page.
     #[arg(long, requires = "play")]
     no_weapon_sway: bool,
+    /// No head bob in first person: the camera stays still while walking and running
+    /// (head_bob.rs); a switch of the settings page.
+    #[arg(long, requires = "play")]
+    no_head_bob: bool,
     /// Keep the first-person weapon up against walls and friendly actors close ahead
     /// (weapon_lower.rs); a switch of the settings page.
     #[arg(long, requires = "play")]
@@ -842,9 +858,16 @@ fn command_line() -> Vec<String> {
 
 /// Bevy's task pools. Test aid `NVF_PLAY_TEST_ASYNC_THREADS=<n>` sets the async compute
 /// pool's size, which is 25 % of the cores and 1 to 4 threads otherwise [documented:
-/// bevy_app 0.20.1 `task_pool_plugin.rs`], to compare with a smaller machine's.
-fn task_pools() -> TaskPoolPlugin {
+/// bevy_app 0.20.1 `task_pool_plugin.rs`], to compare with a smaller machine's. Pipelines
+/// compile there; the game's file reads have a pool of their own, with an aid of its own
+/// (`nvf_assets::read_pool`).
+/// Bevy's task pools: its defaults, with a thread budget only when the game was put on
+/// the largest L3 domain (`placed`, cpu_placement.rs); `None` leaves the defaults as they are.
+fn task_pools(placed: Option<usize>) -> TaskPoolPlugin {
     let mut task_pool_options = bevy::app::TaskPoolOptions::default();
+    if let Some(n) = placed {
+        task_pool_options.max_total_threads = n;
+    }
     if let Some(n) = std::env::var("NVF_PLAY_TEST_ASYNC_THREADS").ok().and_then(|v| v.parse::<usize>().ok()) {
         task_pool_options.async_compute.min_threads = n;
         task_pool_options.async_compute.max_threads = n;
@@ -884,6 +907,10 @@ fn main() -> AppExit {
     // Boxes that ask nothing (the add-on packs' start-up chain) do not stop a test of a level.
     args.no_messages |= args.editor;
     let _ = COMMAND_LINE.set(line);
+    // On a processor with L3 domains of different sizes, the game's threads on the largest
+    // (cpu_placement.rs): before any thread pool or other thread starts, so all of them
+    // start there. Logged once the log is up.
+    let cpu_placed = cpu_placement::place(args.cpu_cache_placement);
     if args.explore {
         eprintln!("explore: the free-camera explorer (--explore)");
     }
@@ -1288,7 +1315,7 @@ fn main() -> AppExit {
     app.set_error_handler(stray_commands::handler);
     app.add_plugins(
         DefaultPlugins
-            .set(task_pools())
+            .set(task_pools(cpu_placed.pool_threads))
             .set(ImagePlugin {
                 default_sampler: ImageSamplerDescriptor {
                     address_mode_u: ImageAddressMode::Repeat,
@@ -1413,6 +1440,9 @@ fn main() -> AppExit {
     .add_plugins(nvf_assets::AssetReleasePlugin)
     // Their keep limits follow the machine's RAM and GPU memory budget (memory_budget.rs).
     .add_plugins(memory_budget::MemoryBudgetPlugin)
+    // wgpu's clean-up of finished GPU work on a thread of its own, not the render thread's
+    // queue submit (gpu_poll.rs, #1427).
+    .add_plugins(gpu_poll::GpuPollPlugin)
     .insert_resource(StartPose {
         position: start,
         heading: args.heading,
@@ -1466,6 +1496,8 @@ fn main() -> AppExit {
     .add_systems(PostUpdate, sky::sun_casters_over_slice.after(bevy::light::SimulationLightSystems::CheckLightVisibility))
     .add_systems(PostUpdate, sky::reach_toward_sun.after(bevy::light::SimulationLightSystems::UpdateDirectionalLightCascades).before(bevy::light::SimulationLightSystems::UpdateLightFrusta))
     .add_systems(Startup, (crash::report_start, report_archives))
+    .add_systems(Startup, move || cpu_placed.report())
+    .add_plugins(start_times::StartTimesPlugin)
     .add_systems(Last, (crash::note_place, crash::report_exit, stray_commands::report));
     if let Some(probe) = actor_feet::from_env() {
         app.insert_resource(probe).add_systems(Last, actor_feet::probe);
@@ -1557,7 +1589,7 @@ fn main() -> AppExit {
             app.add_plugins(creator_view::CreatorViewPlugin { light_scale: args.light_scale });
             // The Vigor Tester's machine: its camera and lights, the room behind it.
             app.add_plugins(vigor_view::VigorViewPlugin);
-            app.add_plugins((player_body::PlayerBodyPlugin { first_person_body: args.first_person_body, weapon_sway: !args.no_weapon_sway, weapon_lower: !args.no_weapon_lower, true_iron_sights: !args.no_true_iron_sights }, stealth_field::StealthFieldPlugin, pipboy_arm::PipBoyArmPlugin, deaths::DeathsPlugin, limbs::LimbsPlugin, ragdoll::RagdollPlugin, swing_traps::SwingTrapsPlugin, wrecks::WrecksPlugin, shot_fx::ShotFxPlugin, particles::ParticlesPlugin, dismember::DismemberPlugin));
+            app.add_plugins((player_body::PlayerBodyPlugin { first_person_body: args.first_person_body, weapon_sway: !args.no_weapon_sway, head_bob: !args.no_head_bob, weapon_lower: !args.no_weapon_lower, true_iron_sights: !args.no_true_iron_sights }, stealth_field::StealthFieldPlugin, pipboy_arm::PipBoyArmPlugin, deaths::DeathsPlugin, limbs::LimbsPlugin, ragdoll::RagdollPlugin, swing_traps::SwingTrapsPlugin, wrecks::WrecksPlugin, shot_fx::ShotFxPlugin, particles::ParticlesPlugin, dismember::DismemberPlugin));
             app.insert_resource(nvf_play::aim_zoom::Scope3d { on: args.scope_3d, lens: false });
             app.add_plugins(decals::DecalsPlugin);
             app.add_plugins(knockouts::KnockoutsPlugin);
@@ -1586,6 +1618,8 @@ fn main() -> AppExit {
             app.add_plugins(speech_look::SpeechLookPlugin);
             // Who perceives whom (detection.rs): the drawn actors and the player.
             app.add_plugins(detection::DetectionPlugin);
+            // The weather's wind on the bodies that respond to it, the tumbleweeds (tumble.rs).
+            app.add_plugins(tumble::TumblePlugin);
             // Alerted actors draw their weapons and look at what alerted them (alert.rs).
             app.add_plugins(alert::AlertPlugin);
             // Fighters look angry (combat_face.rs; lips.rs draws the face).

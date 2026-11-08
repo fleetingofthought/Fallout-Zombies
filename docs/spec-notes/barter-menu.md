@@ -146,8 +146,9 @@ screen's height):
   or its class's): the other items of its stock are held back; it buys anything
   [documented: GECK wiki Class; the categories: vendor-services.md §2].
 - **The total** is the sum of each line's rounded price times its count [hypothesis].
-  Accept is refused when the side that pays has too few caps [hypothesis; the wording is
-  ours: "You don't have enough caps." / "<merchant> doesn't have enough caps."].
+  Accept is refused when the player has too few caps [hypothesis; the wording is ours:
+  "You don't have enough caps."]. A sale beyond the merchant's caps goes through at the
+  caps it holds, and the figure shows that amount [observed 2026-11-06: section 9].
 - **Quest items** cannot be sold [documented: GECK wiki Category:Items]; they are not
   listed [hypothesis].
 - **Restocking** on two days of the week [documented: "Merchant Restocking"] is the
@@ -188,8 +189,8 @@ screen's height):
   of the MISC records of the same names [observed: FalloutNV.esm; playtest list 7 item
   7].
 - The caps arrow and its figure are drawn at half brightness, as a disabled button is,
-  while the side that pays holds fewer caps than the balance (Accept is then refused)
-  [design: the owner's request].
+  while the side that pays holds fewer caps than the balance [design: the owner's
+  request].
 - The container menu's note shows for a container whose record has the Respawns flag
   [hypothesis: every such container]; a refused trade's words show in the same place
   [design].
@@ -429,3 +430,181 @@ What the tile path does with these, and where it differs:
     `ConditionMeter` and `CNDArrows` follow the numbers read (meter 104.67 wide, image the
     condition's part, arrows x 140.5 or 114.33, y 15, 16 x 20) and are not yet compared by eye:
     `tiles-container`'s `card_*` shots hold them (a weapon, armour, an aid item).
+
+
+## 9. The barter menu from its file (issue #1468)
+
+[design: `engine/nvf-play/src/tiles/barter_menu.rs`, `tiles/vanilla.rs`] With
+`[UI] TileMenus=BarterMenu`, the open barter menu (1053) draws from
+`menus\barter_menu.xml`. The hand-built view stays the default. The adapter writes
+nothing with its switch off. A missing file, missing required path, or row template
+without its name, price or marker child keeps the whole hand-built view. The writer's
+single decision supplies drawing, input, and the prompt's drawing; the modal sheet
+stands at the hand-built menu's level, 100, beneath its prompt at 101.
+
+[design: `tiles/item_menu.rs`, `tiles/container_menu.rs`] The first commit extracts the
+container's row reconciliation, template validation, text measuring, row placement,
+counts, scroll, highlight, marker drag state, click meanings, row guards, and alpha/clip
+marks. Both adapters use that state with a table of paths and click meanings. The
+container's snapshot constructor, weight, subtitle, arrow and Take All writes remain
+separate, as do barter's caps and buttons: putting those in one conditional writer
+would obscure their different purposes. The container's existing synthetic tests stay
+in `container_menu.rs`.
+
+[design: `tiles/input.rs`, `menu.rs`, `menu/model.rs`, `ui_sounds.rs`] Every row,
+heading, Accept and Exit action goes through `MenuInput` and `apply_input`, including
+its sounds and events. At most one row click acts per frame; a guard checks the row's
+identity again when queued commands apply. The pointer selects only after moving,
+does not scroll the list, and yields to the wheel's held selection. The wheel still
+moves the selected row, or the category over a heading. Physical A accepts and X exits;
+the arrow keys change sides, W/S and Up/Down select, Enter/Space act, brackets change
+category, and Page Up/Down move the selection. Controller mappings remain `pad.rs`'s.
+The adapter suppresses a second tile action for keys already handled by the model;
+a script's MenuTapKey still follows the file's bindings. Exit sends only Close, so
+it cannot bypass the model's prompt cancellation or menu closing rules.
+
+[design: `tiles/barter_menu.rs::Snapshot::of`, `menu/model.rs::refresh_trade`]
+Prices use the model's existing `barter::price_text`, including `--` for no worth
+and a tenth for a price below one cap. Caps come from each side's purse. The model
+moves an offered row to the opposite list, first, and the adapter shows an open square
+for it, a filled square for an equipped row. Accept is dim and untargetable with no
+items offered, bright with an offer, including a zero-net trade. The flow is hidden
+with a zero balance. A positive balance pays the player and uses
+`barter_arrow_sell.dds`; a negative balance uses `barter_arrow_buy.dds` [documented:
+section 1 names the two textures]. The amount is what the trade moves
+(`Trade::paid`). The flow's picture and texts dim when the payer cannot afford it;
+Accept still sends the model's command, which refuses only a player who is short
+[design: the maintainer's request in section 5 for the dimming].
+
+[observed 2026-11-06: private job `ov_barter`, the original at 1280 x 720,
+Chet, read with JIP] `BM_CapsFlow` is invisible (0) with no trade, visible (1)
+with one, at y 260. Accept's `target` is 0 and 1 the same way. The list without
+the selection reads `_highlight_y` -1 and `_selected_height` 0; the other reads
+the row's `_y` and height (52, or 87 for two lines). Titles read x 50, y -10,
+height 38, font 6. `BM_Items_CapsLabel` reads x 449, y 20, height 32, font 2,
+justify 4. These match the adapter and the file's layout; no title or purse-label
+geometry writes are needed [design: `tiles/barter_menu.rs`, `tiles/list.rs`].
+
+[observed 2026-11-06: private job `ov_barter`, the original at 1280 x 720,
+Chet, read with JIP] Selling, with caps coming to the player, reads
+`_ArrowDirection` 2 and `BM_CapsFlow/x` 830.33; 1 or no direction gives x 810.33.
+The purses show the setting's Caps word, three spaces, and the number (`Caps   900`).
+The normal flow alpha is 255; a sale beyond the merchant's purse reads 64 and dims
+its icon, amount and Caps word. [documented: `barter_menu.xml`, read privately from the user's
+install] Direction 1 selects the icon's `_filename_1`
+(`barter_arrow_buy.dds`), direction 2 its `_filename_2` (`barter_arrow_sell.dds`),
+through successive copies of the direction and `_filename_`. The flow, icon and
+amount shift conditionally for direction 2; the flow's alpha is set in code and
+the icon's alpha copies it.
+
+[design: `tiles/barter_menu.rs::write`, `crates/fnv-ui/src/tree.rs::eval_reading`,
+`expr.rs::ops_of`] The writer now uses direction 2 for positive balance, 1 for
+negative balance and an empty string for zero. A copy replaces the preceding value,
+including a leading string; after a number, a copy of a trait ending in `_` looks up
+that trait with the number appended. The tree therefore selects the icon's filename;
+the adapter no longer writes it. `BM_CapsFlow/_Value` receives the unsigned amount
+and the amount text is also written. The writer sets flow alpha to 255 or 64 and
+writes that same alpha to the amount and Caps text, since `item_menu::mark_tiles`
+marks every tile to take only its own alpha. The icon keeps the file's parent-alpha
+copy. None of these three children receives a brightness write. Accept's existing
+128/255 brightness writes remain separate.
+
+[observed 2026-11-06: private job `ov_barter`, the original at 1280 x 720,
+Chet, read with JIP] `_IsContainerListSelected` is -1 on opening without a selection,
+0 with a player row selected and 1 with a merchant row selected; leaving all rows
+retains the last value. Moving the pointer onto a row of the other list selects it
+and moves focus (`left_selected`, `right_selected_cursor`). [documented:
+`barter_menu.xml`, read privately from the user's install]
+`BM_Items_FocusRect` (id 0) and `BM_Container_FocusRect` (id 1) are hotrects with
+targets following the merchant-focus trait and its inverse. The lists' `_enabled`
+follow its inverse for the player and its copy for the merchant. This differs from
+the container file's two enabled lists in section 8.
+
+[design: `tiles/barter_menu.rs::write`, `pointer_candidates`, `tiles/input.rs`,
+`tiles/item_menu.rs`, `tiles/list.rs`, `menu/model.rs`] The adapter retains the last
+side whose snapshot has a selection, starts at -1 when neither has one, and clears
+that memory on close. The current model preselects row zero and cannot distinguish
+an untouched opening with rows from an explicit selection; the adapter uses that
+snapshot selection, so such an opening still reads 0. No model selection rule changes
+in this review. `_enabled` is a file trait; row `target` expressions use it, and the
+generic pointer reads `target`. The two focus rects now have click meanings. When
+one takes the pointer, input resolves hit candidates with that side temporarily
+enabled and restores the written focus before stepping the pointer. Thus the row
+under it supplies the normal guarded Hover or click, even on a direct click across
+sides. Clipping and higher menus still govern hits, and empty space or the wheel's
+held selection cannot leave the tree's focus ahead of the model.
+
+[observed 2026-11-06: private job `ov_barter`, the original at 1280 x 720,
+Chet, read with JIP] A sale beyond the merchant's caps holds the displayed amount
+at that purse, dimmed; Accept still takes it and completes at that amount. The
+merchant's 815 caps become 0 and the player's 900 become 1715. Both menus do the same
+[design: `Trade::paid`]; they used to refuse it. Filtered category headings remain NVForever's own words
+under LEGAL.md; the capture's category wording has no source in the data files.
+
+[hypothesis: container measurements in section 8; comparisons still outstanding]
+The shared counts formula, retained scroll delta, row measuring and spacing, clip
+handling and backing alpha 193.8 remain borrowed from the container. The card uses
+`item_card.rs` unchanged, including the container's condition-arrow y 15 and height
+20 and the owner's separate DPS placement; those numbers still need comparison.
+No row width, wrapping width, button place or arrow offset is copied into the adapter:
+those remain the file's [design: `tiles/barter_menu.rs`].
+
+[design: `tiles/menus.rs`, `tiles/mod.rs`, `menu.rs`] The quantity prompt follows an
+actually tiled barter view even with only BarterMenu switched on. With a missing or
+short QuantityMenu file it stays hand-built, including the frame before its tree
+builds. Either prompt blocks the underlying rows, headings, buttons and marker drag.
+A barter view that fell back does not implicitly turn its prompt into tiles; the
+explicit QuantityMenu switch still works independently.
+
+[design: LEGAL.md, `tiles/barter_menu.rs`, `tiles/item_card.rs`] String audit:
+
+- All-items heading: `sInventoryItems` through `ui_loading::game_string`, with the
+  load order's GMST winning over `fnv_ui::strings`. Merchant heading: the model's
+  record or script name. Filtered categories use our own words: Weapons, Clothing,
+  Consumables, Other items, Ammunition. `look::half_title`'s transcribed uppercase
+  headings are replaced before anything is written.
+- Purse labels and the flow label: `sInventoryCaps` through the same setting lookup;
+  the three spaces and purse digits are formatting. `look::half_figure` is not used.
+  Amounts and prices are model numbers, with `--` as our no-value notation.
+- Row names: the model's record or script names, its mod marker and count formatting
+  (`look::row_text` formats only the name and count). The model's separate condition
+  suffix helper is not used by this view. No category abbreviation is transcribed.
+- Item-card titles, Accept and Exit: left to the files' settings, with the strings
+  table's own fallback labels (`sAccept`, `sExit`, and the inventory card settings).
+  Hints written by the adapter: `sPCMenuHintA` and `sPCMenuHintX`, adjusted by
+  `pad::game_hint` for the controller's existing mapping and label style.
+- Card values: `look::item_figures` supplies numbers, condition and one-unit weight
+  and value. `pipboy::items::info_of` supplies ammunition names from AMMO records,
+  clip/carried numbers, armor-class enum labels (our functional words), and effects
+  named by AVIF ANAM/FULL or the engine's actor-value names. `item_card::write` uses
+  the DAM/DT identifiers only to choose cards; it leaves their visible titles to the
+  settings. Empty strings clear absent data; `--` is our no-value notation. Icon,
+  marker and flow filenames identify installed assets, rather than displayed wording.
+
+[design: synthetic tests beside `tiles/barter_menu.rs` and `menu/model/tests.rs`]
+Tests cover short files and missing price children, prices/purses/open and filled
+marks, unit card figures and untouched titles, both flow directions, insufficient
+funds, a zero-net trade, empty Accept, child click meanings, stale rows/guards,
+scroll rewrite, pointer picks across disabled lists and focus rects, retained focus
+and its reset on close, rendered flow alpha, physical/script key arbitration, prompt fallback,
+and a real model sale appearing first on the merchant's side before acceptance.
+The fixtures use their own dimensions and expressions, never the game file's (#1512).
+
+[design: `tools/smoke/scenarios.toml`] New scenarios: `tiles-barter`,
+`tiles-barter-quantity` (BarterMenu alone, including Cancel and blocked underlying
+clicks), and `barter-default-drawing`, through Chet's dialogue in GSGeneralStore
+using section 6's talk/barter aids and the currency/pistol recipe. They take 1280x720
+shots of empty Accept, offered and returned items, the caps flow, acceptance, category,
+scroll and quantity states. The automatic trade aid is delayed beyond the runs so
+that the actual tile or hand-built input makes each trade. The input aid now names
+Page Up/Down and the bracket keys for those checks. Pointer places and timing are
+hypotheses borrowed from the container runs. The file has no
+subtitle tile, so the model's own refusal note stays as a small hand-built overlay
+at its existing place (`menu/look.rs::spawn_note`), alongside the dimmed flow
+[design: the contract's paths and `menu::note`]. Those words are the model's own
+functional error message "You don't have enough caps." (`menu/model.rs::accept`),
+or the engine's
+"Cannot..." errors (`plain_error`). They are not transcribed lines. This piece remains separate to
+preserve the feedback without inventing a tile in the file. Blur uses the existing
+tile-menu blur path at radius 3
+[hypothesis for barter: the same shared presentation as the container].

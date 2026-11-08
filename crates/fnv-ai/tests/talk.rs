@@ -572,6 +572,29 @@ fn a_say_to_package_says_its_line_without_a_conversation() {
     assert_eq!(s.talks(), 1);
 }
 
+/// A Say To line to the player waits for a clear line as a force greet does: Officer
+/// Kendall's ambush bark in Tale of Two Wastelands (CG04Security02Ambush) came through
+/// the walls of the player's room and its end script skipped the wake-up's stage 3.
+#[test]
+fn a_say_to_line_to_the_player_waits_for_a_clear_line() {
+    use fnv_game::detection::Detection;
+    let f = fixture();
+    let mut s = sim(&f, R_SAY, [300.0, 100.0, 0.0]);
+    s.game.detection.measures_player = true;
+    let blocked = Detection { clear: false, ..Detection::default() };
+    s.game.detection.record(FormId(R_SAY), FormId(PLAYER), blocked, 0.0);
+    s.run(2.0);
+    let unseen = s.events().iter().filter(|e| matches!(e, AiEvent::TalkUnseen { .. })).count();
+    assert_eq!((s.talks(), unseen), (0, 1), "{:?}", s.events());
+    assert!(!s.game.is_talking(FormId(R_SAY)));
+    let clear = Detection { clear: true, ..Detection::default() };
+    s.game.detection.record(FormId(R_SAY), FormId(PLAYER), clear, s.game.time);
+    s.run(1.0);
+    assert_eq!(s.talks(), 1, "{:?}", s.events());
+    assert!(s.game.dialogue.is_none());
+    assert!(s.game.is_talking(FormId(R_SAY)));
+}
+
 #[test]
 fn a_conversation_between_two_actors_is_not_carried_out() {
     let f = fixture();
@@ -796,6 +819,26 @@ fn far_away_a_dialogue_package_with_a_wait_location_keeps_its_actor_there() {
     next_far_update(&mut s);
     assert!(flat(s.agent(R_GREET).walker.feet, GREETER) < 1.0, "stays at {:?}", s.agent(R_GREET).walker.feet);
     assert_eq!(s.talks(), 0);
+}
+
+/// A wait while an actor is on its way to talk (issue #1597, Malcolm Holmes): the walk led
+/// to the player's own spot and ran to its end, so the actor stood inside the player. It
+/// now stops at its talking distance, says nothing while time passes, and talks once the
+/// game goes on.
+#[test]
+fn a_wait_during_an_approach_leaves_the_actor_at_talking_distance() {
+    let f = fixture();
+    let player = [1100.0, 1100.0, 0.0];
+    let mut s = sim(&f, R_COME, player);
+    s.run(0.5);
+    assert!(matches!(s.agent(R_COME).talk, Some(Talking::Approaching { .. })), "{:?}", s.agent(R_COME).talk);
+    s.ai.pass_time(&mut s.game, &s.nav, 60.0, 0.5);
+    let away = flat(s.agent(R_COME).walker.feet, player);
+    assert!(away > 50.0 && away <= fnv_ai::goal::STANDARD_TALK_DISTANCE + 1.0, "{away} units from the player");
+    assert_eq!(s.talks(), 0, "nobody talks in a wait");
+    s.run(1.0);
+    assert_eq!(s.talks(), 1, "{:?}", s.events());
+    assert!(flat(s.agent(R_COME).walker.feet, player) > 50.0, "not inside the player");
 }
 
 /// A script's StartConversation from afar (issue #1544, `Game::walk_up_greet`): with the AI

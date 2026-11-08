@@ -53,7 +53,7 @@ use bevy::prelude::*;
 use fnv_actor::weapon::AnimType;
 use fnv_combat::body_weapon::{self, Arm};
 use fnv_sim::FormId;
-use nvf_assets::actor::{ActorCtx, ActorParts, PreparedSkeleton};
+use nvf_assets::actor::{ActorCtx, ActorParts, PreparedPart, PreparedSkeleton};
 use nvf_assets::anim_play::BlendPlayer;
 use nvf_assets::model::ModelCtx;
 use nvf_play::combat::Combat;
@@ -154,35 +154,20 @@ fn stand_in_node<'a>(w: &'a fnv_combat::data::WeaponStats, names: &[Option<Strin
 /// `Bip01 R Forearm` [observed]), placed as `weapons::spawn_muzzle` places a weapon's
 /// muzzle under the `Weapon` node, for [`place_muzzles`] to find. The drawn part keeps
 /// no node entities of its own.
-pub fn spawn_part_projectile_nodes(commands: &mut Commands, models: &mut ModelCtx, part: &str, skel: &PreparedSkeleton, nodes: &[Entity]) {
-    let Some(model) = models.model(part) else { return };
-    if !model.nodes.iter().any(|n| n.name.as_deref().is_some_and(is_projectile_node)) {
+pub fn spawn_part_projectile_nodes(commands: &mut Commands, path: &str, part: &PreparedPart, skel: &PreparedSkeleton, nodes: &[Entity]) {
+    if part.projectile_nodes.is_empty() {
         return;
     }
-    // The root's Prn: the one whose node is not below the root.
-    let prn = models.node_strings(part, "Prn");
-    let below = |name: &str| model.nodes.iter().any(|n| n.name.as_deref().is_some_and(|x| x.eq_ignore_ascii_case(name)));
-    let Some(bone) = prn.iter().find(|(node, _)| !below(node)).map(|(_, b)| b.clone()) else { return };
-    let Some(&b) = skel.by_name.get(&bone).filter(|&&b| b < nodes.len()) else { return };
-    for (i, n) in model.nodes.iter().enumerate() {
-        let Some(name) = n.name.as_deref().filter(|n| is_projectile_node(n)) else { continue };
-        let mut path = Vec::new();
-        let mut at = Some(i);
-        while let Some(j) = at {
-            path.push(j);
-            at = model.nodes[j].parent;
-        }
-        path.reverse();
-        let local = path.iter().fold(model.root, |m, &j| m * model.nodes[j].local);
-        let e = commands.spawn((Name::new(name.to_string()), Transform::from_matrix(Mat4::from(local)), Visibility::Inherited)).id();
+    // The root's Prn (`PreparedPart::prn`).
+    let Some(bone) = part.prn.as_deref() else { return };
+    let Some(&b) = skel.by_name.get(bone).filter(|&&b| b < nodes.len()) else { return };
+    for (name, local) in &part.projectile_nodes {
+        let e = commands.spawn((Name::new(name.clone()), Transform::from_matrix(Mat4::from(*local)), Visibility::Inherited)).id();
         commands.entity(nodes[b]).add_child(e);
-        debug!("body weapons: {part}: projectile node {name} under {bone} at {:?}", local.translation);
+        debug!("body weapons: {path}: projectile node {name} under {bone} at {:?}", local.translation);
     }
 }
 
-fn is_projectile_node(name: &str) -> bool {
-    name.get(..14).is_some_and(|p| p.eq_ignore_ascii_case("ProjectileNode"))
-}
 
 /// The first entity under `root` (itself included) named `name`, without regard to case.
 fn find_named(root: Entity, name: &str, children: &Query<&Children>, names: &Query<&Name>) -> Option<Entity> {

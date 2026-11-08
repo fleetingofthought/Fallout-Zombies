@@ -48,6 +48,15 @@ into the render world (`bevy_diagnostic/src/frame_count.rs:10-39`; `bevy_render/
 Update execution or CPU or GPU time. First duration is null; later zeros are valid. Require automatic time
 outside synthetic tests. Collection time is separate from interval endpoints.
 
+[design: `engine/nvforever/src/stress_sample.rs:17-37`] The stress sampler (`NVF_PLAY_TEST_SAMPLE`) does not
+use this delta since issue #1415: its frame is the time between its own `Instant::now()` calls in
+consecutive `First` runs, so the frame's time is taken at the same boundaries as its phase, counters
+and place. That is the main thread's loop including the wait for the render thread at extraction
+(`bevy_render/src/pipelined_rendering.rs:115-136`), whereas the received renderer instant can belong
+to the frame before under pipelined rendering. The `stress sample:`, `stress frames:` and `stress hitch`
+figures and `duration_ns` therefore need not agree frame by frame; means over the same run of frames
+should agree up to the instants at its ends [hypothesis].
+
 [documented] Render diagnostics import in PreUpdate and timestamp that import, not GPU execution.
 Private frame data and completion callbacks provide no source frame number, and mapping can remain
 pending (`bevy_render/src/diagnostic/mod.rs:66-74,126-135`; `diagnostic/internal.rs:217-237,572-583,727-746`).
@@ -157,7 +166,7 @@ the phase name, scenario ID or ordinal. Timestamp is u64 nanoseconds since epoch
 Markers may precede their frame and imply no cause. They contain no game data or copied log text.
 
 [documented] Startup lasts through the sample seeing Streamer settled or absent, or its startup sum over
-60 s; later hidden frames are excluded (`engine/nvforever/src/stress_sample.rs:251-268`;
+60 s; later hidden frames are excluded (`engine/nvforever/src/stress_sample.rs:380-404`;
 `engine/nvf-play/src/loading.rs:170-173`). [hypothesis] Use that policy independently of the sample aid.
 Startup takes priority; loading follows when Loading::unseen_frames is true. Gameplay includes the
 remaining frames, including menus. Mark every phase entry.
@@ -196,7 +205,7 @@ Sort durations ascending as x[1..N]; nearest-rank p(q) is x[ceil(q*N)] for q = 0
 without interpolation. For [10,20,30,40,100] ms, p50 is 30 and p95 and p99 are 100; strict counts above
 33, 50 and 100 ms are 2, 1 and 0. The slowest-1% mean averages the largest max(1,floor(N/100)) values,
 giving 100 ms in this example.
-[documented] That floor rule preserves the existing metric, which is not p99 (`stress_sample.rs:207-218`).
+[documented] That floor rule preserves the existing metric, which is not p99 (`stress_sample.rs:453-465`).
 
 ## 4. Collection, volume and completeness
 

@@ -44,11 +44,11 @@ impl Game<'_> {
     pub fn response_seconds_voiced(&self, placed_base: Option<FormId>, voice_base: Option<FormId>, info: FormId, response: usize) -> f64 {
         let voice = self.voice.as_ref();
         let sound = voice.and_then(|v| v.response_seconds(info, response, voice_base)).or_else(|| {
-            let fixed = self.data.infos.get(&info).and_then(|d| d.speaker).filter(|s| Some(*s) != voice_base && Some(*s) != placed_base)?;
+            let fixed = self.dialogue_view().info(&info).and_then(|d| d.speaker).filter(|s| Some(*s) != voice_base && Some(*s) != placed_base)?;
             voice?.response_seconds(info, response, Some(fixed))
         });
         sound.unwrap_or_else(|| {
-            let chars = self.data.infos.get(&info).and_then(|d| d.response_chars.get(response)).copied().unwrap_or(0);
+            let chars = self.dialogue_view().info(&info).and_then(|d| d.response_chars.get(response)).copied().unwrap_or(0);
             fitted_seconds(chars)
         })
     }
@@ -62,7 +62,7 @@ impl Game<'_> {
     /// [`Game::response_lengths`] for a speaker placed with `placed_base` speaking with
     /// `voice_base`'s voice ([`Game::response_seconds_voiced`]).
     pub fn response_lengths_voiced(&self, placed_base: Option<FormId>, voice_base: Option<FormId>, info: FormId) -> Vec<f64> {
-        let n = self.data.infos.get(&info).map_or(0, |d| d.response_chars.len());
+        let n = self.dialogue_view().info(&info).map_or(0, |d| d.response_chars.len());
         (0..n.max(1)).map(|k| self.response_seconds_voiced(placed_base, voice_base, info, k)).collect()
     }
 
@@ -74,7 +74,7 @@ impl Game<'_> {
 
     /// [`Game::response_lengths`] for a speaker given by its base form.
     pub fn response_lengths_as(&self, speaker_base: Option<FormId>, info: FormId) -> Vec<f64> {
-        let n = self.data.infos.get(&info).map_or(0, |d| d.response_chars.len());
+        let n = self.dialogue_view().info(&info).map_or(0, |d| d.response_chars.len());
         (0..n.max(1)).map(|k| self.response_seconds_as(speaker_base, info, k)).collect()
     }
 }

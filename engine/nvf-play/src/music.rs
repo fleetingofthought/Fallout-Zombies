@@ -522,6 +522,12 @@ pub struct MusicCues {
 }
 
 fn init(mut commands: Commands, d: Res<PlayWorld>) {
+    let d = d.0;
+    crate::start_read::start(&mut commands, "nvf-audio-read", move || read_places(d));
+}
+
+/// [`AudioPlaces`] from the plugins, on its own thread (`crate::start_read`).
+fn read_places(d: crate::PlayData) -> AudioPlaces {
     let t = std::time::Instant::now();
     let forms = AudioForms::build(d.lo, d.schema);
     let (am, sm) = audio::markers(d.lo, d.schema, d.index, d.index.cells.keys().copied());
@@ -542,7 +548,7 @@ fn init(mut commands: Commands, d: Res<PlayWorld>) {
         places.forms.regions.len(),
         t.elapsed().as_secs_f64() * 1000.0
     );
-    commands.insert_resource(places);
+    places
 }
 
 fn setting(sim: &SimState, (name, default): (&str, f32)) -> f32 {
@@ -1097,6 +1103,7 @@ fn release_files(real: Res<Time<Real>>, limits: Option<Res<nvf_assets::KeepLimit
 
 impl Plugin for MusicPlugin {
     fn build(&self, app: &mut App) {
+        crate::start_read::add_collect::<AudioPlaces>(app);
         app.init_resource::<MusicSettings>()
             .init_resource::<Music>()
             .init_resource::<MusicCues>()

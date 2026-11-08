@@ -199,6 +199,18 @@ pub fn register(app: &mut App) {
         add_setting(
             app,
             Setting {
+                key: "head-bob",
+                group: GROUP_PICTURE,
+                label: "Head bob",
+                note: "On: in first person the view dips with each step as you walk and run. Off: it stays level. (--no-head-bob)",
+                get: |w| w.resource::<PlayerBody>().head_bob,
+                set: |w, on| w.resource_mut::<PlayerBody>().head_bob = on,
+                slider: None,
+            },
+        );
+        add_setting(
+            app,
+            Setting {
                 key: "weapon-lower",
                 group: GROUP_PICTURE,
                 label: "Lower weapon near walls",

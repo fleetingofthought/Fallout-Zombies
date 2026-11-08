@@ -39,6 +39,21 @@ pub struct ShowOffState {
     pub temp_reactions: std::collections::HashMap<(FormId, FormId), i64>,
     /// SetRadiationExtraData's levels, by reference (`Game::tick_radiation`).
     pub radiation: std::collections::HashMap<FormId, f32>,
+    /// The plugin (lower case) that started each aux timer, by owner and name
+    /// (ClearShowoffSavedData, `nvse_showoff4`).
+    pub timer_mods: std::collections::HashMap<(FormId, String), String>,
+    /// SetShowOffOnCornerMessageEventHandler's functions, and the corner messages queued
+    /// since the last frame for them: (text, icon path, seconds) (`nvse_showoff4`).
+    pub corner_handlers: Vec<XVal>,
+    pub corner_pending: Vec<(String, String, f64)>,
+    /// SetItemHotkeyIconPath's paths, by item base.
+    pub hotkey_icons: std::collections::HashMap<FormId, String>,
+    /// FreezeAmmoRegen: no regenerating weapon gains rounds (`fnv_combat::attack::Cycle`).
+    pub ammo_regen_frozen: bool,
+    /// SetOwnershipTemp's targets (a reference or a cell) and the owner each had before:
+    /// a save writes that one (`Game::snapshot`); SetOwnership or SetCellOwnership on the
+    /// target drops the entry [documented: SetOwnershipTemp, session persistent].
+    pub temp_owners: std::collections::HashMap<FormId, Option<FormId>>,
 }
 
 fn num(args: &[XVal], k: usize, dflt: f64) -> f64 {

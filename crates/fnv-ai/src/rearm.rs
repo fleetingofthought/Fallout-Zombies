@@ -2,7 +2,8 @@
 //! looking and the fetching; the ranks and the taking are `fnv_game::rearm`'s. The rules
 //! are **[design]**.
 //!
-//! - Every [`LOOK_SECONDS`] an actor that rearms (`Game::rearms`) and is not fetching
+//! - Every [`LOOK_SECONDS`] (the first time at once, the second after a part of a second
+//!   of its own, [`look_phase`]) an actor that rearms (`Game::rearms`) and is not fetching
 //!   first swaps a held weapon its combat style rules out (`Game::arm_restricted_by_style`,
 //!   `fnv_game::style_weapon`), then, holding no usable weapon, holds the best one it
 //!   carries; then it
@@ -56,6 +57,12 @@ fn flat(a: [f32; 3], b: [f32; 3]) -> f32 {
     (a[0] - b[0]).hypot(a[1] - b[1])
 }
 
+/// The part of [`LOOK_SECONDS`] by which `actor`'s looks are put off after its first,
+/// in [0, 1): from its FormID, the same every time [engineering choice].
+pub fn look_phase(actor: FormId) -> f64 {
+    f64::from(actor.0.wrapping_mul(0x9E37_79B1) >> 16) / 65536.0
+}
+
 impl Ai {
     /// One update of re-arming for an actor in a combat state. Returns whether a fetch
     /// moves it now (the fight's own moves wait).
@@ -67,10 +74,16 @@ impl Ai {
             return self.fetch_step(game, nav, actor, f, dt);
         }
         let now = game.time;
-        if game.rearms.next_look.get(&actor).is_some_and(|t| now < *t) {
-            return false;
-        }
-        game.rearms.next_look.insert(actor, now + LOOK_SECONDS);
+        let next = match game.rearms.next_look.get(&actor) {
+            Some(t) if now < *t => return false,
+            Some(_) => now + LOOK_SECONDS,
+            // The first look: the next one a part of a second later, the actor's own, so
+            // that actors who went into combat together do not all look in the same
+            // frame again and again (#1799: 118 looks in one frame were 26-31 ms of a
+            // 50-a-side battle's frame, once a second [observed 2026-11-07]).
+            None => now + LOOK_SECONDS * (1.0 + look_phase(actor)),
+        };
+        game.rearms.next_look.insert(actor, next);
         // A held weapon its combat style rules out is the style rule's to swap
         // (`fnv_game::style_weapon`, #1721); then an empty hand takes the best carried.
         game.arm_restricted_by_style(actor);
@@ -309,5 +322,23 @@ impl Ai {
             a.activity = Activity::There;
         }
         self.log(game, actor, AiEvent::FetchDropped { from, why });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn look_phases_spread_battle_actors_over_the_second() {
+        // Runtime references as a battle creates them, one after another.
+        let phases: Vec<f64> = (0..118u32).map(|i| look_phase(FormId(0xFF00_0000 + i))).collect();
+        assert!(phases.iter().all(|p| (0.0..1.0).contains(p)));
+        // No tenth of a second holds more than a fifth of them.
+        for tenth in 0..10 {
+            let n = phases.iter().filter(|&&p| (p * 10.0) as usize == tenth).count();
+            assert!(n <= 118 / 5, "tenth {tenth} holds {n}");
+        }
+        assert_eq!(look_phase(FormId(0x0010_4C0C)), look_phase(FormId(0x0010_4C0C)));
     }
 }

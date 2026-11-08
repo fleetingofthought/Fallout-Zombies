@@ -121,8 +121,30 @@ Read here as [hypothesis where marked]:
   masters' membranes); "Greater Than" (seen through walls) is not built.
 - The particle shader: §6; holes: §7; add-on models: §8. Not built: "Affect Skin
   Only" (the whole actor is covered).
-- A shader on the player: drawn on whatever body the player has (the wiki notes the
-  original keeps it on the perspective it started in).
+- A shader on the player covers only the third-person body's meshes, never the
+  first-person arms [design: `effect_shaders.rs::play`]. Each overlay takes its covered
+  mesh's render layers at birth. Player overlays follow later changes in both
+  directions, after `player_body.rs::show_rigs` decides which parts the camera sees
+  [design: `effect_shaders.rs::sync_player_effects`]. In ordinary first person the whole
+  body is on `SHADOW_LAYER`; with `--first-person-body`, the head and any replaced arms
+  stay there while the seen body uses `BODY_LAYER` [design: `player_body.rs::Seen`].
+  Neither the main camera nor the reflection camera sees `SHADOW_LAYER`, and overlays
+  have `NotShadowCaster`, so those overlays draw nothing, including in shadows
+  [design: `main.rs` camera spawn, `reflection.rs`, `effect_shaders.rs::play`].
+  Other actors' overlays copy their mesh's layers at birth without joining the player's
+  per-frame synchronization [design: `effect_shaders.rs::PlayerOverlay`].
+- The wiki notes the original keeps a shader on the perspective it started in
+  [documented: GECK wiki, as this note read before #1772]. The original, Flames01 played on
+  the player in first person with the weapon holstered, showed nothing of it in first
+  person, flames at the head once in third person, and nothing again back in first person
+  [observed 2026-11-06: private capture ov_burn, the Prospector Saloon, 1280 x 720]. So in that
+  run a shader started in first person was seen in third.
+- What the original draws on the first-person arms during burning remains unconfirmed, as
+  no arms were in view in that capture [hypothesis]; observer-checks.md item 100 asks. The regression scenario
+  `burn-first-person` starts Flames01 in first person, then switches to third person;
+  `effect shader: ... on the player: the camera sees N of M covered meshes` reports
+  changes in the camera's coverage [design: `tools/smoke/scenarios.toml`,
+  `effect_shaders.rs::sync_player_effects`].
 
 ## 5. SetActorAlpha, Reset3DState, SetSecuritronExpression
 
@@ -196,6 +218,9 @@ Drawn here [hypothesis or design where marked]:
   along the particle's normal (a bone lies inside the body), or anywhere in an unskinned
   mesh's bounds [design: the game's surface points are not documented]. The normal is a
   random direction.
+- Hidden meshes give off no new particles. For the player, meshes on layers the camera
+  does not see also give off none, including the head of `--first-person-body`; particles
+  already alive finish their lives [design: `effect_particles.rs::draw`].
 - Scale: linear from 0 to key 1 and to key 2, held after; the scale is the particle's
   width in game units [hypothesis]. Colour: linear between keys, from and back to white
   (the texture's own colour) [hypothesis: linear]; the alpha is the nearest key's outside
@@ -287,6 +312,17 @@ Drawn here [hypothesis or design where marked]:
 - Which: a model of the DEBR by its percentages, picked once per place and play [design].
 - Each is played as an effect model: its billboards face the camera, its controllers play
   (`shot_fx::spawn_attached`).
+- Player add-ons follow the camera's decision for their attachment's part, including
+  while fading after a shader ends. A mesh attachment uses that mesh's head or arm
+  classification; a bone on or below `Bip01 Head` follows the head, and one on or below
+  either `Bip01 L UpperArm` or `Bip01 R UpperArm` follows the arms. Other attachments
+  follow whether the body is seen at all [design: `player_body.rs::effect_part`,
+  `effect_bone_part`, `Seen::effect_part`]. This branch classification is an engine
+  choice, not confirmed original behaviour [design]. Their holders use inherited
+  visibility, and their own `AddonEmitter` or `ModelEmitter` checks the same part before
+  births, even on its first frame. Other actors' add-ons keep their existing visibility
+  and birth rules [design: `effect_shaders.rs::player_addon`, `sync_player_effects`,
+  `particles.rs::emit`].
 - Timing: from the play's start the model grows from the scale start to 1 over the scale
   in time and fades in over the fade in time; after the play ends it shrinks from where
   it was to the scale end over the scale out time and fades out over the fade out time,

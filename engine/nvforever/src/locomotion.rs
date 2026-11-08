@@ -8,6 +8,7 @@
 //! (actors.md §8.9), which plays its turn clip; `--actor-turn-test` ([`TurnTest`]) tries it.
 
 use bevy::prelude::*;
+use bevy::tasks::{ComputeTaskPool, ParallelSliceMut};
 use fnv_actor::locomotion::{choose, direction, hurt_move_in, wrap01, Blend, Body, Choice, ClipInfo, LocomotionSet, Move, Slot, HURT_FOLDER, RATE_MAX, RATE_MIN};
 use fnv_nav::follow::{heading_delta, SPOT_TURN_RATE, SPOT_TURN_START};
 use nvf_assets::actor::{bind_clip, clip_binding, ClipSource, PreparedSkeleton};
@@ -894,157 +895,215 @@ type ActorAnimParts = (
     Option<&'static crate::talk_clips::TalkClip>,
 );
 
+/// Actors posed in one task of [`drive`] on the compute pool.
+const DRIVE_CHUNK: usize = 8;
+
 /// Choose, blend and pose every actor with a [`Locomotion`], with its weapon clips
 /// (`weapons.rs`) and the idles it plays (`idles.rs`) layered on top.
+///
+/// Each actor's clips are chosen and its bones sampled on the compute pool, several
+/// actors at once: that reads and writes only the actor's own components. The bones'
+/// transforms are written afterwards, one actor after another in the query's order, so
+/// the frame's poses do not depend on the threads (issue #1799).
 pub fn drive(
     time: Res<Time>,
     mut actors: Query<ActorAnimParts>,
     mut transforms: Query<&mut Transform>,
     mut cost: ResMut<ActorAnimCost>,
-    mut scratch: Local<Vec<(usize, Transform)>>,
 ) {
     let t0 = std::time::Instant::now();
     let (dt, now) = (time.delta_secs(), time.elapsed_secs());
+    let mut items: Vec<_> = actors.iter_mut().collect();
+    // A dead actor's pose stands only while nothing else wrote its bones
+    // (`BlendPlayer::pose_held`): asked here, before anything is written.
+    let written: Vec<bool> = items.iter().map(|it| it.3.is_some() && it.1.written_since(&mut transforms)).collect();
+    let mut jobs: Vec<(_, bool)> = items.iter_mut().zip(written).collect();
+    let one_chunk = |chunk: &mut [(&mut ActorAnimItem, bool)]| {
+        let mut c = ActorAnimCost::default();
+        let (mut scratch, mut out) = (Vec::new(), Vec::new());
+        for (item, written) in chunk.iter_mut() {
+            drive_one(item, *written, dt, now, &mut scratch, &mut out, &mut c);
+        }
+        (c, out)
+    };
+    let parts = if jobs.len() <= DRIVE_CHUNK { vec![one_chunk(&mut jobs)] } else { jobs.par_chunk_map_mut(ComputeTaskPool::get(), DRIVE_CHUNK, |_, chunk| one_chunk(chunk)) };
     let mut n = 0;
-    for (mut lo, mut player, weapon, dying, flinch, seated, idle, pose, creature, name, talk) in &mut actors {
-        if let Some(mut d) = dying {
-            // Dead: the death pose to its end and held; without one the pose stays (and
-            // whoever has the bones now, a ragdoll, has written them).
-            let Some(clip) = d.clip.clone() else {
-                player.forget_pose();
-                continue;
-            };
-            // Approximate: this starts after the query's iteration and the clip clone, and
-            // the pose check ends before `cost` is updated, so those stay in `total` less
-            // `held_time`, which the per actor figure divides by sampled actor frames only.
-            let dead_t0 = std::time::Instant::now();
-            let len = clip.clip.length().max(1e-3);
-            d.t = (d.t + dt).min(len);
-            let phase = (d.t / len).min(0.999);
-            let finished = phase >= 0.999;
-            player.layers = Default::default();
-            player.layers[0] = Some(Layer { clip, phase, weight: 1.0 });
-            // A weapon still on the body stays where its stance hung it.
-            if let Some(w) = weapon.as_deref() {
-                w.weapon_layers(&mut player);
-            }
-            // The layers stay on the player for those who read them (`actor_materials`,
-            // `anim_sounds`); the bones are sampled only if that makes a different pose.
-            match player.pose_held(&mut scratch, &mut transforms) {
-                None => {
-                    cost.held_frames += 1;
-                    cost.finished_held_frames += u64::from(finished);
-                    cost.held_time += dead_t0.elapsed();
-                }
-                Some(tracks) => {
-                    cost.tracks += tracks as u64;
-                    cost.dead_tracks += tracks as u64;
-                    cost.finished_sampled_frames += u64::from(finished);
-                    n += 1;
-                }
-            }
-            continue;
-        }
-        if let Some((clip, phase)) = seated.and_then(|s| s.pose.clone()) {
-            // Getting onto, on, or getting off furniture (`furniture.rs`): its clip, and
-            // over it the idle the actor plays there (a seated speaker's gesture). The
-            // weapon stays where its stance hangs it, following that bone.
-            player.layers = Default::default();
-            player.layers[0] = Some(Layer { clip, phase, weight: 1.0 });
-            if let Some(mut w) = weapon {
-                if !w.hold {
-                    w.step(dt);
-                }
-                w.weapon_layers(&mut player);
-            }
-            if let Some(i) = idle {
-                i.layers(&mut player);
-            }
-            cost.tracks += player.pose(&mut scratch, &mut transforms) as u64;
-            n += 1;
-            continue;
-        }
-        if !lo.hold {
-            // A drawn weapon's own walks, runs and turns (`WeaponMoves`).
-            let drawn = weapon.as_deref().filter(|w| crate::attack_anims::drawn(Some(w)));
-            lo.set_armed(drawn.map(|w| &w.stance.moves));
-            lo.step(dt);
-            if let Some((prefix, mv, path)) = lo.armed_clip_news() {
-                info!("armed locomotion: {} {prefix} {} plays {path}", name.map_or("actor", |n| n.as_str()), mv.group());
+    for (c, out) in parts {
+        for (e, tr) in out {
+            if let Ok(mut t) = transforms.get_mut(e) {
+                t.set_if_neq(tr);
             }
         }
-        cost.turn_frames += u64::from(lo.blend.cur.mv.is_turn());
-        lo.layers(&mut player);
-        cost.under_frames += u64::from(player.layers[UNDER_LAYER].is_some());
-        let drawn = crate::attack_anims::drawn(weapon.as_deref());
-        if let Some(mut w) = weapon {
-            if !w.hold {
-                // Sneaking: the stance's crouched equip, aim and unequip clips
-                // (`weapons::WeaponHold::set_crouched`); in water the body is upright.
-                w.set_crouched(lo.sneaking && !lo.swimming);
-                w.step(dt);
-                if let Some((clip, path)) = w.crouched_clip_news() {
-                    info!("crouched weapon: {} {} {clip:?} plays {path}", name.map_or("actor", |n| n.as_str()), w.stance.prefix);
-                }
-            }
-            w.layers(&mut player);
-        }
-        // A creature's unarmed stance (`creature_stance.rs`) on the same layers.
-        if let Some(mut c) = creature {
-            if !lo.hold {
-                c.step(dt);
-            }
-            c.layers(&mut player);
-        }
-        let idles = crate::idles::IDLE_LAYER;
-        (player.layers[idles], player.layers[idles + 1]) = (None, None);
-        if let Some(i) = idle {
-            i.layers(&mut player);
-        }
-        if let Some(f) = flinch {
-            let (len, t) = (f.clip.clip.length().max(1e-3), now - f.at);
-            if t < len {
-                player.layers[3] = Some(Layer { clip: f.clip.clone(), phase: t / len, weight: 1.0 });
-            }
-        }
-        // A fighter's aim and attack (`attack_anims.rs`) over all of it; a creature's blow
-        // shows on its head and neck while it moves.
-        let moving = lo.velocity[0].hypot(lo.velocity[1]) >= fnv_actor::locomotion::STAND_SPEED;
-        if let Some(mut p) = pose {
-            p.moving = moving;
-            p.layers(&mut player, drawn, dt);
-            if moving {
-                let blow = p.attack.as_ref().filter(|a| a.melee && player.layers[crate::attack_anims::ATTACK_LAYER].is_some());
-                if blow.is_some_and(|a| a.head_blow == Some(true)) {
-                    cost.head_blow_frames += 1;
-                }
-            }
-        }
-        if moving && !lo.hold && !lo.blend.cur.mv.is_moving() && lo.blend.prev.is_none_or(|p| !p.mv.is_moving()) && lo.jump_clip().is_none() {
-            cost.clipless_frames += 1;
-            if lo.clipless_logged < 1 {
-                lo.clipless_logged += 1;
-                info!("actor moves with no movement clip: {} at {:.0} units/s, {:?} playing", name.map_or("actor", |n| n.as_str()), lo.velocity[0].hypot(lo.velocity[1]), lo.blend.cur.mv);
-            }
-        }
-        // A stimpak's upper-body idle over the fight's pose too (`npc_stimpaks.rs`).
-        if let Some(i) = idle.filter(|i| i.over_pose()) {
-            i.layers(&mut player);
-        }
-        // A robot's `Talking` while it says a line (`talk_clips.rs`).
-        if let Some(t) = talk {
-            t.layers(&mut player);
-        }
-        let layers = player.layers.iter().flatten().count() as u64;
-        cost.layer_frames += layers;
-        cost.blend_frames += u64::from(layers > 1);
-        cost.tracks += player.pose(&mut scratch, &mut transforms) as u64;
-        n += 1;
+        n += c.actor_frames as usize;
+        cost.absorb(&c);
     }
     cost.total += t0.elapsed();
     cost.frames += 1;
-    cost.actor_frames += n as u64;
     cost.peak = cost.peak.max(n);
+}
+
+/// One item of [`drive`]'s query.
+type ActorAnimItem<'w, 's> = bevy::ecs::query::QueryItem<'w, 's, ActorAnimParts>;
+
+/// One actor of [`drive`]: its clips chosen and blended and its bones sampled into
+/// `out` (written by the caller); `written` is [`BlendPlayer::written_since`] for a dead
+/// one. Only the actor's own components are touched.
+fn drive_one(item: &mut ActorAnimItem<'_, '_>, written: bool, dt: f32, now: f32, scratch: &mut Vec<(usize, Transform)>, out: &mut Vec<(Entity, Transform)>, cost: &mut ActorAnimCost) {
+    let (lo, player, weapon, dying, flinch, seated, idle, pose, creature, name, talk) = item;
+    let (flinch, seated, idle, name, talk) = (*flinch, *seated, *idle, *name, *talk);
+    if let Some(d) = dying.as_mut() {
+        // Dead: the death pose to its end and held; without one the pose stays (and
+        // whoever has the bones now, a ragdoll, has written them).
+        let Some(clip) = d.clip.clone() else {
+            player.forget_pose();
+            return;
+        };
+        // Approximate: this starts after the clip clone, and the pose check ends before
+        // `cost` is updated, so those stay in `total` less `held_time`, which the per
+        // actor figure divides by sampled actor frames only.
+        let dead_t0 = std::time::Instant::now();
+        let len = clip.clip.length().max(1e-3);
+        d.t = (d.t + dt).min(len);
+        let phase = (d.t / len).min(0.999);
+        let finished = phase >= 0.999;
+        player.layers = Default::default();
+        player.layers[0] = Some(Layer { clip, phase, weight: 1.0 });
+        // A weapon still on the body stays where its stance hung it.
+        if let Some(w) = weapon.as_deref() {
+            w.weapon_layers(player);
+        }
+        // The layers stay on the player for those who read them (`actor_materials`,
+        // `anim_sounds`); the bones are sampled only if that makes a different pose.
+        match player.sample_held_into(written, scratch, out) {
+            None => {
+                cost.held_frames += 1;
+                cost.finished_held_frames += u64::from(finished);
+                cost.held_time += dead_t0.elapsed();
+            }
+            Some(tracks) => {
+                cost.tracks += tracks as u64;
+                cost.dead_tracks += tracks as u64;
+                cost.finished_sampled_frames += u64::from(finished);
+                cost.actor_frames += 1;
+            }
+        }
+        return;
+    }
+    if let Some((clip, phase)) = seated.and_then(|s| s.pose.clone()) {
+        // Getting onto, on, or getting off furniture (`furniture.rs`): its clip, and
+        // over it the idle the actor plays there (a seated speaker's gesture). The
+        // weapon stays where its stance hangs it, following that bone.
+        player.layers = Default::default();
+        player.layers[0] = Some(Layer { clip, phase, weight: 1.0 });
+        if let Some(w) = weapon.as_mut() {
+            if !w.hold {
+                w.step(dt);
+            }
+            w.weapon_layers(player);
+        }
+        if let Some(i) = idle {
+            i.layers(player);
+        }
+        cost.tracks += player.sample_into(scratch, out) as u64;
+        cost.actor_frames += 1;
+        return;
+    }
+    if !lo.hold {
+        // A drawn weapon's own walks, runs and turns (`WeaponMoves`).
+        let drawn = weapon.as_deref().filter(|w| crate::attack_anims::drawn(Some(w)));
+        lo.set_armed(drawn.map(|w| &w.stance.moves));
+        lo.step(dt);
+        if let Some((prefix, mv, path)) = lo.armed_clip_news() {
+            info!("armed locomotion: {} {prefix} {} plays {path}", name.map_or("actor", |n| n.as_str()), mv.group());
+        }
+    }
+    cost.turn_frames += u64::from(lo.blend.cur.mv.is_turn());
+    lo.layers(player);
+    cost.under_frames += u64::from(player.layers[UNDER_LAYER].is_some());
+    let drawn = crate::attack_anims::drawn(weapon.as_deref());
+    if let Some(w) = weapon.as_mut() {
+        if !w.hold {
+            // Sneaking: the stance's crouched equip, aim and unequip clips
+            // (`weapons::WeaponHold::set_crouched`); in water the body is upright.
+            w.set_crouched(lo.sneaking && !lo.swimming);
+            w.step(dt);
+            if let Some((clip, path)) = w.crouched_clip_news() {
+                info!("crouched weapon: {} {} {clip:?} plays {path}", name.map_or("actor", |n| n.as_str()), w.stance.prefix);
+            }
+        }
+        w.layers(player);
+    }
+    // A creature's unarmed stance (`creature_stance.rs`) on the same layers.
+    if let Some(c) = creature.as_mut() {
+        if !lo.hold {
+            c.step(dt);
+        }
+        c.layers(player);
+    }
+    let idles = crate::idles::IDLE_LAYER;
+    (player.layers[idles], player.layers[idles + 1]) = (None, None);
+    if let Some(i) = idle {
+        i.layers(player);
+    }
+    if let Some(f) = flinch {
+        let (len, t) = (f.clip.clip.length().max(1e-3), now - f.at);
+        if t < len {
+            player.layers[3] = Some(Layer { clip: f.clip.clone(), phase: t / len, weight: 1.0 });
+        }
+    }
+    // A fighter's aim and attack (`attack_anims.rs`) over all of it; a creature's blow
+    // shows on its head and neck while it moves.
+    let moving = lo.velocity[0].hypot(lo.velocity[1]) >= fnv_actor::locomotion::STAND_SPEED;
+    if let Some(p) = pose.as_mut() {
+        p.moving = moving;
+        p.layers(player, drawn, dt);
+        if moving {
+            let blow = p.attack.as_ref().filter(|a| a.melee && player.layers[crate::attack_anims::ATTACK_LAYER].is_some());
+            if blow.is_some_and(|a| a.head_blow == Some(true)) {
+                cost.head_blow_frames += 1;
+            }
+        }
+    }
+    if moving && !lo.hold && !lo.blend.cur.mv.is_moving() && lo.blend.prev.is_none_or(|p| !p.mv.is_moving()) && lo.jump_clip().is_none() {
+        cost.clipless_frames += 1;
+        if lo.clipless_logged < 1 {
+            lo.clipless_logged += 1;
+            info!("actor moves with no movement clip: {} at {:.0} units/s, {:?} playing", name.map_or("actor", |n| n.as_str()), lo.velocity[0].hypot(lo.velocity[1]), lo.blend.cur.mv);
+        }
+    }
+    // A stimpak's upper-body idle over the fight's pose too (`npc_stimpaks.rs`).
+    if let Some(i) = idle.filter(|i| i.over_pose()) {
+        i.layers(player);
+    }
+    // A robot's `Talking` while it says a line (`talk_clips.rs`).
+    if let Some(t) = talk {
+        t.layers(player);
+    }
+    let layers = player.layers.iter().flatten().count() as u64;
+    cost.layer_frames += layers;
+    cost.blend_frames += u64::from(layers > 1);
+    cost.tracks += player.sample_into(scratch, out) as u64;
+    cost.actor_frames += 1;
+}
+
+impl ActorAnimCost {
+    /// Add the per-actor counts of `o` (one task of [`drive`]); the totals of time and
+    /// frames, and the peak, are the caller's.
+    fn absorb(&mut self, o: &ActorAnimCost) {
+        self.actor_frames += o.actor_frames;
+        self.layer_frames += o.layer_frames;
+        self.tracks += o.tracks;
+        self.blend_frames += o.blend_frames;
+        self.turn_frames += o.turn_frames;
+        self.under_frames += o.under_frames;
+        self.clipless_frames += o.clipless_frames;
+        self.held_frames += o.held_frames;
+        self.finished_held_frames += o.finished_held_frames;
+        self.held_time += o.held_time;
+        self.finished_sampled_frames += o.finished_sampled_frames;
+        self.dead_tracks += o.dead_tracks;
+        self.head_blow_frames += o.head_blow_frames;
+    }
 }
 
 /// A standing actor turning on the spot to a compass heading (radians: 0 north, +y;

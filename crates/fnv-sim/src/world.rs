@@ -524,6 +524,15 @@ pub struct World<'a> {
     /// world starts from a number no other world of this process used, as
     /// `lock_serial`.
     presence_serial: u64,
+    /// ShowOff's SetEnableParent: a reference's enable parent for the session in place of
+    /// its XESP (`None`: removed) [documented: SetEnableParent]. Not saved [hypothesis: the
+    /// page does not say the change is savebaked].
+    enable_parent_edits: BTreeMap<FormId, Option<crate::refs::EnableParent>>,
+    /// References DisableAlt or EnableAlt set: their own enable flag counts, whatever their
+    /// enable parent says [documented: DisableAlt, EnableAlt, "Ignores Disable's limitation
+    /// of being unable to disable references that have an Enable Parent"; hypothesis: until
+    /// SetEnableParent changes their parent]. Not saved.
+    own_enable: std::collections::BTreeSet<FormId>,
     next_dynamic: u32,
     rng: ChaCha8Rng,
 }
@@ -558,6 +567,8 @@ impl<'a> World<'a> {
             deleted_created: BTreeMap::new(),
             lock_serial: serial,
             presence_serial: serial,
+            enable_parent_edits: BTreeMap::new(),
+            own_enable: std::collections::BTreeSet::new(),
             next_dynamic: FormId::FIRST_DYNAMIC.0,
             rng: ChaCha8Rng::seed_from_u64(cfg.seed),
         }
@@ -1570,7 +1581,8 @@ impl<'a> World<'a> {
         let mut cur = id;
         let mut seen = vec![id];
         loop {
-            let Some(ep) = self.placed.get(cur).and_then(|p| p.enable_parent) else {
+            let parent = if self.own_enable.contains(&cur) { None } else { self.enable_parent(cur) };
+            let Some(ep) = parent else {
                 return Ok(own(self, cur).unwrap_or(start) ^ invert);
             };
             if seen.contains(&ep.reference) || own(self, ep.reference).is_none() {
@@ -1580,6 +1592,38 @@ impl<'a> World<'a> {
             seen.push(ep.reference);
             cur = ep.reference;
         }
+    }
+
+    /// A reference's enable parent: SetEnableParent's for the session, else its XESP.
+    pub fn enable_parent(&self, id: FormId) -> Option<crate::refs::EnableParent> {
+        match self.enable_parent_edits.get(&id) {
+            Some(e) => *e,
+            None => self.placed.get(id).and_then(|p| p.enable_parent),
+        }
+    }
+
+    /// SetEnableParent: `parent` (none: no parent) in place of the record's, not
+    /// opposite, for the session; the reference follows it again even after DisableAlt
+    /// or EnableAlt [hypothesis].
+    pub fn set_enable_parent(&mut self, id: FormId, parent: Option<FormId>) {
+        let pop_in = self.enable_parent(id).is_some_and(|e| e.pop_in);
+        self.enable_parent_edits.insert(id, parent.map(|reference| crate::refs::EnableParent { reference, opposite: false, pop_in }));
+        self.own_enable.remove(&id);
+        self.presence_serial += 1;
+    }
+
+    /// DisableAlt / EnableAlt: from now on the reference's own flag counts, not its enable
+    /// parent's state (`own_enable`).
+    pub fn keep_own_enable(&mut self, id: FormId) {
+        if self.own_enable.insert(id) {
+            self.presence_serial += 1;
+        }
+    }
+
+    /// Whether the reference's own flag counts over its enable parent
+    /// ([`World::keep_own_enable`]).
+    pub fn keeps_own_enable(&self, id: FormId) -> bool {
+        self.own_enable.contains(&id)
     }
 
     /// Current value of a global.

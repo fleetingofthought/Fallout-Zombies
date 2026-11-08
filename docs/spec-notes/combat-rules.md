@@ -266,6 +266,24 @@ each the identity by default. Reading PERK records is a later step.
   `actors_near(point, radius)`.
 - **A shot.** `shot::fire` spawns the chain's projectiles per shot, each with its own
   direction in the cone.
+- **Where an arcing round leaves** (issue #1471). The player's shots leave the eye along
+  the view, except an arcing explosive missile (a PROJ of type Missile with gravity and
+  an explosion: the grenade launchers' rounds), which leaves the weapon's muzzle along the
+  view when nothing stands between the eye and the muzzle. The original's 40 mm round
+  started 110 / 125 / 138 units above the feet and 51-55 units ahead at aim 0 / 15 / 30
+  degrees up [observed: o26_gl, 2026-11-06, the first positions of its projectile
+  reference]; our Grenade Launcher's muzzle is 110 / 126 / 142 above the feet and 60-64
+  ahead [observed: smoke `grenade-launcher-arc`, debug log], while the eye stays about
+  118 above. From the eye ours first hit the ground 840 / 1,841 / 2,763 units out after
+  0.48 / 1.09 / 1.82 s, against the original's 793 / 1,944 / 2,815 after 0.45 / 1.16 /
+  1.86 s: speed (1,750) and gravity (1.5 × 686.7) were the same, the launch point was not
+  [observed]. From the muzzle ours lands 812 / 1,864 / 2,801 units out after 0.46 / 1.10 /
+  1.85 s [observed: smoke `grenade-launcher-arc`, no spread]. The rest of the gap at 15
+  degrees is the launch angle: the original's left 1.2 degrees above the aim there (0.3
+  below at 0, 0.3 above at 30) [observed]; ours leaves along the aim [hypothesis: the
+  original's small offsets are its aim spread]. Thrown weapons (lobbers) still leave the eye: the original's frag
+  grenade started 118 above the feet and 52 ahead [observed: o26_gl frag0], as high as our
+  eye.
 - **Flight.**
   - Beams and hitscan projectiles trace at once. The hit is delivered after distance ÷
     speed; beams deliver at once.
@@ -273,13 +291,64 @@ each the identity by default. Reading PERK records is a later step.
     A flame goes on through actors, hitting each once.
   - Projectiles flagged to pass small-transparent colliders go through them.
   - Gravity is the PROJ value × the world's 9.81 m/s² at 70 units per metre
-    [hypothesis; the owner plans projectile captures to tune this].
+    [observed for a missile: o26_gl below].
+  - **Measured in the original (o26_gl, 2026-11-06, `nvfairport`, the runway, first
+    person; the newest live projectile's position every game loop by `GetFirstRef 51`,
+    times from GameHour at TimeScale 30; issue #1471).** The Grenade Launcher's
+    `40mmGrenLaunchProjectile` (Missile, speed 1,750, gravity 1.5) flew at **1,750
+    units/s** (1,750-1,753 in all four shots) under **1,030-1,039 units/s²**, that is 1.5
+    × 686.7 [observed]: the PROJ speed and the gravity rule above, as built. The shots,
+    from 110-140 units above the ground and 55 units ahead of the player:
+
+    | Aim (GetAngle X) | Launch angle | First ground hit | Flight |
+    |---|---|---|---|
+    | 0 (attack key held 4 loops) | -0.3° | 793 units | 0.45 s |
+    | -15 | 16.2° | 1,944 units | 1.16 s |
+    | -30 | 30.3° | 2,815 units | 1.86 s |
+    | 0, `player.FireWeapon` | 0.3° | 821 units | 0.47 s |
+
+    The round went off at its first ground hit; it did not bounce or roll. The launch
+    angle was 1.2° above the aim at -15 and 0.3° at -30 [observed]. So speed and gravity
+    do not make NVForever's round fall short; the launch point did, and ours now leaves
+    the muzzle (above, PR #1788).
+  - A thrown frag grenade (`GrenadeFragProjectile`, Lobber, speed 1,200, gravity 1.0;
+    the attack held 30 loops, aimed level; one run, o26_gl frag0): its figures are under
+    "A thrown grenade rolls" and "Throw speed" below.
 - **Explosions.**
   - Without Alt. Trigger, the explosion goes off on impact.
   - With it, a lobber bounces (× its bouncy multiplier, else `default_bounce`) and
-    settles. It explodes when its timer runs out, or, when it has a proximity radius,
+    settles; a thrown grenade (a fuse, no proximity, not Detonates) rolls instead, below. It explodes when its timer runs out, or, when it has a proximity radius,
     once armed (after the timer) when an actor other than the thrower comes within
     the radius.
+  - **A thrown grenade rolls** (issue #1785; owner 2026-11-06: only thrown grenades
+    roll, launcher rounds go off where they first land). At a contact the speed into the
+    surface keeps `fGrenadeRestitution` of itself, out of it (0.01 in FalloutNV.esm
+    [observed]; its meaning [hypothesis: from its name]), the speed along it keeps
+    `grenade_roll_keep` (0.9) at the first landing, and the grenade goes on along the
+    surface; on ground (a normal at least 0.7 up) it rolls, its speed falling as
+    e^(−0.66 × t) (`grenade_roll_damping`), until it is slower than 40 units/s or its fuse
+    ends. Both shares are fitted to the original's frag grenade [observed: o26_gl frag0,
+    distances from where it left the hand: it touched down 513 units out after 0.58 s,
+    bounced under 15 units, rolled off at about 636 units/s and slowed at 0.66 a second
+    (rms 2.6 units), to 1,206 units by 2.47 s, still moving when the record ended; the
+    0.9 is its speed just after over just before]. Ours does the same since PR #1788
+    (smoke `frag-grenade-roll`). `fGrenadeFriction` (5.0 in FalloutNV.esm) is
+    not used [hypothesis: a Havok friction; our grenade is no rigid body]. The grenade
+    model's own body (`GrenadeFrag.NIF` bhkRigidBody: mass 5, friction 0.5, restitution
+    0.4, linear damping 0.1, angular damping 0.05) is not used either [observed values].
+  - **Throw speed, open** (issue #1785). Ours throws at the PROJ speed (1,200 for
+    `GrenadeFragProjectile`) times the throwing perks. The original's left at about 950
+    units/s across the ground (949-955 over its first 0.35 s, aimed level), slowed to
+    about 650-770 in the last 0.2 s before touchdown, and touched down 513 units from where
+    it left (about 563 from the player) after 0.58 s; its height over that flight fits a
+    fall under about 570 units/s² from a slight downward start (a rough fit, less than the
+    686.7 rule) [observed: o26_gl frag0; times from the floor clock, floor(GameDaysPassed)
+    × 24 + GameHour, on which JIP's projectile lifetime reaches 1 at 1.00 s and the 40 mm
+    round flies at 1,746-1,754 units/s; the 534 units after 0.61 s and the 490 units/s²
+    first written from the same run are replaced by these, read again from its samples].
+    Nothing in the data gives 950 (no throw setting in the
+    masters but `fGrenadeFriction` and `fGrenadeRestitution`; the weapon's Animation
+    Multiplier and Attack Multiplier are 1.0), so ours keeps the PROJ speed.
   - Detonating projectiles wait for `detonate()` (C-4).
   - Anything else ends after 60 s [design].
 - **Melee swing.** A fan of `melee_rays` rays over ±`melee_arc_deg` at the eye, as
@@ -1012,7 +1081,18 @@ From the ESM audit (gap 5). Code: `fnv_combat::data::ProjectileStats::lands_as_w
   joints. Without this, the torso's top cap covered the lower head and took head shots
   [observed]. The torso's lower end is not pulled in: pulled, it left a band at the hips
   that no capsule covered [observed].
-- **Damage** (`nvf-play` combat; projectiles and melee alike):
+- **The player's capsule** (`nvf_play::combat::player_hit_condition`, issue #1345)
+  [design]: first and third person use the character controller's feet, height and
+  radius, and the player's heading. A hit above 86 % of its height selects the head;
+  below 50 % it selects a leg. Between them, more than 60 % of the radius sideways
+  from the facing selects an arm; otherwise the torso. Left and right follow the
+  player's facing. Height clamps to the capsule; a leg hit exactly on the centre line
+  chooses the right leg. The named thresholds follow human skeleton proportions
+  [design]; how the original chooses a player's part remains [hypothesis], observer
+  check 3. The selected condition actor value finds the part in
+  `body_parts_for(PLAYER_BASE, HUMAN_SKELETON)`, the same data the player's limbs
+  already follow [design: `combat.rs`]. Missing data keeps location 0 and no limb.
+- **Damage** (`nvf-play` combat):
   - The hit's part gives the damage multiplier (`BodyPart::hit_part`; head hits count
     for the unaware-headshot critical).
   - The part gives the `GetHitLocation` number (`BodyPart::location`, the BodyLocation
@@ -1028,8 +1108,18 @@ From the ESM audit (gap 5). Code: `fnv_combat::data::ProjectileStats::lands_as_w
     Until 2026-10-25 the multiplier stayed in, so head hits crippled twice as fast.
     Guns only: two machete hits did not fit (×4 on the head, ×2 on a leg), so melee is
     open.
-  - Hits on the single capsule stay location 0 (torso); explosions are −1, with no
-    limb [design].
+  - Player shots missing a part use the capsule rule above, then `BodyPart::hit_part`,
+    `BodyPart::location` and `limb_hit`, including the head's ×2 Health multiplier
+    [design: `combat.rs`]. NPC blows on the player use the same rule for location and
+    limb, with `HitPart::default()` for Health [hypothesis: melee is open]. Creature
+    blows keep their weapon's Limb Dmg Mult, or the Fists' when that path supplies
+    them [hypothesis: the unmeasured creature multiplier]. NPC-on-NPC blows keep
+    location 0, no limb and their existing Health damage [design: `actor_attacks`].
+    Blocked blows use the damage left after blocking; zero damage gives no limb
+    loss. God mode stops Health and limb loss [design: `limb_hit`, `hit_player`].
+  - Other single capsules without part data keep location 0. Explosions keep
+    location −1 and their own limb shares; falls keep their own leg damage
+    [design: `combat.rs`, crippled-limbs.md §5, physics.md §6.12].
 - **Limb condition** (`Game::hit`, `Game::damage_limb`):
   - The part's condition actor value (25–31, starting at 100) loses
     `limb damage ÷ (max health × health % ÷ 100) × 100`, and stops at 0.
@@ -1047,7 +1137,8 @@ From the ESM audit (gap 5). Code: `fnv_combat::data::ProjectileStats::lands_as_w
   - the HUD's health line lists crippled limbs.
   - What every crippled limb does, to the player and to NPCs: crippled-limbs.md.
 
-  Nothing hurts the player yet (no NPC attacks); scripts can (`DamageActorValue`).
+  Ordinary NPC shots and blows now damage the player's limbs by default, as well as
+  explosions, falls and scripts [design: `combat.rs`, issue #1345].
 - **Hit reactions** (`damage::staggers`, `deaths.rs`) [design: the owner's rule,
   2026-10-11; before it every hit played one, and fast hits held an actor in it]:
   - The hit that cripples a body part always plays one.
@@ -1107,7 +1198,7 @@ From the ESM audit (gap 5). Code: `fnv_combat::data::ProjectileStats::lands_as_w
 ## 13. Open points
 
 - Every [design] number is a first guess for the owner to tune in play.
-- Projectile gravity units and speeds: the owner's projectile capture round.
+- Projectile gravity and speed: the Grenade Launcher's round matches the PROJ speed × the 686.7 rule (§5, o26_gl), and ours now leaves the muzzle (PR #1788). A thrown frag grenade went about 950 units/s across the ground, not its PROJ 1,200, and slowed in the air; ours still throws at the PROJ speed, and now rolls as the original's did (§5, PR #1788).
 - `fCombatDistance`, the melee reach base: not in the masters and not documented; 107
   is fitted to the NPCs' swings (§10). The player's own reach in the original is not
   measured.

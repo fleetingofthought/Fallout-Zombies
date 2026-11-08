@@ -358,6 +358,15 @@ impl TextureCache {
         }
     }
 
+    /// Whether the texture at the resolved path `path` is loaded (or failed to load), being
+    /// put in from a worker thread, or its file read ahead ([`Self::offer`]): loading it
+    /// reads no file.
+    pub fn has_or_ahead(&self, path: &str) -> bool {
+        let key = |srgb: bool| (path.to_string(), srgb);
+        self.ahead.contains_key(path)
+            || [true, false].iter().any(|&srgb| self.map.contains_key(&key(srgb)) || self.workers.entries.lock().expect("worker textures").contains_key(&key(srgb)))
+    }
+
     /// Textures loaded and held now (failures not counted).
     pub fn len(&self) -> usize {
         self.map.values().chain(self.clamped.values()).filter(|h| h.is_some()).count()
@@ -422,11 +431,15 @@ impl TextureCache {
             }
         }
         let bc = formats.is_none_or(|f| f.0.contains(CompressedImageFormats::BC));
+        let read_span = bevy::log::info_span!("texture::read").entered();
         let read = self.ahead.remove(&path).map(|(bytes, _)| bytes).or_else(|| data.read(&path));
+        drop(read_span);
+        let decode_span = bevy::log::info_span!("texture::decode").entered();
         let result = match read {
             None => Err("not in any archive".to_string()),
             Some(bytes) => dds_image(&bytes, srgb, bc),
         };
+        drop(decode_span);
         let handle = match result {
             Ok(mut img) => {
                 img.texture_descriptor.label = Some(folder_label(&path));

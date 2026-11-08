@@ -9,12 +9,17 @@
 //!   not be pickpocketed again ("<name> has already caught you.", `sNoPickPocketAgain`).
 //! - A take that succeeds is theft (karma, Pockets Picked). A grenade or mine placed in
 //!   the pocket (a weapon whose projectile explodes and has Alt. Trigger [documented: GECK
-//!   wiki Projectile notes]) goes live: after `fProjectileInventoryGrenadeTimer` its
-//!   explosion goes off where the victim stands, killing it (Pants Exploded); its
-//!   blast hurts others as a thrown one's does [hypothesis].
+//!   wiki Projectile notes]) goes live, but not on a child or an essential actor: after
+//!   `fProjectileInventoryGrenadeTimer` its explosion goes off where the victim stands
+//!   (Pants Exploded), killing it when the explosion hurts its kind
+//!   (`Game::explosive_harms`: a pulse grenade kills a robot, not a man); its blast hurts
+//!   others as a thrown one's does [hypothesis]. Until then the victim panics: it plays
+//!   the idle tree's panic idle (`Game::panic_idle`, `nvforever`'s idles) and stands
+//!   where it is (`nvforever`'s residents).
 //!
 //! Logged: `pickpocket: open on …`, `pickpocket: took …`, `pickpocket: caught by …`,
-//! `pickpocket: planted …`, `pickpocket: … explodes in …'s pocket`, and at exit
+//! `pickpocket: planted …` (or `placed … not live on …`), `pickpocket: … explodes in …'s
+//! pocket: it dies` (or `: it lives, the explosion does not hurt its kind`), and at exit
 //! `pickpocket summary: …`.
 
 use crate::activate::HudMessage;
@@ -48,6 +53,7 @@ struct Stats {
     caught: u32,
     planted: u32,
     exploded: u32,
+    killed: u32,
 }
 
 pub struct PickpocketPlugin;
@@ -81,6 +87,14 @@ fn live_explosive(c: &Combat, item: FormId) -> Option<FormId> {
     p.explodes().filter(|_| p.has("Alt. Trigger"))
 }
 
+/// What the rules need of `item`'s blast to judge its victim (`fnv_game::pickpocket::Explosive`):
+/// the explosion's damage and object effect, the weapon's damage type.
+fn blast_of(c: &Combat, item: FormId, explosion: FormId) -> fnv_game::pickpocket::Explosive {
+    let x = c.forms.explosions.get(&explosion);
+    let resist = c.forms.weapons.get(&item).and_then(fnv_combat::damage::resistance_of).and_then(fnv_game::functions::av_by_name);
+    fnv_game::pickpocket::Explosive { damage: x.map_or(0.0, |x| f64::from(x.damage)), resist, enchantment: x.and_then(|x| x.enchantment) }
+}
+
 fn results(
     mut done: MessageReader<Pickpocketed>,
     mut sim: ResMut<SimState>,
@@ -101,11 +115,24 @@ fn results(
         for &(item, n) in &p.given {
             match combat.as_deref().and_then(|c| live_explosive(c, item)) {
                 Some(explosion) => {
+                    let blast = combat.as_deref().map(|c| blast_of(c, item, explosion)).unwrap_or_default();
+                    let mut refused = None;
                     for _ in 0..n {
-                        rt.game.plant_explosive(victim, item);
+                        if let Err(why) = rt.game.plant_explosive(victim, item, blast) {
+                            refused = Some(why);
+                            break;
+                        }
                     }
-                    stats.planted += n.max(0) as u32;
-                    info!("pickpocket: planted {} x{n} (live, explosion {explosion}) on {name} {victim}", item_name(&sim, item));
+                    match refused {
+                        Some(why) => info!("pickpocket: placed {} x{n} not live on {name} {victim} ({})", item_name(&sim, item), match why {
+                            fnv_game::pickpocket::NotLive::Child => "a child",
+                            fnv_game::pickpocket::NotLive::Essential => "essential",
+                        }),
+                        None => {
+                            stats.planted += n.max(0) as u32;
+                            info!("pickpocket: planted {} x{n} (live, explosion {explosion}) on {name} {victim}", item_name(&sim, item));
+                        }
+                    }
                 }
                 None => info!("pickpocket: placed {} x{n} on {name} {victim}", item_name(&sim, item)),
             }
@@ -130,13 +157,19 @@ fn blasts(mut sim: ResMut<SimState>, mut script: Option<ResMut<ScriptState>>, mu
     let due = crate::script::with_world(rt, &mut sim, |rt| rt.game.tick_planted());
     for b in due {
         stats.exploded += 1;
+        let fate = if b.killed {
+            stats.killed += 1;
+            "it dies"
+        } else {
+            "it lives, the explosion does not hurt its kind"
+        };
         let at = sim.world.peek(b.victim).map(|s| s.pos);
         match (live_explosive(&c, b.item), at) {
             (Some(e), Some(p)) => {
                 c.mine_explodes(e, [p[0], p[1], p[2] + DESTRUCTION_BLAST_HEIGHT], Some((FormId::PLAYER_REF, b.item)));
-                info!("pickpocket: {} explodes in {}'s pocket: it dies", item_name(&sim, b.item), b.victim);
+                info!("pickpocket: {} explodes in {}'s pocket: {fate}", item_name(&sim, b.item), b.victim);
             }
-            _ => info!("pickpocket: {} explodes in {}'s pocket: it dies (no explosion drawn)", item_name(&sim, b.item), b.victim),
+            _ => info!("pickpocket: {} explodes in {}'s pocket: {fate} (no explosion drawn)", item_name(&sim, b.item), b.victim),
         }
     }
 }
@@ -144,8 +177,8 @@ fn blasts(mut sim: ResMut<SimState>, mut script: Option<ResMut<ScriptState>>, mu
 fn summary(mut exit: MessageReader<AppExit>, stats: Res<Stats>) {
     if exit.read().next().is_some() && stats.opened + stats.caught + stats.taken > 0 {
         info!(
-            "pickpocket summary: {} pockets opened, {} takes unseen, caught {} times, {} explosives planted, {} went off",
-            stats.opened, stats.taken, stats.caught, stats.planted, stats.exploded
+            "pickpocket summary: {} pockets opened, {} takes unseen, caught {} times, {} explosives planted, {} went off, {} killed",
+            stats.opened, stats.taken, stats.caught, stats.planted, stats.exploded, stats.killed
         );
     }
 }

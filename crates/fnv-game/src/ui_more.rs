@@ -41,7 +41,7 @@ pub struct UiExtra {
     pub bars: crate::ui_hudbar::Bars,
     pub attached: Vec<Attachment>,
     /// The engine's text measure for GetStringUIDimensions; `None` headless (the function
-    /// then writes nothing).
+    /// then writes zero dimensions [design: deterministic unavailable-font policy]).
     pub measure: Option<Measure>,
 }
 
@@ -486,6 +486,13 @@ const TREE_FUNCTIONS: [&str; 16] = [
     "dumptileinfotoarray",
 ];
 
+/// Resolve inspection commands' path before the HUD's deferred writes are flushed.
+/// [documented: GetUIElementType, DumpTileInfo] Missing and nonexistent paths use
+/// the cursor; Pointer::active rejects unloaded tiles [design].
+fn inspection_tile(g: &Game, path: &str) -> Option<TileId> {
+    g.ui_tree.find_tile(path).or_else(|| g.ui_pointer.active(&g.ui_tree))
+}
+
 /// The function `name` (any case) with its arguments; `None` when it is not one of these.
 pub fn call(g: &mut Game, name: &str, subject: Option<FormId>, args: &[XVal]) -> Option<Result<XVal, String>> {
     let lname = name.to_ascii_lowercase();
@@ -494,10 +501,13 @@ pub fn call(g: &mut Game, name: &str, subject: Option<FormId>, args: &[XVal]) ->
     // `crate::ui_functions` does): the HUD bars and the attachments always, a cached tile
     // (any menu's, the HUD's as a rule) [design], the path functions by their path; a
     // function on another menu leaves the HUD's writes kept back.
-    let on_hud = lname.starts_with("hudbar")
+    let cursor_query = matches!(lname.as_str(), "getuielementtype" | "dumptileinfo");
+    let inspected = cursor_query.then(|| inspection_tile(g, &text(args, path_arg))).flatten();
+    let on_hud = inspected.is_some_and(|t| crate::ui_functions::on_hud(&g.ui_tree.path_of(t)))
+        || lname.starts_with("hudbar")
         || lname.starts_with("cacheui")
         || matches!(lname.as_str(), "attachuixml" | "attachuicomponent" | "dumptileinfoall")
-        || (TREE_FUNCTIONS.contains(&lname.as_str()) && crate::ui_functions::on_hud(&text(args, path_arg)));
+        || (!cursor_query && TREE_FUNCTIONS.contains(&lname.as_str()) && crate::ui_functions::on_hud(&text(args, path_arg)));
     if on_hud {
         g.ui_used = true;
         crate::ui_hud::flush(g);
@@ -605,25 +615,26 @@ pub fn call(g: &mut Game, name: &str, subject: Option<FormId>, args: &[XVal]) ->
         },
         // -1 when no value is there [documented: GetUIValueType notes].
         "getuivaluetype" => XVal::Num(g.ui_tree.find_trait(&path).map_or(-1.0, |(t, k)| value_type(&g.ui_tree, t, k) as f64)),
-        // No path, or none found, means the tile under the cursor [documented]; that is
-        // T8's pointer: -1 here [hypothesis].
-        "getuielementtype" => XVal::Num(g.ui_tree.find_tile(&path).map_or(-1.0, |t| element_type(&g.ui_tree.tile(t).kind) as f64)),
+        // Missing or nonexistent path falls back to the live highlighted tile
+        // [documented: GetUIElementType]. No tile returns -1 [design].
+        "getuielementtype" => XVal::Num(inspected.map_or(-1.0, |t| element_type(&g.ui_tree.tile(t).kind) as f64)),
         "sortuilistbox" => yes(sort_list_box(&mut g.ui_tree, &path, &text(args, 1))),
         // `text font wrap` and three output variables, which the VM takes off
         // (`fnv_script::vm`'s out_call): the answer is [0, width, height, lines].
-        "getstringuidimensions" => match g.ui_extra.measure.as_ref() {
-            Some(m) => {
-                let (w, h, n) = string_dimensions(m.as_ref(), &text(args, 0), num(args, 1), num(args, 2));
-                let entries = [0.0, w, h, n].iter().enumerate().map(|(i, v)| (XKey::Num(i as f64), XVal::Num(*v))).collect();
-                XVal::Array(g.ext.new_array(ArrayKind::List, entries))
-            }
-            None => zero,
+        "getstringuidimensions" => {
+            // Always supply the output slots, including headless/unavailable metrics
+            // [design: never leave a caller's previous dimensions in place].
+            let (w, h, n) = g.ui_extra.measure.as_ref().map_or((0.0, 0.0, 0.0), |m| {
+                string_dimensions(m.as_ref(), &text(args, 0), num(args, 1), num(args, 2))
+            });
+            let entries = [0.0, w, h, n].iter().enumerate().map(|(i, v)| (XKey::Num(i as f64), XVal::Num(*v))).collect();
+            XVal::Array(g.ext.new_array(ArrayKind::List, entries))
         },
-        // `[toFile [path]]` [documented: DumpTileInfo]. Without a path the cursor's tile
-        // (T8): nothing here.
+        // `[toFile [path]]`; missing or nonexistent path uses the cursor's live tile
+        // [documented: DumpTileInfo].
         "dumptileinfo" => {
             let to_file = num(args, 0) != 0.0;
-            if let Some(t) = g.ui_tree.find_tile(&text(args, 1)) {
+            if let Some(t) = inspected {
                 let lines = dump_lines(&g.ui_tree, t);
                 emit(g, to_file, lines);
             }

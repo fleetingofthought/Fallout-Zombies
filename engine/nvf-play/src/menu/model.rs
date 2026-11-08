@@ -117,6 +117,9 @@ pub struct Row {
     /// A weapon's attached mods (`Extra::mods`): its units are a row of their own, named
     /// with " +" (docs/spec-notes/weapon-mods.md §3).
     pub mods: u8,
+    /// What the attached mods add to one unit's value: their IMOD values, which its
+    /// condition does not lower (`FormStore::mods_value`, issue #982).
+    pub mods_value: i32,
     /// The Misc tab's folder rows (the keyring, the caravan cards, and "Back" inside
     /// one): no item of their own ([`Folder`]).
     pub folder: Option<FolderRow>,
@@ -172,7 +175,7 @@ impl Row {
             FolderRow::Open(f) => f.name().to_string(),
             FolderRow::Back => BACK.to_string(),
         };
-        Row { item: FormId(0), at: None, name, count, weight: None, value: None, kind: None, equipped: false, quest: false, condition: None, icon: None, price: None, bartered: false, mods: 0, folder: Some(f), reference: None }
+        Row { item: FormId(0), at: None, name, count, weight: None, value: None, kind: None, equipped: false, quest: false, condition: None, icon: None, price: None, bartered: false, mods: 0, mods_value: 0, folder: Some(f), reference: None }
     }
 }
 
@@ -244,6 +247,13 @@ pub fn plain_error(forms: &FormStore, e: &SimError) -> String {
 pub type Units = (FormId, Option<u32>, u8);
 
 impl Row {
+    /// One unit's value before a trade's multiplier: the item's value at its condition
+    /// plus what its attached mods add, which the condition does not lower [observed:
+    /// o26_value 2026-11-06, `FormStore::mods_value`; issue #982].
+    pub fn worth(&self, prices: &Prices) -> Option<f32> {
+        self.value.map(|v| prices.value_at(v, self.condition) + self.mods_value as f32)
+    }
+
     pub fn units(&self) -> Units {
         (self.item, self.at.map(f32::to_bits), self.mods)
     }
@@ -309,6 +319,7 @@ pub fn listing(world: &mut World<'_>, holder: FormId) -> Result<Listing, SimErro
             price: None,
             bartered: false,
             mods: extra.mods,
+            mods_value: forms.mods_value(item, extra.mods),
             folder: None,
             reference: None,
         });
@@ -317,7 +328,7 @@ pub fn listing(world: &mut World<'_>, holder: FormId) -> Result<Listing, SimErro
         r.quest = world.is_quest_item(r.item);
     }
     sort_rows(&mut rows);
-    let value = rows.iter().map(|r| r.value.unwrap_or(0) as i64 * r.count as i64).sum();
+    let value = rows.iter().map(|r| (r.value.unwrap_or(0) + r.mods_value) as i64 * r.count as i64).sum();
     Ok(Listing { rows, weight: totals.weight, value, hidden })
 }
 
@@ -351,11 +362,12 @@ fn add_dropped_beside(world: &World<'_>, holder: FormId, l: &mut Listing) {
             price: None,
             bartered: false,
             mods: s.extra.mods,
+            mods_value: forms.mods_value(s.base, s.extra.mods),
             folder: None,
             reference: Some(r),
         };
         l.weight += f64::from(row.weight.unwrap_or(0.0)) * f64::from(row.count);
-        l.value += row.value.unwrap_or(0) as i64 * row.count as i64;
+        l.value += (row.value.unwrap_or(0) + row.mods_value) as i64 * row.count as i64;
         l.rows.push(row);
         added = true;
     }
@@ -636,13 +648,21 @@ impl PartialEq for Sells {
 }
 
 impl Trade {
-    /// Whether the side that pays holds the caps the balance asks of it.
+    /// Whether the side that pays holds the caps the balance asks of it. When it does not,
+    /// the figure dims; only a player who is short is refused ([`Trade::paid`]).
     pub fn affordable(&self) -> bool {
         let (player, merchant) = (Side::Player as usize, Side::Container as usize);
         match self.balance {
             b if b < 0 => self.purse[player] as i64 >= -b,
             b => self.purse[merchant] as i64 >= b,
         }
+    }
+
+    /// The caps the trade moves, positive when the player is paid: the balance, held at the
+    /// merchant's purse when it cannot pay all of it [observed 2026-11-06: barter-menu.md
+    /// section 9, the original completes such a sale at that amount].
+    pub fn paid(&self) -> i64 {
+        self.balance.min(i64::from(self.purse[Side::Container as usize]))
     }
 
     /// What one unit of value is worth when it comes from `from`.
@@ -768,12 +788,15 @@ pub struct Steal {
     /// The player's and the victim's Sneak.
     pub thief: f64,
     pub target: f64,
+    /// Equipped items are listed too (ShowOff's SetPlayerCanPickpocketEquippedItems,
+    /// `fnv_game::Game::pickpocket_worn`).
+    pub worn: bool,
     rng: fnv_combat::rng::SplitMix,
 }
 
 impl Steal {
     pub fn new(victim: FormId, rules: fnv_game::pickpocket::Rules, thief: f64, target: f64, seed: u64) -> Steal {
-        Steal { victim, rules, thief, target, rng: fnv_combat::rng::SplitMix(seed) }
+        Steal { victim, rules, thief, target, worn: false, rng: fnv_combat::rng::SplitMix(seed) }
     }
 
     /// The chance, percent, of moving `count` units of `row` either way.
@@ -916,7 +939,7 @@ impl MenuModel {
                 let all = l.rows.len();
                 l.rows.retain(|r| self.category[side as usize].holds_item(r.kind, forms.item(r.item)));
                 self.filtered[side as usize] = all - l.rows.len();
-                if side == Side::Container && self.steal.is_some() {
+                if side == Side::Container && self.steal.as_ref().is_some_and(|s| !s.worn) {
                     l.rows.retain(|r| !r.equipped);
                 }
                 if self.mode == Mode::Inventory && self.category[side as usize] == Category::Misc {
@@ -962,7 +985,7 @@ impl MenuModel {
                     why.is_none()
                 })
                 .map(|mut r| {
-                    r.price = r.value.map(|v| prices.value_at(v, r.condition) * mult);
+                    r.price = r.worth(&prices).map(|v| v * mult);
                     r
                 })
                 .collect();
@@ -1040,6 +1063,7 @@ impl MenuModel {
                                 price: None,
                                 bartered: false,
                                 mods: 0,
+                                mods_value: 0,
                                 folder: None,
                                 reference: None,
                             }),
@@ -1400,15 +1424,16 @@ impl MenuModel {
         }
     }
 
-    /// Barter: move what was put up and the caps it comes to, if the paying side can pay.
+    /// Barter: move what was put up and the caps it comes to, if the player can pay; a
+    /// merchant who cannot pays what it holds ([`Trade::paid`]).
     fn accept(&mut self, world: &mut World<'_>, out: &mut Applied) -> Result<String, SimError> {
         let Some(t) = self.trade.as_mut() else { return Ok(String::new()) };
         if t.is_empty() {
             return Ok("Nothing to trade".into());
         }
         let (player, merchant) = (Side::Player as usize, Side::Container as usize);
-        if !t.affordable() {
-            return Ok(if t.balance < 0 { "You don't have enough caps.".into() } else { format!("{} doesn't have enough caps.", self.title) });
+        if t.balance < 0 && !t.affordable() {
+            return Ok("You don't have enough caps.".into());
         }
         for (u, &n) in &t.offered[player] {
             world.transfer_at(PLAYER, t.stock, u.0, n, units_pick(u))?;
@@ -1416,7 +1441,7 @@ impl MenuModel {
         for (u, &n) in &t.offered[merchant] {
             world.transfer_at(t.stock, PLAYER, u.0, n, units_pick(u))?;
         }
-        let paid = t.balance;
+        let paid = t.paid();
         match paid {
             p if p > 0 => world.transfer(t.stock, PLAYER, t.caps, p as i32)?,
             p if p < 0 => world.transfer(PLAYER, t.stock, t.caps, (-p) as i32)?,

@@ -183,6 +183,31 @@ them.
 - **The player's limbs** take `fCombatPlayerLimbDamageMult` (0.5) of the limb damage
   (`Game::limb_damage`) [observed: the value; hypothesis: it scales the damage the
   player's limbs take rather than the damage the player does to others' limbs].
+  Observer check 3 (o17_air limbs_10mm, 38 hits from a trooper's 10mm Pistol on a
+  mortal player) measured body Health loss 16.06, arm or leg condition loss 16.06,
+  torso Endurance Condition loss 6.69, and head Health loss 32.12 with Perception
+  Condition loss 20.075. A larger head hit lost 76.12 Health and 47.575 Perception
+  Condition [observed]. With maximum Health 200 [hypothesis: that run did not record
+  base Health], DefaultBodyPartData's shares (arms and legs 25 %, torso 60 %, head
+  20 %, ×2 Health), and Limb Dmg Mult 1, the existing formula gives all four losses:
+  `damage before the part multiplier × Limb Dmg Mult × 0.5 × 100 /
+  (max Health × part health % / 100)` [design: `Game::damage_limb`, `limb_hit`].
+  The ratios between parts follow from the shares; nothing cancels the halving and
+  no formula change is needed under that maximum-Health hypothesis. The synthetic
+  test `player_limb_losses_fit_the_10mm_capture_at_200_maximum_health` pins those
+  values [design: `crates/fnv-game/tests/synthetic.rs`].
+- **Shots and blows on the player** now select a part from the single character
+  capsule's hit point in either view, then match its condition in the human body
+  part data [design: `nvf_play::combat::player_body_part`, combat-rules.md §12,
+  issue #1345]. The height and side bands are [hypothesis]; shots use the selected
+  part's Health multiplier. Blows keep their existing Health calculation and use
+  damage left after blocking for limb loss [hypothesis: melee's part multipliers
+  are unmeasured]. Creatures keep the multiplier of the weapon this path already
+  supplies (Fists when unarmed) [hypothesis]. God mode takes neither Health nor
+  limb condition; zero-damage hits lose no limb condition [design: `hit_player`,
+  `limb_hit`]. Every actual loss logs `combat: the player's <limb> takes <loss>,
+  condition <condition>`; `track_limbs` already logs newly crippled player limbs
+  [design: `combat.rs`].
 - **Explosions** (built, `nvf_play::combat::blast_limb_hits`, `Game::blast_limbs`): a
   blast damages limbs as well as Health [documented: GECK wiki GetHitLimbDamage, which
   returns 0 for an explosion "even if the explosion dealt limb damage"]. It has no hit

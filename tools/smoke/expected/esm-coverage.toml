@@ -11,10 +11,10 @@
 
 [summary]
 subrecords = 3056241
-ok = 2998102
-unknown = 58139
+ok = 2998163
+unknown = 58078
 trailing = 0
 error = 0
 opaque_bytes = 17503
 distinct_pairs = 1168
-pairs_fully_decoded = 1136
+pairs_fully_decoded = 1137

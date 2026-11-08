@@ -373,11 +373,13 @@ pub(crate) fn open_menus(
         }
         (None, Some(c)) if steal.is_some() => {
             let victim = FormId(c.container);
-            let rules = script.as_deref_mut().and_then(|s| s.rt.as_mut()).map(|rt| crate::script::with_world(rt, &mut sim, |rt| (rt.game.pickpocket_settings(), rt.game.pickpocket_skills(victim))));
-            let (rules, (thief, target)) = rules.unwrap_or((fnv_game::pickpocket::Rules::default(), (0.0, 0.0)));
+            let rules = script.as_deref_mut().and_then(|s| s.rt.as_mut()).map(|rt| crate::script::with_world(rt, &mut sim, |rt| (rt.game.pickpocket_settings(), rt.game.pickpocket_skills(victim), rt.game.pickpocket_worn(victim))));
+            let (rules, (thief, target), worn) = rules.unwrap_or((fnv_game::pickpocket::Rules::default(), (0.0, 0.0), false));
             info!("pickpocket: open on {victim}: Sneak {thief:.0} against {target:.0}");
             MenuModel::open_container(&mut sim.world, victim).and_then(|mut m| {
-                m.steal = Some(model::Steal::new(victim, rules, thief, target, u64::from(victim.0) ^ 0x5EED));
+                let mut steal = model::Steal::new(victim, rules, thief, target, u64::from(victim.0) ^ 0x5EED);
+                steal.worn = worn;
+                m.steal = Some(steal);
                 m.refresh(&mut sim.world)?;
                 Ok(m)
             })
@@ -525,6 +527,9 @@ fn wheel_hold(mut wheel: MessageReader<MouseWheel>, mut moved: MessageReader<Cur
     }
 }
 
+/// [`menu_mouse`]'s view of the item menus drawn from their files.
+type MouseTiles<'w> = (Option<Res<'w, crate::tiles::container_menu::ContainerTiles>>, Option<Res<'w, crate::tiles::barter_menu::BarterTiles>>, Option<Res<'w, crate::tiles::container_menu::TileWheelTitle>>);
+
 /// The pointer selects the row it comes onto (the list's highlight follows it
 /// [documented: list_box.xml, the template's rows take the pointer]), unless the wheel
 /// holds the selection ([`WheelHold`]); a click acts on it, Shift+click on its whole
@@ -541,7 +546,7 @@ fn menu_mouse(
     mut wheel: MessageReader<MouseWheel>,
     mut lines: Local<f32>,
     mut out: MessageWriter<MenuInput>,
-    (tile_menu, tile_title): (Option<Res<crate::tiles::container_menu::ContainerTiles>>, Option<Res<crate::tiles::container_menu::TileWheelTitle>>),
+    (tile_menu, barter_tiles, tile_title): MouseTiles,
 ) {
     let Some(m) = active.0.as_ref().filter(|m| m.mode != Mode::Inventory && m.quantity.is_none()) else {
         wheel.clear();
@@ -550,7 +555,7 @@ fn menu_mouse(
     // T15c: drawn from its file the pointer on rows and buttons is `crate::tiles::input`'s,
     // also on the frame the hand-built drawing is still there, which would act on the same
     // press; the wheel stays here, with the heading the tiles say the pointer is over.
-    let tiled = tile_menu.is_some_and(|t| t.menu.is_some());
+    let tiled = tile_menu.is_some_and(|t| t.menu.is_some()) || barter_tiles.is_some_and(|t| t.menu().is_some());
     let hover = !tiled;
     let shift = keys.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]);
     // Only a pointer that moves takes the selection: a redrawn row under a resting
@@ -853,9 +858,9 @@ pub(crate) fn note(m: &MenuModel, sim: &SimState) -> Option<String> {
 /// the scripts' game (an aid item's effects, `crate::pipboy::items::info_of`).
 type DrawSources<'w> = (Option<Res<'w, crate::combat::Combat>>, Option<Res<'w, crate::PlayWorld>>, Option<ResMut<'w, crate::script::ScriptState>>);
 
-/// [`draw`]'s view of the tile menus: the switch, what was drawn from tiles last, the container
-/// menu's tile state.
-type DrawTiles<'w, 's> = (Option<Res<'w, crate::tiles::vanilla::TileMenus>>, Local<'s, (bool, bool)>, Option<Res<'w, crate::tiles::container_menu::ContainerTiles>>);
+/// [design] The item drawing reads the switch, its previous drawing choice and both
+/// item adapters' tile state.
+type DrawTiles<'w, 's> = (Option<Res<'w, crate::tiles::vanilla::TileMenus>>, Local<'s, (bool, bool)>, Option<Res<'w, crate::tiles::container_menu::ContainerTiles>>, Option<Res<'w, crate::tiles::barter_menu::BarterTiles>>);
 
 /// Rebuild the container or barter menu's UI when the model changed (the inventory is
 /// the Pip-Boy's).
@@ -871,22 +876,22 @@ fn draw(
     mut kit: Local<Option<look::Kit>>,
     (combat, play, mut script): DrawSources,
     mut forms: Local<Option<crate::pipboy::stats::read::Forms>>,
-    (tiles, mut was_tiled, tile_menu): DrawTiles,
+    (tiles, mut was_tiled, tile_menu, barter_tiles): DrawTiles,
 ) {
-    // T15c: with `[UI] TileMenus=ContainerMenu` the menu is drawn from its tiles
-    // (`crate::tiles::container_menu`) once the tree has built its file; a sheet takes the
+    // [design] With ContainerMenu or BarterMenu enabled the item menu draws from tiles
+    // once its writer has the file built; a sheet takes the
     // pointer here instead (no click past it [documented: `&no_click_past;`]).
-    let container_tiled = tile_menu.is_some_and(|t| t.menu.is_some());
-    // T15a: with `[UI] TileMenus=QuantityMenu`, or over a container menu drawn from its tiles,
+    let item_tiled = tile_menu.is_some_and(|t| t.menu.is_some()) || barter_tiles.is_some_and(|t| t.menu().is_some());
+    // [design] With QuantityMenu enabled, or over either item menu drawn from tiles,
     // the prompt is drawn from its tiles (`crate::tiles::menus`) once the tree has built its
     // file; drawn again here when that changes (the frame the prompt opens, before the tree
     // builds it, draws it by hand).
     let prompt = active.0.as_ref().is_some_and(|m| m.quantity.is_some());
-    let tiled = script.as_ref().and_then(|s| s.rt.as_ref()).is_some_and(|rt| crate::tiles::menus::quantity_tiled(tiles.as_ref().is_some_and(|t| t.quantity), &rt.game, prompt, container_tiled));
-    if !active.is_changed() && !roots.is_empty() && (tiled, container_tiled) == *was_tiled {
+    let tiled = script.as_ref().and_then(|s| s.rt.as_ref()).is_some_and(|rt| crate::tiles::menus::quantity_tiled(tiles.as_ref().is_some_and(|t| t.quantity), &rt.game, prompt, item_tiled));
+    if !active.is_changed() && !roots.is_empty() && (tiled, item_tiled) == *was_tiled {
         return;
     }
-    *was_tiled = (tiled, container_tiled);
+    *was_tiled = (tiled, item_tiled);
     for e in &roots {
         commands.entity(e).despawn();
     }
@@ -898,7 +903,7 @@ fn draw(
     let bc = crate::interface::bc_supported(formats.as_deref());
     let kit = kit.get_or_insert_with(|| look::Kit::load(data.as_deref(), &mut images, bc));
     // The lists' scroll positions follow the rows drawn (`MenuModel::pointer_pick`).
-    if m.mode != Mode::Inventory && !container_tiled {
+    if m.mode != Mode::Inventory && !item_tiled {
         let first = [Side::Container, Side::Player].map(|s| look::drawn_first(m, s, kit));
         if let Some(m) = active.bypass_change_detection().0.as_mut() {
             m.scroll = first;
@@ -913,9 +918,15 @@ fn draw(
         align_items: AlignItems::Center,
         ..default()
     };
-    if container_tiled {
+    if item_tiled {
         commands.spawn((MenuRoot, screen.clone(), GlobalZIndex(100))).with_children(|root| {
             root.spawn(crate::tiles::menus::modal_sheet());
+            // [design] Barter has no subtitle tile; keep the model's own refusal words.
+            if matches!(m.mode, Mode::Barter(_)) {
+                if let Some(note) = note(m, &sim) {
+                    look::spawn_note(root, &note, kit, data.as_deref(), &mut images, bc);
+                }
+            }
         });
     } else if m.mode != Mode::Inventory {
         let note = note(m, &sim);

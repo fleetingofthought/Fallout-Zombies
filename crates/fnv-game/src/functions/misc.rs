@@ -16,6 +16,7 @@ pub fn show_message(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> 
     let def = g.data.messages.get(&m).ok_or_else(|| format!("{} is not a message", g.data.name(m)))?;
     // SetMessageFlags' Message Box bit (`nvse_jip6`).
     let (text, buttons, is_box) = (def.text.clone(), def.buttons.clone(), g.message_flags(m) & 1 != 0);
+    let (icon, seconds) = (def.icon, def.display_seconds);
     // "A disabled message will never be displayed by the game" [documented:
     // SetMessageDisabled].
     if g.message_disabled(m) {
@@ -35,6 +36,7 @@ pub fn show_message(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> 
     }
     // Player character string codes (`&PCName;` …) [documented: ext-format.md §6].
     let text = text.map(|t| g.expand_codes(&t));
+    let shown = text.clone().unwrap_or_default();
     g.emit(EventKind::MessageShown { message: m, text, buttons: buttons.clone(), hidden });
     // A message box (MESG flag Message Box, or buttons) is a menu until the player closes
     // it [observed: MenuMode 1001 while the pack plugins' boxes were open,
@@ -42,7 +44,11 @@ pub fn show_message(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> 
     if is_box || !buttons.is_empty() {
         g.show_box(m);
     } else {
-        g.queue_corner_message();
+        let icon = match icon.and_then(|i| crate::nvse::record_value(g, i, "ICON", "")) {
+            Some(fnv_script::vm::XVal::Str(p)) => p,
+            _ => String::new(),
+        };
+        g.queue_corner_message(&shown, &icon, seconds.map_or(crate::nvse_hud::CORNER_SECONDS, f64::from));
     }
     none()
 }

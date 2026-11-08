@@ -488,6 +488,30 @@ impl<'a> Resolver<'a> {
                 }
             }
         }
+        // The held weapon's addons (WEAP BIPL, `records::Weapon::addons`), worn as an
+        // outfit's are: a hand-to-hand weapon's hand model (the power fist's metal hand,
+        // the brass knuckles' hand with the knuckles) covers the Right Hand slot, so the
+        // race's bare hand is not drawn through it, and a worn addon that covers any slot
+        // it takes (an outfit's glove, for one hand or both) is left out, one hand model
+        // per hand
+        // [observed: the original draws no bare hand at the power fist's or knuckles'
+        // front, capture pf_h2h_rest3 2026-11-06, actors.md §9.2; hypothesis: worn while
+        // the weapon is equipped, drawn or not, as h2h weapons hang on the forearm both
+        // ways].
+        let held: Vec<FormId> = match wearing {
+            Some(w) => w.iter().copied().filter(|id| self.actors.weapons.contains_key(id)).collect(),
+            None => weapon.into_iter().collect(),
+        };
+        for h in &held {
+            let addons: Vec<FormId> = self.actors.weapons.get(h).map(|w| w.addons.clone()).unwrap_or_default();
+            let taken = addons.iter().fold(0, |acc, a| acc | own_slots(a));
+            if taken != 0 {
+                pieces.retain(|(id, owner)| owner.is_none() || own_slots(id) & taken == 0);
+            }
+            for ad in addons.into_iter().filter(|a| self.actors.armors.contains_key(a)) {
+                pieces.push((ad, Some(*h)));
+            }
+        }
         let by_others_addons = |id: &FormId| pieces.iter().filter(|(_, o)| o.is_some_and(|o| o != *id)).fold(0, |acc, (a, _)| acc | own_slots(a));
         let drawn: Vec<FormId> = pieces
             .iter()

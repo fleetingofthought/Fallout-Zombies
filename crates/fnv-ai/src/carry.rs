@@ -1646,7 +1646,13 @@ impl Ai {
         let from = Place { space: a.walker.space, pos: a.walker.feet };
         match a.walker.go_to(nav, target, &params) {
             Ok(path) => {
-                let (length, doors) = (path.length, path.legs.iter().filter_map(|l| l.door.map(|d| FormId(d.door))).collect());
+                let (length, doors): (f32, Vec<FormId>) = (path.length, path.legs.iter().filter_map(|l| l.door.map(|d| FormId(d.door))).collect());
+                // The way ends short of the target, inside the talking distance, not on
+                // its spot: a wait walks it to its end (issue #1597) [design: three
+                // quarters of the distance].
+                if let Some(f) = a.walker.follower.as_mut() {
+                    f.goal_radius = f.goal_radius.max(talk.distance * 0.75);
+                }
                 if a.activity != Activity::Travelling {
                     a.trip_started = game.time;
                     a.trip_from = a.walker.travelled;
@@ -1670,9 +1676,15 @@ impl Ai {
     /// conversation, a menu) starts when it can.
     fn talk_start(&mut self, game: &mut Game, actor: FormId, package: FormId, talk: &Talk, away: f32) {
         // A force greet needs a clear line to the target: not through a wall or a closed
-        // door (`Game::greet_sight`). The actor stays as it is (waiting, or at the end
-        // of its walk) and tries again every update.
-        if !talk.say_to && !game.greet_sight(actor, talk.target) {
+        // door (`Game::greet_sight`). So does a Say To line to the player: Officer
+        // Kendall's "There he is!" (TTW, CG04Security02Ambush, activate distance 1500)
+        // came through the walls while the player was still in bed, and its end script's
+        // stage 12 kept the wake-up's stage 3 from coming (docs/design/actor-behaviour.md).
+        // Only the player is measured, so a Say To line to an NPC is not held back. The
+        // actor stays as it is (waiting, or at the end of its walk) and tries again every
+        // update.
+        let needs_sight = !talk.say_to || talk.target == FormId::PLAYER_REF;
+        if needs_sight && !game.greet_sight(actor, talk.target) {
             if self.unseen_greets.insert(actor) {
                 self.log(game, actor, AiEvent::TalkUnseen { package, target: talk.target, away });
             }

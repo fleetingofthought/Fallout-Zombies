@@ -538,6 +538,21 @@ impl Weather {
         blend(self.colors.get(ty as usize), c, hour)
     }
 
+    /// A colour type at `hour` as stored, 0..255 per channel, the times of day blended on
+    /// the bytes themselves (no sRGB decoding), as the original's light level at an actor
+    /// follows them (docs/design/detection.md §3) [observed: o27_light, 2026-11-06].
+    pub fn color_bytes(&self, c: &Climate, ty: ColorType, hour: f32) -> [f32; 3] {
+        let Some(set) = self.colors.get(ty as usize) else { return [0.0; 3] };
+        let mut out = [0.0; 3];
+        for (k, w) in time_keys(c, hour, false) {
+            let col = set.get(k as usize).copied().unwrap_or([0; 3]);
+            for i in 0..3 {
+                out[i] += w * col[i] as f32;
+            }
+        }
+        out
+    }
+
     /// Cloud layer `layer`'s colour at `hour`, linear RGB (same time model as [`Self::color`]).
     pub fn cloud_color(&self, c: &Climate, layer: usize, hour: f32) -> [f32; 3] {
         blend(self.cloud_colors.get(layer), c, hour)
@@ -768,6 +783,24 @@ pub fn placeable_water_type(lo: &LoadOrder, schema: &Schema, pwat: u32) -> Optio
     global(lo, pi, formid_of(f.get(b"DNAM")?.get("water")?)?)
 }
 
+/// Whether a placeable water (PWAT) reflects at all: its `DNAM` flags bit 0 "Reflects"
+/// [documented: xEdit PWAT; the GECK's PlaceableWater dialog has a "Reflects" group that
+/// "determines which objects can be reflected in this water object"]. Taken as the
+/// switch for the whole reflection, the sky's and the sun's highlight included, whatever
+/// the other "Reflects - …" bits say [hypothesis, world.md §6 "Placed water": the
+/// Ultra-Luxe fountain's PWAT sets "Reflects - Land" and "Reflects - Sky" without it and
+/// shows no reflection in the original]. True when the record has no flags to read.
+pub fn placeable_water_reflects(lo: &LoadOrder, schema: &Schema, pwat: u32) -> bool {
+    let Some((pi, r)) = winner(lo, pwat) else { return true };
+    let Ok(f) = Fields::new(r, pi, schema) else { return true };
+    pwat_reflects(f.get(b"DNAM").as_ref())
+}
+
+/// [`placeable_water_reflects`] from a decoded PWAT `DNAM`.
+fn pwat_reflects(dnam: Option<&Value>) -> bool {
+    dnam.and_then(|d| d.get("flags")).and_then(|v| num(v, "value")).is_none_or(|v| (v as u64) & 1 != 0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -790,6 +823,34 @@ mod tests {
         // Hours into a session the offset still moves smoothly.
         let (a, b) = (w.cloud_offset(3, 36_000.0), w.cloud_offset(3, 36_001.0));
         assert!(((b - a).rem_euclid(1.0) - 65.0 / 25_600.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn color_bytes_blend_the_stored_bytes() {
+        // NVWastelandClear's sunlight: sunrise, day, sunset, night [observed: FalloutNV.esm].
+        let mut colors = vec![Vec::new(); COLOR_TYPES];
+        colors[ColorType::Sunlight as usize] = vec![[255, 157, 111], [255, 227, 170], [255, 173, 83], [166, 191, 210]];
+        let w = Weather { colors, ..Default::default() };
+        let c = clim();
+        assert_eq!(w.color_bytes(&c, ColorType::Sunlight, 12.0), [255.0, 227.0, 170.0]);
+        assert_eq!(w.color_bytes(&c, ColorType::Sunlight, 0.0), [166.0, 191.0, 210.0]);
+        // Between two keys the bytes are mixed as they are, not their linear values.
+        let [(k0, w0), (k1, w1)] = time_keys(&c, 19.0, false);
+        let set = &w.colors[ColorType::Sunlight as usize];
+        let want: [f32; 3] = std::array::from_fn(|i| w0 * set[k0 as usize][i] as f32 + w1 * set[k1 as usize][i] as f32);
+        let got = w.color_bytes(&c, ColorType::Sunlight, 19.0);
+        assert!((0..3).all(|i| (got[i] - want[i]).abs() < 1e-3), "{got:?} {want:?}");
+        assert_eq!(w.color_bytes(&c, ColorType::Ambient, 12.0), [0.0; 3]);
+    }
+
+    #[test]
+    fn pwat_reflects_bit_0() {
+        // The Ultra-Luxe fountain's DupontCircle01Water: Reflects - Land, Reflects - Sky,
+        // the refracts bits and Depth, not Reflects [observed: FalloutNV.esm].
+        let fountain = serde_json::json!({ "flags": { "value": 268635716u64 }, "water": "0x0016663E" });
+        assert!(!pwat_reflects(Some(&fountain)));
+        assert!(pwat_reflects(Some(&serde_json::json!({ "flags": { "value": 0x201u64 } }))));
+        assert!(pwat_reflects(None));
     }
 
     #[test]

@@ -22,7 +22,8 @@
 //!   (found within their radius, made visible by ShowMap or by their flag), the active
 //!   quest's markers and the player's arrow; dragged to pan, the wheel zooms; the
 //!   highlight box follows the pointer and takes a marker's name when over one. A click
-//!   on a marker asks whether to fast travel there, in a box over the map ([`travel`],
+//!   on a marker — or the controller's A on one — asks whether to fast travel there, in
+//!   a box over the map ([`travel`],
 //!   docs/spec-notes/fast-travel.md).
 //! - **Local Map**: the doors leading elsewhere, the known map markers and the quest
 //!   markers around the player, with the player's arrow, over an outline of the place
@@ -185,7 +186,7 @@ const CLICK_SLOP: f32 = 6.0;
 /// §3).
 const POPUP_W: f32 = 520.0;
 const POPUP_PAD: f32 = 30.0;
-const POPUP_ROW_PAD: f32 = 16.0;
+const POPUP_ROW_PAD: f32 = 20.0;
 const POPUP_FRAME_PAD: f32 = 42.0;
 /// The local map: game units to one canvas unit at a magnification of 1 [observed:
 /// fitted to the owner's Local Map screenshot, where the gas station's door (-75242, 4076)
@@ -900,6 +901,13 @@ fn take_input(st: &mut DataState, tab: usize, l: &Lists, game: &mut Game, input:
         }
     } else {
         st.press = None;
+    }
+    // The controller's A (the confirm button) on a highlighted marker asks to travel
+    // there, as a click does [observed: the original; docs/design/controller.md §3].
+    if tab == WORLD && crate::pad::menu_button(&input.pads, input.bindings.as_deref(), GamepadButton::South) {
+        if let Some(m) = st.cursor_marker {
+            input.ask.write(FastTravelAsk(m));
+        }
     }
     // Dragging a map moves the point at its middle: the left button held down on it, the
     // pointer moving (or the test aid's drag).
@@ -1632,7 +1640,9 @@ fn popup(p: &mut ChildSpawnerCommands, c: &mut Ctx, q: &Popup) {
         if i == q.selected {
             c.boxed(p, frame, amber(LINE), Some(amber(FILL.0).with_alpha(FILL.1 / 255.0)));
         }
-        c.text(p, 2, b, mid.x, y + POPUP_ROW_PAD / 2.0, Align::Centre, amber(TEXT));
+        // The text stands at the bottom of its row, as the message box's buttons do
+        // (message-menu.md section 2: a row is the text and 20, the text at its bottom).
+        c.text(p, 2, b, mid.x, y + POPUP_ROW_PAD, Align::Centre, amber(TEXT));
         p.spawn((at(frame.min.x, frame.min.y, frame.width(), frame.height()), PopupHit(i), Pickable::default())).observe(on_popup_over).observe(on_popup_click);
     }
 }

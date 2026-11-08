@@ -1,0 +1,94 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o28_intercom",
+ "title": "Issue #992: an intercom line in the original (Benny through the Tops presidential suite's security intercom), recorded on the loopback, to compare with its voice file played dry",
+ "save": "nvfstrip",
+ "defaults": {
+  "fields": "fight",
+  "every": 5,
+  "depth": 0,
+  "settle_frames": 300,
+  "max_actors": 2
+ },
+ "sessions": [
+  {
+   "name": "tops_intercom",
+   "note": "Tops presidential suite: VTopsPresidentialIntercomREF given BennyREF as its talking actor, then activated by the player (GREETING 00147865 needs only IsActorTalkingThroughActivator 1 and GetIsID Benny), the game's output recorded on the loopback beside the run",
+   "console_first": [
+    "CloseAllMenus"
+   ],
+   "go": {
+    "coc": "2ETopsPresidentialSuite"
+   },
+   "hours": 0.25,
+   "close_menus_after": 2400,
+   "do": [
+    "player.SetPos X 1990",
+    "player.SetPos Y 1216",
+    "player.SetPos Z 8040",
+    [
+     "player.SetAngle Z 0"
+    ]
+   ],
+   "extra_header": [
+    [
+     "menu_any",
+     "num",
+     "MenuMode"
+    ],
+    [
+     "menu_dialogue",
+     "num",
+     "MenuMode 1009"
+    ],
+    [
+     "v1",
+     "num",
+     "player.GetAV Variable01"
+    ],
+    [
+     "v2",
+     "num",
+     "player.GetAV Variable02"
+    ]
+   ],
+   "events": "all",
+   "timed": [
+    {
+     "after": 20,
+     "do": [
+      "{0}.SetTalkingActivatorActor {1}",
+      "0x00129556",
+      "0x00101CA0"
+     ]
+    },
+    {
+     "after": 40,
+     "do": [
+      "{0}.Activate player",
+      "0x00129556"
+     ]
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "float fV"
+      ],
+      "names": [
+       "0x00129556",
+       "0x00101CA0"
+      ],
+      "lines": [
+       "let fV := {0}.GetDistance player",
+       "player.SetAV Variable01 fV",
+       "let fV := {1}.IsTalking",
+       "player.SetAV Variable02 fV"
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -510,11 +510,15 @@ impl Game<'_> {
     /// player's teammates and do not ignore crime.
     pub fn crime_witnesses(&self) -> Vec<FormId> {
         let now = self.time;
+        // Those who saw the player while a planted explosive was live, when its kill is
+        // judged (`crate::pickpocket`).
+        let planted = self.pickpocket.blast_witnesses.iter().copied().filter(|w| !self.detection.pairs.get(&(*w, FormId::PLAYER_REF)).is_some_and(|(d, at)| d.band == Band::Detected && now - at <= 1.0));
         self.detection
             .pairs
             .iter()
             .filter(|((w, t), (d, at))| *t == FormId::PLAYER_REF && *w != FormId::PLAYER_REF && d.band == Band::Detected && now - at <= 1.0)
             .map(|((w, _), _)| *w)
+            .chain(planted)
             .filter(|&w| self.present(w) && !self.is_dead(w) && !self.extra.get(&w).is_some_and(|e| e.teammate || e.ignore_crime || e.out_cold()))
             .collect()
     }

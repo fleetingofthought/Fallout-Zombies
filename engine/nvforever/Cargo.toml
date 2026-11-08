@@ -68,7 +68,7 @@ default = ["intro-video"]
 intro-video = ["nvf-play/intro-video"]
 # Bevy's spans for the in-engine span profile (profile.rs, NVF_PLAY_TEST_PROFILE); not for
 # release builds.
-profile = ["bevy/trace"]
+profile = ["bevy/trace", "fnv-phys/solver-timers"]
 # The same spans sent live to the Tracy profiler (docs/design/frame-rate-audit.md §1: the
 # viewer's version must match the tracy-client in Cargo.lock); not for release builds.
 tracy = ["profile", "bevy/trace_tracy", "dep:tracy-client"]

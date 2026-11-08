@@ -70,6 +70,7 @@ const CAPS: u32 = 0x101; // MISC "Bottle Cap", value 1, weight 0
 const ANVIL: u32 = 0x102; // MISC "anvil", value 1, weight 250
 const PISTOL: u32 = 0x170; // WEAP "Pistol", value 100, weight 3
 const RIFLE: u32 = 0x171; // WEAP "Varmint Rifle", value 300, weight 8
+const SCOPE: u32 = 0x178; // IMOD "Rifle Scope", value 125: RIFLE's mod slot 2
 const AID: u32 = 0x175; // ALCH "Aid", weight 0.5
 const BULLETS: u32 = 0x176; // AMMO "Ammo", weight 0.1 (Hardcore only)
 const CHIP: u32 = 0x177; // MISC "Platinum Chip" with the "Quest Item" header flag (bit 10)
@@ -91,7 +92,15 @@ fn plugin_bytes() -> Vec<u8> {
         &misc(ANVIL, "TestAnvil", "anvil", 1, 250.0),
         &quest_misc(CHIP, "TestChip", "Platinum Chip"),
     ]);
-    let weaps = cat(&[&weap(PISTOL, "TestPistol", "Pistol", 100, 3.0), &weap(RIFLE, "TestRifle", "Varmint Rifle", 300, 8.0)]);
+    // The rifle's mod slot 2 holds SCOPE (WMI2).
+    let rifle = {
+        let [e, f] = named("TestRifle", "Varmint Rifle");
+        let data = cat(&[&300i32.to_le_bytes(), &100i32.to_le_bytes(), &8f32.to_le_bytes(), &10i16.to_le_bytes(), &[12u8]]);
+        record(b"WEAP", 0, RIFLE, &[e, f, sub(b"WMI2", SCOPE.to_le_bytes().to_vec()), sub(b"DATA", data)])
+    };
+    let weaps = cat(&[&weap(PISTOL, "TestPistol", "Pistol", 100, 3.0), &rifle]);
+    let [e, f] = named("TestScope", "Rifle Scope");
+    let imod = record(b"IMOD", 0, SCOPE, &[e, f, sub(b"DATA", cat(&[&125i32.to_le_bytes(), &0f32.to_le_bytes()]))]);
     let enit = cat(&[&20i32.to_le_bytes(), &[0u8, 0, 0, 0], &0u32.to_le_bytes(), &0f32.to_le_bytes(), &0u32.to_le_bytes()]);
     let [e, f] = named("TestAid", "Aid");
     let alch = record(b"ALCH", 0, AID, &[e, f, sub(b"DATA", 0.5f32.to_le_bytes().to_vec()), sub(b"ENIT", enit)]);
@@ -141,6 +150,7 @@ fn plugin_bytes() -> Vec<u8> {
         &top(b"MISC", &miscs),
         &top(b"CONT", &cont),
         &top(b"WEAP", &weaps),
+        &top(b"IMOD", &imod),
         &top(b"ALCH", &alch),
         &top(b"AMMO", &ammo),
         &top(b"KEYM", &keys),
@@ -557,7 +567,34 @@ fn barter_put_up_take_back_and_accept() {
 }
 
 #[test]
-fn a_merchant_without_enough_caps_cannot_buy() {
+fn barter_tiles_show_the_models_sale_first_and_use_their_own_headings() {
+    use crate::tiles::barter_menu::tests::of_model;
+    let f = fixture();
+    let mut w = World::new(&f.forms, &f.refs, SimConfig::default());
+    let mut m = barter(&mut w);
+    let before = of_model(&m);
+    let root = "BarterMenu/NOGLOW_BRANCH";
+    assert_eq!(before.get_string(&format!("{root}/BM_ItemsRect/BM_ItemsTitle/string")).as_deref(), Some("Personal items"));
+    assert_eq!(before.get_string(&format!("{root}/BM_ItemsRect/BM_Items_CapsLabel/string")).as_deref(), Some("Coins   5"));
+    assert_eq!(before.get_float(&format!("{root}/BM_ButtonRect/BM_ButtonX/target")), Some(0.0));
+    select(&mut m, Side::Player, "Pistol");
+    m.apply(&mut w, Command::One);
+    let sold = of_model(&m);
+    let offered = format!("{root}/BM_ContainerRect/BM_Container_InventoryList/Pistol");
+    assert_eq!(sold.get_float(&format!("{offered}/listindex")), Some(0.0));
+    assert_eq!(sold.get_string(&format!("{offered}/BM_list_template_ItemValue/string")).as_deref(), Some("90"));
+    assert_eq!(sold.get_float(&format!("{offered}/BM_list_template_ItemMarker/visible")), Some(1.0));
+    assert!(sold.find_tile(&format!("{root}/BM_ItemsRect/BM_Items_InventoryList/Pistol")).is_none());
+    assert_eq!(sold.get_string(&format!("{root}/BM_CapsFlow/BM_TransactionAmount/string")).as_deref(), Some("90"));
+    assert_eq!(sold.get_float(&format!("{root}/BM_ButtonRect/BM_ButtonX/target")), Some(1.0));
+    m.apply(&mut w, Command::Accept);
+    let accepted = of_model(&m);
+    assert_eq!(accepted.get_string(&format!("{root}/BM_ItemsRect/BM_Items_CapsLabel/string")).as_deref(), Some("Coins   95"));
+    assert_eq!(accepted.get_float(&format!("{root}/BM_ButtonRect/BM_ButtonX/target")), Some(0.0));
+}
+
+#[test]
+fn a_merchant_without_enough_caps_pays_what_it_has() {
     let f = fixture();
     let mut w = World::new(&f.forms, &f.refs, SimConfig::default());
     w.add_item(PLAYER, FormId(RIFLE), 1).unwrap();
@@ -565,10 +602,17 @@ fn a_merchant_without_enough_caps_cannot_buy() {
     let mut m = barter(&mut w);
     select(&mut m, Side::Player, "Varmint Rifle");
     m.apply(&mut w, Command::One);
-    assert!(!m.trade.as_ref().unwrap().affordable());
+    let t = m.trade.as_ref().unwrap();
+    let held = i64::from(t.purse[Side::Container as usize]);
+    assert!(!t.affordable(), "the figure dims");
+    assert!(t.balance > held, "the sale asks more than the merchant holds");
+    assert_eq!(t.paid(), held, "the figure is held at the merchant's purse");
+    let before = count(&mut w, 0x14, CAPS);
     m.apply(&mut w, Command::Accept);
-    assert_eq!(m.status.as_deref(), Some("Cash Box doesn't have enough caps."));
-    assert_eq!(count(&mut w, 0x14, RIFLE), 1);
+    assert_eq!(m.status.as_deref(), Some(format!("Traded: received {held} caps").as_str()));
+    assert_eq!(count(&mut w, 0x14, RIFLE), 0);
+    assert_eq!(i64::from(count(&mut w, 0x14, CAPS)), i64::from(before) + held);
+    assert_eq!(m.trade.as_ref().unwrap().purse[Side::Container as usize], 0);
 }
 
 #[test]
@@ -814,7 +858,7 @@ fn a_modded_row_takes_the_modded_unit() {
     modded(&mut m, Side::Container);
     m.apply(&mut w, Command::One);
     assert_eq!(rifles(&m, Side::Player)[0], (1, 2, true));
-    w.add_item(PLAYER, FormId(CAPS), 400).unwrap();
+    w.add_item(PLAYER, FormId(CAPS), 1000).unwrap(); // the scope (slot 2, 125) adds to its price
     m.refresh(&mut w).unwrap();
     m.apply(&mut w, Command::Accept);
     assert!(m.status.as_deref().unwrap_or("").starts_with("Traded"), "{:?}", m.status);
@@ -1005,4 +1049,24 @@ fn a_guarded_click_on_a_row_still_there_acts() {
     let held = in_box(&mut app, first);
     send(&mut app, &[Command::Expect(guard), Command::Hover(Side::Container, 0), Command::Stack]);
     assert_eq!(in_box(&mut app, first), held);
+}
+
+/// A modded weapon's value is its own at its condition plus its mods' values, which the
+/// condition does not lower [observed: o26_value 2026-11-06, a Varmint Rifle 75 with all
+/// three mods (300) read 326 at 50 % condition; issue #982].
+#[test]
+fn a_modded_weapon_is_worth_its_mods_on_top() {
+    use fnv_sim::inventory::Extra;
+    let f = fixture();
+    let mut w = World::new(&f.forms, &f.refs, SimConfig::default());
+    w.add_item_extra(PLAYER, FormId(RIFLE), 1, Extra { mods: 2, condition: Some(0.5), ..Extra::default() }).unwrap();
+    let inv = MenuModel::open_inventory(&mut w).unwrap();
+    let r = inv.list(Side::Player).rows.iter().find(|r| r.item == FormId(RIFLE) && r.mods == 2).expect("a modded row");
+    assert_eq!(r.mods_value, 125);
+    let p = Prices::default();
+    let worth = r.worth(&p).unwrap();
+    assert!((worth - (p.value_at(300, Some(0.5)) + 125.0)).abs() < 1e-3, "{worth}");
+    // Slot 1 is empty: its flag adds nothing.
+    assert_eq!(f.forms.mods_value(FormId(RIFLE), 1), 0);
+    assert_eq!(f.forms.mods_value(FormId(RIFLE), 3), 125);
 }

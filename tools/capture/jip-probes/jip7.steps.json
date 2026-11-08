@@ -1,0 +1,605 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jip7",
+ "title": "jip7, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet fSave := GetAmmoTraitNumeric rObj 0\nlet fRes := SetAmmoTraitNumeric rObj 0 2.5\nlet fA := GetAmmoTraitNumeric rObj 0\nSetAmmoTraitNumeric rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoTraitNumeric rObj 0))\nEnd\n",
+   "label": "jip7.ammo.trait.0.2.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet fSave := GetAmmoTraitNumeric rObj 1\nlet fRes := SetAmmoTraitNumeric rObj 1 3\nlet fA := GetAmmoTraitNumeric rObj 1\nSetAmmoTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoTraitNumeric rObj 1))\nEnd\n",
+   "label": "jip7.ammo.trait.1.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet fSave := GetAmmoTraitNumeric rObj 1\nlet fRes := SetAmmoTraitNumeric rObj 1 -5\nlet fA := GetAmmoTraitNumeric rObj 1\nSetAmmoTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoTraitNumeric rObj 1))\nEnd\n",
+   "label": "jip7.ammo.trait.1.-5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet fSave := GetAmmoTraitNumeric rObj 2\nlet fRes := SetAmmoTraitNumeric rObj 2 150\nlet fA := GetAmmoTraitNumeric rObj 2\nSetAmmoTraitNumeric rObj 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoTraitNumeric rObj 2))\nEnd\n",
+   "label": "jip7.ammo.trait.2.150",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet fSave := GetAmmoTraitNumeric rObj 2\nlet fRes := SetAmmoTraitNumeric rObj 2 35.5\nlet fA := GetAmmoTraitNumeric rObj 2\nSetAmmoTraitNumeric rObj 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoTraitNumeric rObj 2))\nEnd\n",
+   "label": "jip7.ammo.trait.2.35.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet fSave := GetAmmoTraitNumeric rObj 3\nlet fRes := SetAmmoTraitNumeric rObj 3 300\nlet fA := GetAmmoTraitNumeric rObj 3\nSetAmmoTraitNumeric rObj 3 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoTraitNumeric rObj 3))\nEnd\n",
+   "label": "jip7.ammo.trait.3.300",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet fSave := GetAmmoTraitNumeric rObj 3\nlet fRes := SetAmmoTraitNumeric rObj 3 7.6\nlet fA := GetAmmoTraitNumeric rObj 3\nSetAmmoTraitNumeric rObj 3 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoTraitNumeric rObj 3))\nEnd\n",
+   "label": "jip7.ammo.trait.3.7.6",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nSetFunctionValue (GetAmmoSpeed rObj)\nEnd\n",
+   "label": "jip7.ammo.read.speed",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nSetFunctionValue (GetAmmoConsumedPercent rObj)\nEnd\n",
+   "label": "jip7.ammo.read.consumed",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nSetFunctionValue (GetNumAmmoEffects rObj)\nEnd\n",
+   "label": "jip7.ammo.read.effects",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet fRes := SetAmmoProjectile rObj rOther\nlet rItem := GetAmmoProjectile rObj\nSetAmmoProjectile rObj\nSetFunctionValue (sv_Construct \"%g %z %z\" fRes (GetFormIDString rItem) (GetFormIDString (GetAmmoProjectile rObj)))\nEnd\n",
+   "label": "jip7.ammo.setproj",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"140AA7\"\nlet fRes := SetAmmoCasing rObj\nlet rItem := GetAmmoCasing rObj\nSetAmmoCasing rObj rOther\nSetFunctionValue (sv_Construct \"%g %z %z\" fRes (GetFormIDString rItem) (GetFormIDString (GetAmmoCasing rObj)))\nEnd\n",
+   "label": "jip7.ammo.setcasing.none",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"17BA46\"\nlet fA := AddAmmoEffect rObj rOther\nlet fB := AddAmmoEffect rObj rOther\nlet fC := GetNumAmmoEffects rObj\nlet rItem := GetNthAmmoEffect rObj 0\nlet fRes := RemoveAmmoEffect rObj rOther\nlet fSave := RemoveAmmoEffect rObj rOther\nSetFunctionValue (sv_Construct \"%g %g %g %z %g %g %g\" fA fB fC (GetFormIDString rItem) fRes fSave (GetNumAmmoEffects rObj))\nEnd\n",
+   "label": "jip7.ammo.effects.addremove",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17BA46\"\nlet fSave := GetAmmoEffectTraitNumeric rObj 0\nlet fRes := SetAmmoEffectTraitNumeric rObj 0 9\nlet fA := GetAmmoEffectTraitNumeric rObj 0\nSetAmmoEffectTraitNumeric rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoEffectTraitNumeric rObj 0))\nEnd\n",
+   "label": "jip7.amef.trait.0.9",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17BA46\"\nlet fSave := GetAmmoEffectTraitNumeric rObj 0\nlet fRes := SetAmmoEffectTraitNumeric rObj 0 3\nlet fA := GetAmmoEffectTraitNumeric rObj 0\nSetAmmoEffectTraitNumeric rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoEffectTraitNumeric rObj 0))\nEnd\n",
+   "label": "jip7.amef.trait.0.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17BA46\"\nlet fSave := GetAmmoEffectTraitNumeric rObj 1\nlet fRes := SetAmmoEffectTraitNumeric rObj 1 5\nlet fA := GetAmmoEffectTraitNumeric rObj 1\nSetAmmoEffectTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoEffectTraitNumeric rObj 1))\nEnd\n",
+   "label": "jip7.amef.trait.1.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17BA46\"\nlet fSave := GetAmmoEffectTraitNumeric rObj 2\nlet fRes := SetAmmoEffectTraitNumeric rObj 2 0.5\nlet fA := GetAmmoEffectTraitNumeric rObj 2\nSetAmmoEffectTraitNumeric rObj 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetAmmoEffectTraitNumeric rObj 2))\nEnd\n",
+   "label": "jip7.amef.trait.2.0.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 0)\nEnd\n",
+   "label": "jip7.proj.trait.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 1)\nEnd\n",
+   "label": "jip7.proj.trait.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 2)\nEnd\n",
+   "label": "jip7.proj.trait.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 3)\nEnd\n",
+   "label": "jip7.proj.trait.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 4)\nEnd\n",
+   "label": "jip7.proj.trait.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 5)\nEnd\n",
+   "label": "jip7.proj.trait.5",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 6)\nEnd\n",
+   "label": "jip7.proj.trait.6",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 7)\nEnd\n",
+   "label": "jip7.proj.trait.7",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 8)\nEnd\n",
+   "label": "jip7.proj.trait.8",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 9)\nEnd\n",
+   "label": "jip7.proj.trait.9",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 10)\nEnd\n",
+   "label": "jip7.proj.trait.10",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 11)\nEnd\n",
+   "label": "jip7.proj.trait.11",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 12)\nEnd\n",
+   "label": "jip7.proj.trait.12",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 13)\nEnd\n",
+   "label": "jip7.proj.trait.13",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 14)\nEnd\n",
+   "label": "jip7.proj.trait.14",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nSetFunctionValue (GetProjectileTraitNumeric rObj 15)\nEnd\n",
+   "label": "jip7.proj.trait.15",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet fSave := GetProjectileTraitNumeric rObj 0\nlet fRes := SetProjectileTraitNumeric rObj 0 99\nlet fA := GetProjectileTraitNumeric rObj 0\nSetProjectileTraitNumeric rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetProjectileTraitNumeric rObj 0))\nEnd\n",
+   "label": "jip7.proj.settrait.0.99",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet fSave := GetProjectileTraitNumeric rObj 0\nlet fRes := SetProjectileTraitNumeric rObj 0 2\nlet fA := GetProjectileTraitNumeric rObj 0\nSetProjectileTraitNumeric rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetProjectileTraitNumeric rObj 0))\nEnd\n",
+   "label": "jip7.proj.settrait.0.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet fSave := GetProjectileTraitNumeric rObj 1\nlet fRes := SetProjectileTraitNumeric rObj 1 1.5\nlet fA := GetProjectileTraitNumeric rObj 1\nSetProjectileTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetProjectileTraitNumeric rObj 1))\nEnd\n",
+   "label": "jip7.proj.settrait.1.1.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet fSave := GetProjectileTraitNumeric rObj 2\nlet fRes := SetProjectileTraitNumeric rObj 2 1000\nlet fA := GetProjectileTraitNumeric rObj 2\nSetProjectileTraitNumeric rObj 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetProjectileTraitNumeric rObj 2))\nEnd\n",
+   "label": "jip7.proj.settrait.2.1000",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet fSave := GetProjectileTraitNumeric rObj 4\nlet fRes := SetProjectileTraitNumeric rObj 4 2\nlet fA := GetProjectileTraitNumeric rObj 4\nSetProjectileTraitNumeric rObj 4 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetProjectileTraitNumeric rObj 4))\nEnd\n",
+   "label": "jip7.proj.settrait.4.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet fSave := GetProjectileTraitNumeric rObj 14\nlet fRes := SetProjectileTraitNumeric rObj 14 5\nlet fA := GetProjectileTraitNumeric rObj 14\nSetProjectileTraitNumeric rObj 14 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetProjectileTraitNumeric rObj 14))\nEnd\n",
+   "label": "jip7.proj.settrait.14.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet fSave := GetProjectileTraitNumeric rObj 14\nlet fRes := SetProjectileTraitNumeric rObj 14 2\nlet fA := GetProjectileTraitNumeric rObj 14\nSetProjectileTraitNumeric rObj 14 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetProjectileTraitNumeric rObj 14))\nEnd\n",
+   "label": "jip7.proj.settrait.14.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"1E879\"\nlet fRes := SetProjectileLight rObj rOther\nlet rItem := GetProjectileLight rObj\nSetProjectileLight rObj\nSetFunctionValue (sv_Construct \"%g %z %z\" fRes (GetFormIDString rItem) (GetFormIDString (GetProjectileLight rObj)))\nEnd\n",
+   "label": "jip7.proj.setlight",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"2CD5F\"\nlet fRes := SetProjectileMuzzleFlash rObj \"nvf\\probe.nif\"\nlet sText := GetProjectileMuzzleFlash rObj\nSetProjectileMuzzleFlash rObj \"Effects\\MuzzleFlashes\\HandGunMuzzleFlash01.NIF\"\nSetFunctionValue (sv_Construct \"%g [%z]\" fRes sText)\nEnd\n",
+   "label": "jip7.proj.setflash",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nSetFunctionValue (GetExplosionTraitNumeric rObj 0)\nEnd\n",
+   "label": "jip7.expl.trait.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nSetFunctionValue (GetExplosionTraitNumeric rObj 1)\nEnd\n",
+   "label": "jip7.expl.trait.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nSetFunctionValue (GetExplosionTraitNumeric rObj 2)\nEnd\n",
+   "label": "jip7.expl.trait.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nSetFunctionValue (GetExplosionTraitNumeric rObj 3)\nEnd\n",
+   "label": "jip7.expl.trait.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nSetFunctionValue (GetExplosionTraitNumeric rObj 4)\nEnd\n",
+   "label": "jip7.expl.trait.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nSetFunctionValue (GetExplosionTraitNumeric rObj 5)\nEnd\n",
+   "label": "jip7.expl.trait.5",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nSetFunctionValue (GetExplosionTraitNumeric rObj 6)\nEnd\n",
+   "label": "jip7.expl.trait.6",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nSetFunctionValue (GetExplosionTraitNumeric rObj 7)\nEnd\n",
+   "label": "jip7.expl.trait.7",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nSetFunctionValue (GetExplosionTraitNumeric rObj 8)\nEnd\n",
+   "label": "jip7.expl.trait.8",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nlet fSave := GetExplosionTraitNumeric rObj 1\nlet fRes := SetExplosionTraitNumeric rObj 1 200\nlet fA := GetExplosionTraitNumeric rObj 1\nSetExplosionTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetExplosionTraitNumeric rObj 1))\nEnd\n",
+   "label": "jip7.expl.settrait.1.200",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nlet fSave := GetExplosionTraitNumeric rObj 7\nlet fRes := SetExplosionTraitNumeric rObj 7 9\nlet fA := GetExplosionTraitNumeric rObj 7\nSetExplosionTraitNumeric rObj 7 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetExplosionTraitNumeric rObj 7))\nEnd\n",
+   "label": "jip7.expl.settrait.7.9",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nlet fSave := GetExplosionTraitNumeric rObj 7\nlet fRes := SetExplosionTraitNumeric rObj 7 1\nlet fA := GetExplosionTraitNumeric rObj 7\nSetExplosionTraitNumeric rObj 7 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetExplosionTraitNumeric rObj 7))\nEnd\n",
+   "label": "jip7.expl.settrait.7.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"179DA\"\nlet fSave := GetExplosionTraitNumeric rObj 2\nlet fRes := SetExplosionTraitNumeric rObj 2 -10\nlet fA := GetExplosionTraitNumeric rObj 2\nSetExplosionTraitNumeric rObj 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetExplosionTraitNumeric rObj 2))\nEnd\n",
+   "label": "jip7.expl.settrait.2.-10",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 0)\nEnd\n",
+   "label": "jip7.ipct.trait.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 1)\nEnd\n",
+   "label": "jip7.ipct.trait.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 2)\nEnd\n",
+   "label": "jip7.ipct.trait.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 3)\nEnd\n",
+   "label": "jip7.ipct.trait.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 4)\nEnd\n",
+   "label": "jip7.ipct.trait.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetFormIDString (GetImpactDataTrait rObj 5))\nEnd\n",
+   "label": "jip7.ipct.trait.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetFormIDString (GetImpactDataTrait rObj 6))\nEnd\n",
+   "label": "jip7.ipct.trait.6",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetFormIDString (GetImpactDataTrait rObj 7))\nEnd\n",
+   "label": "jip7.ipct.trait.7",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 8)\nEnd\n",
+   "label": "jip7.ipct.trait.8",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 9)\nEnd\n",
+   "label": "jip7.ipct.trait.9",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 10)\nEnd\n",
+   "label": "jip7.ipct.trait.10",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 11)\nEnd\n",
+   "label": "jip7.ipct.trait.11",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 12)\nEnd\n",
+   "label": "jip7.ipct.trait.12",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 13)\nEnd\n",
+   "label": "jip7.ipct.trait.13",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 14)\nEnd\n",
+   "label": "jip7.ipct.trait.14",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 15)\nEnd\n",
+   "label": "jip7.ipct.trait.15",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 16)\nEnd\n",
+   "label": "jip7.ipct.trait.16",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 17)\nEnd\n",
+   "label": "jip7.ipct.trait.17",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nSetFunctionValue (GetImpactDataTrait rObj 18)\nEnd\n",
+   "label": "jip7.ipct.trait.18",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nlet fSave := GetImpactDataTrait rObj 0\nlet fRes := SetImpactDataTraitNumeric rObj 0 0.5\nlet fA := GetImpactDataTrait rObj 0\nSetImpactDataTraitNumeric rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetImpactDataTrait rObj 0))\nEnd\n",
+   "label": "jip7.ipct.settrait.0.0.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nlet fSave := GetImpactDataTrait rObj 1\nlet fRes := SetImpactDataTraitNumeric rObj 1 5\nlet fA := GetImpactDataTrait rObj 1\nSetImpactDataTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetImpactDataTrait rObj 1))\nEnd\n",
+   "label": "jip7.ipct.settrait.1.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nlet fSave := GetImpactDataTrait rObj 16\nlet fRes := SetImpactDataTraitNumeric rObj 13 99\nlet fA := GetImpactDataTrait rObj 16\nSetImpactDataTraitNumeric rObj 13 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetImpactDataTrait rObj 16))\nEnd\n",
+   "label": "jip7.ipct.settrait.13.99",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nlet fSave := GetImpactDataTrait rObj 16\nlet fRes := SetImpactDataTraitNumeric rObj 13 6\nlet fA := GetImpactDataTrait rObj 16\nSetImpactDataTraitNumeric rObj 13 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetImpactDataTrait rObj 16))\nEnd\n",
+   "label": "jip7.ipct.settrait.13.6",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nlet fSave := GetImpactDataTrait rObj 17\nlet fRes := SetImpactDataTraitNumeric rObj 14 300300300\nlet fA := GetImpactDataTrait rObj 17\nSetImpactDataTraitNumeric rObj 14 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetImpactDataTrait rObj 17))\nEnd\n",
+   "label": "jip7.ipct.settrait.14.300300300",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nlet fSave := GetImpactDataTrait rObj 17\nlet fRes := SetImpactDataTraitNumeric rObj 14 10020030\nlet fA := GetImpactDataTrait rObj 17\nSetImpactDataTraitNumeric rObj 14 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetImpactDataTrait rObj 17))\nEnd\n",
+   "label": "jip7.ipct.settrait.14.10020030",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"6C666\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"28047\"\nlet rItem := GetImpactDataTrait rObj 6\nlet fRes := SetImpactDataTraitForm rObj 1 rOther\nlet rP := GetImpactDataTrait rObj 6\nSetImpactDataTraitForm rObj 1 rItem\nSetFunctionValue (sv_Construct \"%g %z %z %z\" fRes (GetFormIDString rItem) (GetFormIDString rP) (GetFormIDString (GetImpactDataTrait rObj 6)))\nEnd\n",
+   "label": "jip7.ipct.setform.sound1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"176A12\"\nlet rItem := GetFormFromMod \"FalloutNV.esm\" \"19083\"\nlet fRes := SetImpactDataSet rObj rOther\nSetImpactDataSet rObj rItem\nSetFunctionValue fRes\nEnd\n",
+   "label": "jip7.ipds.set",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"92BD2\"\nSetFunctionValue (GetImpactMaterialType rObj)\nEnd\n",
+   "label": "jip7.mat.boone",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17B587\"\nSetFunctionValue (GetImpactMaterialType rObj)\nEnd\n",
+   "label": "jip7.mat.brahmin",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"4241\"\nSetFunctionValue (GetImpactMaterialType rObj)\nEnd\n",
+   "label": "jip7.mat.ammo",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"92BD2\"\nlet fSave := GetImpactMaterialType rObj\nlet fRes := SetImpactMaterialType 5 rObj\nlet fA := GetImpactMaterialType rObj\nSetImpactMaterialType fSave rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetImpactMaterialType rObj))\nEnd\n",
+   "label": "jip7.mat.set.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"92BD2\"\nlet fSave := GetImpactMaterialType rObj\nlet fRes := SetImpactMaterialType 15 rObj\nlet fA := GetImpactMaterialType rObj\nSetImpactMaterialType fSave rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetImpactMaterialType rObj))\nEnd\n",
+   "label": "jip7.mat.set.15",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"92BD2\"\nlet fSave := GetImpactMaterialType rObj\nlet fRes := SetImpactMaterialType 11 rObj\nlet fA := GetImpactMaterialType rObj\nSetImpactMaterialType fSave rObj\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetImpactMaterialType rObj))\nEnd\n",
+   "label": "jip7.mat.set.11",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nSetFunctionValue (GetWeatherPrecipitationModel rObj)\nEnd\n",
+   "label": "jip7.wthr.precip",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nSetFunctionValue (GetWeatherTexture rObj 0)\nEnd\n",
+   "label": "jip7.wthr.tex.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nSetFunctionValue (GetWeatherTexture rObj 1)\nEnd\n",
+   "label": "jip7.wthr.tex.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nSetFunctionValue (GetWeatherTexture rObj 2)\nEnd\n",
+   "label": "jip7.wthr.tex.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nSetFunctionValue (GetWeatherTexture rObj 3)\nEnd\n",
+   "label": "jip7.wthr.tex.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nSetFunctionValue (GetWeatherTexture rObj 4)\nEnd\n",
+   "label": "jip7.wthr.tex.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nlet fRes := SetWeatherTexture rObj 0 \"nvf\\probe.dds\"\nlet sText := GetWeatherTexture rObj 0\nSetWeatherTexture rObj 0 \"sky\\alpha.dds\"\nSetFunctionValue (sv_Construct \"%g [%z]\" fRes sText)\nEnd\n",
+   "label": "jip7.wthr.settex.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := SetWeatherTransitionTimeOverride 5\nlet fB := SetWeatherTransitionTimeOverride 0\nSetFunctionValue (sv_Construct \"%g %g\" fA fB)\nEnd\n",
+   "label": "jip7.wthr.override",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"8809B\"\nSetFunctionValue (GetClimateNumWeatherTypes rObj)\nEnd\n",
+   "label": "jip7.clmt.count",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"8809B\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"100A4E\"\nlet fA := ClimateAddWeatherType rObj rOther 50\nlet fB := GetClimateNumWeatherTypes rObj\nlet fC := ClimateAddWeatherType rObj rOther 70\nlet fSave := GetClimateNumWeatherTypes rObj\nlet fRes := ClimateRemoveWeatherType rObj rOther\nSetFunctionValue (sv_Construct \"%g %g %g %g %g %g %g\" fA fB fC fSave (GetClimateNthWeatherChance rObj (fSave - 1)) fRes (GetClimateNumWeatherTypes rObj))\nEnd\n",
+   "label": "jip7.clmt.addremove",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"8809B\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"100A4E\"\nSetFunctionValue (ClimateRemoveWeatherType rObj rOther)\nEnd\n",
+   "label": "jip7.clmt.remove.absent",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"8809B\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"100A4E\"\nlet fA := ClimateAddWeatherType rObj rOther 150\nlet fB := GetClimateNumWeatherTypes rObj\nlet fC := GetClimateNthWeatherChance rObj (fB - 1)\nClimateRemoveWeatherType rObj rOther\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB fC)\nEnd\n",
+   "label": "jip7.clmt.add.chance",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"20423\"\nSetFunctionValue (GetArmorClass rObj)\nEnd\n",
+   "label": "jip7.armor.class.leather",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"20423\"\nlet fSave := GetArmorClass rObj\nlet fRes := SetArmorClass rObj 3\nlet fA := GetArmorClass rObj\nSetArmorClass rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetArmorClass rObj))\nEnd\n",
+   "label": "jip7.armor.setclass.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"20423\"\nlet fSave := GetArmorClass rObj\nlet fRes := SetArmorClass rObj 2\nlet fA := GetArmorClass rObj\nSetArmorClass rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetArmorClass rObj))\nEnd\n",
+   "label": "jip7.armor.setclass.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"20423\"\nlet fSave := GetArmorClass rObj\nlet fRes := SetArmorClass rObj 0\nlet fA := GetArmorClass rObj\nSetArmorClass rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetArmorClass rObj))\nEnd\n",
+   "label": "jip7.armor.setclass.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"20423\"\nlet fSave := GetArmorClass rObj\nlet fRes := SetArmorClass rObj 4\nlet fA := GetArmorClass rObj\nSetArmorClass rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetArmorClass rObj))\nEnd\n",
+   "label": "jip7.armor.setclass.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"20423\"\nlet fRes := SetArmorRCT rObj \"nvf\\probe.rct\"\nSetFunctionValue (sv_Construct \"%g [%z]\" fRes (GetArmorRCT rObj))\nEnd\n",
+   "label": "jip7.armor.setrct",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := SetArmorConditionPenalty\nlet fB := SetArmorConditionPenalty 1.5\nlet fC := SetArmorConditionPenalty 3\nlet fRes := SetArmorConditionPenalty -1\nSetArmorConditionPenalty 1\nSetFunctionValue (sv_Construct \"%g %g %g %g %g\" fA fB fC fRes (SetArmorConditionPenalty))\nEnd\n",
+   "label": "jip7.armor.condpenalty",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nstring_var sText\narray_var aList\narray_var aKeys\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := SetDamageToArmorMaxPercent\nlet fB := SetDamageToArmorMaxPercent 0.5\nlet fC := SetDamageToArmorMaxPercent 2\nSetDamageToArmorMaxPercent fA\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fA fB fC (SetDamageToArmorMaxPercent))\nEnd\n",
+   "label": "jip7.armor.maxpercent",
+   "field": "value",
+   "text": true
+  }
+ ]
+}

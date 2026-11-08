@@ -40,9 +40,9 @@
 //!   [`VoiceState::spoken`] from `nvforever`'s `lips.rs` (docs/spec-notes/lipsync.md).
 //!
 //! - **Through a helmet or a speaker** ([`crate::voice_filter`]): a speaker wearing an
-//!   armour that "modulates voice" (power armour helmets) or a talking activator without
-//!   "No Voice Filter" is heard through the voice filter (`voice: playing … through the
-//!   voice filter`).
+//!   armour that "modulates voice" (power armour helmets) is heard through the voice
+//!   filter (`voice: playing … through the voice filter`). A talking activator's lines play
+//!   as their files: the intercoms' files are already processed (issue #992).
 //!
 //! - **In the room** ([`crate::reverb::for_voice`]): a line heard where it is said goes,
 //!   after the voice filter, into the reverb of the place the listener is in, and its

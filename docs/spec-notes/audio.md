@@ -38,7 +38,11 @@ all four record types decode over FalloutNV.esm with no bytes left over [observe
 - **ASPC, acoustic space** (113): five `SNAM` in a row, by position the looping sound of
   dawn (or the default loop), afternoon, dusk and night, and a "walla" sound; `WNAM`
   walla trigger count; `RDAT` "use sound from region (interiors only)"; `ANAM` a reverb
-  environment by name; `INAM` is interior.
+  environment by name; `INAM` is interior. No shipped master names a walla sound: the
+  fifth `SNAM` is null and `WNAM` 0 on all 145 acoustic spaces of FalloutNV.esm (113),
+  Dead Money (18), Honest Hearts (2), Old World Blues (3) and Lonesome Road (9); the other
+  add-ons have none [observed 2026-11-06, `fnvtool esm decode` of every ASPC, issue #990].
+  The casinos' crowd sounds are sound markers instead (e.g. `AMBTopsCasinoAWallaOS`).
 - **On cells and worldspaces**: CELL `XCMO` a music type (297 cells), CELL `XCAS` an
   acoustic space (17,485 cells), WRLD `ZNAM` a music type (3 worldspaces).
 - **On references**: the audio marker data `MMRK` (empty), `FULL` a location name,
@@ -818,8 +822,9 @@ creature_sound_survey` (FalloutNV.esm alone; `--show <CREA edid>`, `--near x,y,r
   A living creature within 3,000 units sounds its Conscious Loop (the chance rolled once
   per creature [design]) and while it moves (over 20 units/s) its Movement Loop, as
   sources the ambient plays like sound markers (§14.3). A creature without sounds steps
-  like a person (§10.2). Aware also plays when the creature becomes aware (§16).
-  Not built: Attack beyond the keys (§16), Weapon, the type-21 sound.
+  like a person (§10.2). Nothing else plays a type: Aware, Idle and Attack without a key
+  and the type-21 siren stay silent, as in the original (§16.1). Weapon is not built (no
+  list names one).
 
 ### 14.2 The player's and actors' movement
 
@@ -1085,9 +1090,12 @@ Submerged 2,846, Start at Random Position 110. 2,423 keep the attenuation curve
   The attenuation curve and the reverb control are built (§15.5).
 - **ASPC walla** (a crowd loop with a trigger count) and **ALOC location / retrigger
   delays**: how the count and the delays act is not documented; music.md keeps the
-  delays "not built".
-- **ARMO Modulates Voice** and **TACT No Voice Filter**: built (§15.5); what the
-  original's filter sounds like is still a capture question.
+  delays "not built". The walla is used by no shipped master (§1; issue #990), so the
+  original cannot show what the count counts without a plugin that sets one, and there
+  is nothing to play until a mod does [observed 2026-11-06].
+- **ARMO Modulates Voice**: built (§15.5); what the original's helmet filter sounds
+  like is still a capture question. **TACT No Voice Filter**: read, and nothing is
+  filtered for a talking activator (§15.5, observed).
 - **The Bolt and Area Sounds** of MGEF: one bolt sound, no area sound in the master,
   and no spell projectile is drawn.
 
@@ -1154,11 +1162,38 @@ From the ESM audit (docs/handoff/esm-full-audit-2026-10-24.md, gaps 7, 15, 17). 
   Voice Filter" [documented: GECK wiki GetFormFlag] is heard through a filter. 85 of
   FalloutNV.esm's 87 TACT lack the bit (intercoms, speakers, the Lucky 38 mainframe), the
   two with it are radios (`TopsBruceIsaacRadio`, `TopsLonesomeDrifterRadio`); Dead
-  Money, Honest Hearts and Old World Blues set it on none of their 45 [observed]. That
-  the TACT without the bit are filtered is a [hypothesis] from the bit's name. The
+  Money, Honest Hearts and Old World Blues set it on none of their 45 [observed]. The
   filter's sound is NVForever's [hypothesis]: a 350–3,200 Hz band, a mild saturation
-  and a 3.5 ms ring, at about the same level (`voice_filter.rs`). The voice files of the
-  intercoms may already be processed; heard twice it would be too much (owner review).
+  and a 3.5 ms ring, at about the same level (`voice_filter.rs`).
+- **Talking activators are not filtered** (issue #992, observer batch o28, 2026-11-06)
+  [observed]:
+  - *The files are processed.* The lines said only through an activator (condition
+    `IsActorTalkingThroughActivator == 1`: Benny 11 files, Chris Haversam 7, Ramos 21,
+    Tabitha 11, Captain Graham 2) against the same speakers' lines said face to face
+    (12 to 26 files each), by the share of the file's energy per band: below 300 Hz
+    0.02–0.05 of it through the activator against 0.30–0.43 face to face, above 6 kHz
+    0.0001–0.0009 against 0.007–0.037; Benny's through the intercom lie 25–30 dB under
+    his own below 200 Hz and 10–20 dB under above 8 kHz, Tabitha's radio lines are a band
+    of about 400–2,500 Hz, Ramos's carry added noise above 3 kHz. Only the NCR radio
+    operator's two lines look like plain speech. (Private script over the Voices
+    archives, `fnvtool voice line` and `bsa extract`, decoded with ffmpeg.)
+  - *The original adds nothing.* Observer campaign `o28_intercom` (save `nvfstrip`, the
+    Tops presidential suite, 249 units from VTopsPresidentialIntercomREF 0x00129556):
+    `SetTalkingActivatorActor BennyREF` and `Activate player` on the intercom (as its
+    trigger's script does, observer-checks 47) opened the dialogue and Benny's GREETING
+    0x00147865 played, all three responses, while the game's output was recorded on the
+    WASAPI loopback. Each response's file is found in the recording with a normalised
+    correlation of 0.80–0.83, and the transfer from the file to the recording stays
+    within +4.5 and −4.1 dB of its 600–1,500 Hz level from 200 Hz to 6 kHz (coherence
+    0.8–1.0): +4 dB at 300–400 Hz, −4 dB at 2–3.5 kHz, +0.7 dB at 4–5 kHz. A 350 Hz
+    high-pass and a 3,200 Hz low-pass would take 3 dB at 350 Hz and about 8 dB at 5 kHz.
+    The tilt is unexplained (the room, the game's mix) [hypothesis]; no band filter is
+    applied to the line. Above 6 kHz the file holds too little to measure.
+  - *Built*: a talking activator's lines play as their files; the voice filter is only for
+    armour that modulates the voice. The TACT "No Voice Filter" flag is read but changes
+    nothing heard [hypothesis: it may name the pre-processing done to the files, or
+    another use; nothing shows it]. Whether the original filters a helmet wearer's voice
+    is not captured (observer-checks).
 
 ## 16. Creature sound audit (owner's playtest list 7 item 46, 2026-10-23)
 
@@ -1184,13 +1219,11 @@ archive) [observed 2026-10-23].
   every pick, 159 from some (their lists hold Fallout 3 creatures without sounds as
   well), 26 from none (the ceiling turrets `LvlTurretCeiling…`, `LvlCrTrogg`,
   `BethesdaGhoul`, a few FFER/quest creatures, `NVCRTumbleweedBaby`).
-- **Aware**: a creature whose awareness state (`fnv_game::awareness`) goes from Normal
-  or Lost to Alert or Combat plays its Aware sound, at its chance, once per change
-  (nvforever `anim_sounds.rs`; the first frame a creature is seen only notes its state,
-  so a cell's creatures do not all call out as it loads) [hypothesis: by the name; the
-  Aware lists of the radscorpion, mirelurk and lakelurk king have no `Enum: Aware` key in
-  any clip, so something other than a key must play them]. Seen: `creature-sounds-aware`
-  (a radscorpion placed at the player: "Aware 1").
+- **Aware**: only an `Enum: Aware` key plays it (the mole rat's `mtforward.kf`, the
+  mirelurk king's `specialidle_alert.kf`, 9 clips in all). From 2026-10-23 to 2026-11-06 a
+  creature becoming aware (`fnv_game::awareness` Normal or Lost to Alert or Combat) played
+  it as well [hypothesis then]; the original does not (§16.1), so that was dropped.
+  `creature-sounds-aware` now checks that radscorpions noticing the player play none.
 - **Attack** is still only played by the clips' keys (`Enum: Attack`, in the radroach,
   radscorpion, giant rat, ant, queen ant, spore carrier, brahmin and the gecko's power
   attacks). Not at every attack's start [design]: the ghoul's list has Attack
@@ -1222,14 +1255,45 @@ feet, MoveLP/ConsLP the movement and conscious loops, AuxN how many Auxiliary ty
 | NVCrRaven | Aux2 (take-off, fly away) |
 
 Every type these list now plays where something calls for it: feet and Auxiliary and
-Idle and Attack types by the clips' keys, Hit and Death on hits (`ActorHit`), Aware on
-becoming aware, the loops while the creature lives (and moves). Left: Weapon (no list
-names one), the type-21 siren, an Idle type for creatures whose idle clip has no
-`Enum: Idle` key (the mole rat, yao guai, giant rat: nothing says when else it plays),
-Attack without a key (above), super mutants' and robots' combat voices (dialogue
-topics, not creature sounds), and the 26 creatures whose templates give none. Checks:
-the `anim sounds summary` (types counted, "Aware n"), smoke `creature-sounds-ghoul`,
-`creature-sounds-aware`, `bighorner`.
+Idle, Aware and Attack types by the clips' keys, Hit and Death on hits (`ActorHit`), the
+loops while the creature lives (and moves). Not played, as in the original (§16.1): the
+type-21 siren, Idle without an `Enum: Idle` key (the mole rat, yao guai, giant rat), Aware
+and Attack without a key (the radscorpion's and lakelurk king's Aware, the lakelurk king's
+Attack). Left: Weapon (no list names one), super mutants' and robots' combat voices
+(dialogue topics, not creature sounds), and the 26 creatures whose templates give none.
+Checks: the `anim sounds summary` (types counted, "Aware n"), smoke
+`creature-sounds-ghoul`, `creature-sounds-aware`, `bighorner`.
+
+### 16.1 What the original plays without a key (issue #989, 2026-11-06)
+
+Observer campaigns `o28_creature_sounds` and `o28_creature_sounds2` (plugin version 10,
+save `nvfairport`, the Searchlight Airport runway, god mode): one creature spawned with
+`PlaceAtMe` per session, and every sample (5 game loops) JIP's `IsSoundPlaying <sound>
+<creature>` [documented: GECK wiki IsSoundPlaying, JIP: "Returns 1 if the specified Sound
+is currently being played by the passed objectRef"] for three of its sounds, plus the
+first one from any source, read back through the player's `Variable01`-`09`. The probe
+works: it read the Securitrons' Conscious Loop the whole time, `NPCSecuritronForward`
+as they set off, the mole rat's Aware `NPCMoleRatMtFwdVox` twice while it ran (its
+`mtforward.kf` has the `Enum: Aware` key) and the radscorpion's Attack
+`NPCRadScorpionClawAtk` five times in its fight (its clips' `Enum: Attack` keys)
+[observed]. What was never read [observed 2026-11-06]:
+
+| Creature (sound template) | Situation | Sound, never playing |
+|---|---|---|
+| VStreetSecuritron (Cops), VStreetSecuritronMk2 (Army) | 21–24 s standing, then `StartCombat player`: 26 s (36 hits) and 12 s (8 hits) of fight | siren `NPCSecuritronSiren` (type 21) |
+| VStreetSecuritron | `player.SendAssaultAlarm` on it (it fought, 37 s, 70 hits), `SendTrespassAlarm player` (it did not fight; 36 s), in combat and hurt with `DamageAV Health` until it died | the siren |
+| CrMoleRatDomesticated (MoleRat) | 83 s idling and wandering (procedures 0 and 7), then 25 s in combat | Idle `NPCMoleRatIdle` (50 %) |
+| NVCrGiantRat (GiantRat) | 3 s idle, then it attacked by itself: 93 s, 39 hits | Idle `NPCMoleRatIdle` (50 %) |
+| CrLakelurkKingCG (LakelurkKing) | 25 s out of combat, then `StartCombat player`: 70 s, 46 hits on the player; again finding the player by itself (combat at once), 72 s, 51 hits | Aware `NPCMirelurkKingEquip` (100 %), Attack `NPCMirelurkKingAttack` (50 %), Idle `NPCMirelurkKingIdleFeeding` (50 %) |
+| CrRadscorpion1Small (RadScorpion) | found the player by itself: 60 s of fight, 15 hits | Aware `NPCRadScorpionAware` (75 %), Idle `NPCRadScorpionIdle` (100 %) |
+
+No script of FalloutNV.esm names the siren or these Idle, Aware and Attack sounds
+(`fnvtool script decompile`, all units) [observed]. So in what was tried the original
+plays a creature's Idle, Aware and Attack only from its clips' keys, and the siren not at
+all; when, if ever, the siren plays is open (observer-checks 96). NVForever plays none of
+them otherwise (nvforever `anim_sounds.rs`); the Aware on becoming aware it played
+before is dropped. The siren's folder is `fx\npc\robotsecuritron\futz\`.
+
 
 ## 17. Volume sliders (issue #1450, 2026-11-03)
 

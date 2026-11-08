@@ -300,6 +300,13 @@ pub struct Round {
     /// round: they change only by script (AddToFaction and the like) and crimes, which
     /// forget them (`functions::actor::FactionKeep`).
     pub(crate) kept: crate::functions::actor::FactionKeep,
+    /// Each actor's kinship facts ([`crate::awareness::KinFacts`]) and Aggression, kept
+    /// while `hostile` is: asked again for every pair, `Game::kin` was half the hostility
+    /// of a 50-a-side battle's measurement (5.6-9.4 ms of 14.5-18.4 for ~11,000 pairs),
+    /// the Aggression a fifth [observed 2026-11-07, #1799]. Nothing the pairs do changes
+    /// them; they go with the hostility at [`Game::end_detection_hostility`].
+    pub(crate) kin: HashMap<FormId, crate::awareness::KinFacts>,
+    pub(crate) aggression: HashMap<FormId, i64>,
 }
 
 /// One actor's detection inputs ([`Pair`]'s detector and target fields).
@@ -596,6 +603,8 @@ impl Game<'_> {
     pub fn end_detection_hostility(&mut self) {
         if let Some(r) = self.detection_round.as_mut() {
             r.hostile = None;
+            r.kin.clear();
+            r.aggression.clear();
         }
     }
 

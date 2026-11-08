@@ -377,7 +377,7 @@ pub fn spawn(root: &mut ChildSpawnerCommands, m: &MenuModel, note: Option<&str>,
         match (m.mode, &m.trade) {
             (Mode::Barter(_), Some(t)) => {
                 if let Some(flow) = barter::flow(t.balance) {
-                    caps_flow(p, &mut c, flow, t.balance.unsigned_abs(), t.affordable());
+                    caps_flow(p, &mut c, flow, t.paid().unsigned_abs(), t.affordable());
                 }
             }
             (Mode::Container(_), _) if m.selected_row(m.focus).is_some() => {
@@ -394,6 +394,15 @@ pub fn spawn(root: &mut ChildSpawnerCommands, m: &MenuModel, note: Option<&str>,
         if let Some(n) = note.filter(|n| !n.is_empty()) {
             c.text(p, false, n, MAIN.x / 2.0, NOTE_Y + (31.0 + 20.0) / 2.0 + 20.0, Align::Centre, bright);
         }
+    });
+}
+
+/// [design: barter-menu.md section 9] Keep the model's own refusal note over the tiled
+/// barter view, whose file has no subtitle tile, at the existing hand-built place.
+pub fn spawn_note(root: &mut ChildSpawnerCommands, note: &str, kit: &mut Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool) {
+    let mut c = Ctx { kit, data, images, bc };
+    root.spawn(Node { width: crate::interface::u(MAIN.x), height: crate::interface::u(MAIN.y), ..default() }).with_children(|p| {
+        c.text(p, false, note, MAIN.x / 2.0, NOTE_Y + (31.0 + 20.0) / 2.0 + 20.0, Align::Centre, amber(255.0));
     });
 }
 
@@ -556,7 +565,7 @@ fn item_data(p: &mut ChildSpawnerCommands, c: &mut Ctx, m: &MenuModel, r: &Row, 
 /// (`crate::tiles::item_card`) both read these.
 pub fn item_figures(m: &MenuModel, r: &Row, info: Option<&Info>) -> Info {
     let prices = m.trade.as_ref().map(|t| t.prices).unwrap_or_default();
-    let value = r.value.map(|v| prices.value_at(v, r.condition).round() as i64);
+    let value = r.worth(&prices).map(|v| v.round() as i64);
     let condition = r.condition.filter(|_| matches!(r.kind, Some(ItemKind::Weapon | ItemKind::Armor)));
     let mut i = info.cloned().unwrap_or_else(|| Info { condition, ..Info::default() });
     i.weight = r.weight.filter(|w| *w > 0.0).map(|w| format!("{w:.2}"));

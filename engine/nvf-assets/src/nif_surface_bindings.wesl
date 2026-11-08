@@ -26,6 +26,10 @@ struct NifSurface {
     // REFRACT: seconds for the normal map to scroll once up its texture (fire
     // refraction); 0: it does not move.
     fire_period: f32,
+    // x 1 skips the image-space emissive scale; y holds each channel on the soft path
+    // (0: no hold); z, w unused [hypothesis, nif.md §6 "Unlit shapes that are pictures,
+    // and cut-out signs"]. Same fields in the same order as NifSurfaceUniform.
+    emissive_rule: vec4<f32>,
     // Holes: x the value (alpha units, negative: no holes), y the edge band's width.
     holes: vec4<f32>,
     // The edge band's colour (linear).

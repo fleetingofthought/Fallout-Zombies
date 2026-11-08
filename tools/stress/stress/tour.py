@@ -28,6 +28,11 @@ ACTORS = re.compile(r"stress actors: (\d+) drawn in (\d+) frames \(([\d.]+) ms, 
 STARTUP = re.compile(r"stress start-up: (\d+) frames, ([\d.]+) ms, slowest ([\d.]+) ms")
 HITCH = re.compile(r"stress hitch: ([\d.]+) ms at t ([\d.]+) s, (\d+) cells loaded in it \(([\d.]+) ms\),"
                    r"(?: (\d+) actors drawn in it \(([\d.]+) ms\),)? at (.*)$")
+# A frame a loading screen went up or came down in (nvforever stress_sample.rs, issue #1415):
+# its raw time, left out of the frame times, with the place at its start and at its end.
+CROSSING = re.compile(r"stress hitch \(across a phase change, (\S+) to (\S+)\): ([\d.]+) ms at t ([\d.]+) s, "
+                      r"(\d+) cells loaded in it \(([-\d.]+) ms\), (\d+) actors drawn in it \(([-\d.]+) ms\), from (.*?) to (.*)$")
+LEFT_OUT = re.compile(r"stress frames: .*; (\d+) behind loading screens left out(?:, (\d+) across a phase change left out)?")
 PROGRESS = re.compile(r"stress (tour|sample)")
 # Counts a leak would show in (the engine's sample fields, and the process's memory).
 WATCHED = ["entities", "refs drawn", "meshes", "images", "materials", "models cached", "textures cached", "audio",
@@ -298,6 +303,26 @@ def startup_and_hitches(lines: list[str], top: int = 10) -> tuple[dict | None, l
     return startup, hitches[:top]
 
 
+def crossing_hitches(lines: list[str], top: int = 10) -> list[dict]:
+    """The slowest `top` frames over the hitch line that a loading screen went up or came
+    down in (`stress hitch (across a phase change, …)`): kept apart from the seen hitches,
+    since which phase took their time is not known."""
+    out = []
+    for ln in lines:
+        if m := CROSSING.search(ln):
+            out.append({"from": m.group(1), "to": m.group(2), "ms": float(m.group(3)), "t": float(m.group(4)),
+                        "cells": int(m.group(5)), "cell_ms": float(m.group(6)), "actors": int(m.group(7)),
+                        "actor_ms": float(m.group(8)), "from_at": m.group(9), "at": m.group(10)})
+    out.sort(key=lambda h: -h["ms"])
+    return out[:top]
+
+
+def windows_across_changes(samples: list[dict]) -> int:
+    """Sample windows a loading screen went up or came down in (`phase changes` over 0):
+    their frame mean and worst cover only the seen frames, their place is where they ended."""
+    return sum(1 for s in samples if s.get("phase changes", 0) > 0)
+
+
 def write_csv(path, samples: list[dict]) -> None:
     keys = ["t", "lap", "waypoint"] + sorted({k for s in samples for k in s} - {"t", "lap", "waypoint", "at"}) + ["at"]
     with open(path, "w", encoding="utf-8") as f:
@@ -349,6 +374,7 @@ def run(ctx: lib.Ctx, route: str, laps: int, every: float, hang: float, start_ar
     frames = next((FRAMES.search(ln) for ln in reversed(r.lines) if FRAMES.search(ln)), None)
     actors = next((ACTORS.search(ln) for ln in reversed(r.lines) if ACTORS.search(ln)), None)
     startup, hitches = startup_and_hitches(r.lines)
+    left_out = next((LEFT_OUT.search(ln) for ln in reversed(r.lines) if LEFT_OUT.search(ln)), None)
     laps_done = max((int(m.group(1)) for ln in r.lines if (m := re.search(r"stress tour: lap (\d+) done", ln))), default=0)
     return {
         "test": "tour",
@@ -358,7 +384,9 @@ def run(ctx: lib.Ctx, route: str, laps: int, every: float, hang: float, start_ar
         "samples": len(samples),
         "frames": None if not frames else {"count": int(frames.group(1)), "mean_ms": float(frames.group(2)),
                                            "low1_ms": float(frames.group(3)), "low1_fps": float(frames.group(4)),
-                                           "worst_ms": float(frames.group(5))},
+                                           "worst_ms": float(frames.group(5)),
+                                           "hidden": int(left_out.group(1)) if left_out else None,
+                                           "crossed": int(left_out.group(2)) if left_out and left_out.group(2) else None},
         "actors": None if not actors else {"drawn": int(actors.group(1)), "frames": int(actors.group(2)),
                                            "ms": float(actors.group(3)), "most_ms": float(actors.group(4)),
                                            "frame_mean_ms": float(actors.group(5)), "frame_worst_ms": float(actors.group(6)),
@@ -368,6 +396,8 @@ def run(ctx: lib.Ctx, route: str, laps: int, every: float, hang: float, start_ar
         "not_released": not_released(samples),
         "startup": startup,
         "hitches": hitches,
+        "crossing_hitches": crossing_hitches(r.lines),
+        "windows_across_changes": windows_across_changes(samples),
         "machine": lib.machine_load(r.cpu, r.cpu_skipped),
         "profile_hitches": lib.profile_hitches(r.lines),
         "crash_groups": lib.group_crashes([("tour", c) for c in r.crashes]),
@@ -384,6 +414,9 @@ def report(res: dict) -> list[str]:
         f = res["frames"]
         out += ["", f"Frames: {f['count']}, mean {f['mean_ms']} ms, 1% low {f['low1_ms']} ms ({f['low1_fps']} fps), worst {f['worst_ms']} ms"
                 " (after start-up)"]
+        if f.get("crossed") is not None:
+            out.append(f"Left out: {f['hidden']} frames behind loading screens, {f['crossed']} that a loading screen "
+                       "went up or came down in.")
     if res.get("actors"):
         a = res["actors"]
         out.append(f"Actors drawn: {a['drawn']} in {a['frames']} frames, {a['ms']:g} ms (most in a frame {a['most_ms']:g} ms); "
@@ -395,6 +428,17 @@ def report(res: dict) -> list[str]:
         out += ["", "## Slowest hitches", "", "| ms | t | cells loaded in it | actors drawn in it | at |", "|---|---|---|---|---|"]
         out += [f"| {h['ms']:g} | {h['t']:g} | {h['cells']} ({h['cell_ms']:g} ms) | {h.get('actors', 0)} ({h.get('actor_ms', 0):g} ms) "
                 f"| {h['at']} |" for h in res["hitches"]]
+    if res.get("crossing_hitches"):
+        out += ["", "## Hitches across a phase change (left out of the frame times)", "",
+                "A loading screen went up or came down in these frames: their time is real, but whether the "
+                "loading or the game took it is not known.", "",
+                "| ms | t | change | cells loaded in it | actors drawn in it | from | to |", "|---|---|---|---|---|---|---|"]
+        out += [f"| {h['ms']:g} | {h['t']:g} | {h['from']} to {h['to']} | {h['cells']} ({h['cell_ms']:g} ms) "
+                f"| {h['actors']} ({h['actor_ms']:g} ms) | {h['from_at']} | {h['at']} |" for h in res["crossing_hitches"]]
+    if res.get("windows_across_changes"):
+        out += ["", f"{res['windows_across_changes']} of {res['samples']} sample windows held a loading screen's coming "
+                "or going (`phase changes`): their frame mean and worst cover only the seen frames, and their place "
+                "is where the window ended."]
     out += lib.load_report(res.get("machine"))
     out += lib.profile_hitch_report(res.get("profile_hitches", []))
     out += ["", "## Peaks", "", "| count | peak |", "|---|---|"]

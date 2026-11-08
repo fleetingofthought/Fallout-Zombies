@@ -1,0 +1,218 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "showoff4",
+ "title": "showoff4, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (Matrix_IsMatrix (ar_List \"test\"))\nEnd\n",
+   "label": "showoff4.ismat.text",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (Matrix_IsMatrix (ar_List (ar_List 1)))\nEnd\n",
+   "label": "showoff4.ismat.one",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (Matrix_IsMatrix (ar_List (ar_List 1), (ar_List 2, 3)))\nEnd\n",
+   "label": "showoff4.ismat.ragged",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (Matrix_IsMatrix (ar_List 5, (ar_List 2, 3)))\nEnd\n",
+   "label": "showoff4.ismat.mixed",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (Matrix_IsMatrix (ar_List 1, 2, 3))\nEnd\n",
+   "label": "showoff4.ismat.flat",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (Matrix_IsMatrix (ar_List))\nEnd\n",
+   "label": "showoff4.ismat.empty",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Mat_ApplyOpWithMat (ar_List (ar_List 3, 4) (ar_List 5, 6)) \"*\" (ar_List (ar_List 7, 8) (ar_List 9, 10))\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (aR[0][0]) (aR[0][1]) (aR[1][0]) (aR[1][1]))\nEnd\n",
+   "label": "showoff4.mul.2x2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (ar_Size (Mat_ApplyOpWithMat (ar_List 1, 2, 3) \"*\" (ar_List 1, 2, 3)))\nEnd\n",
+   "label": "showoff4.mul.undefined.size",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (ar_Size (Mat_ApplyOpWithMat (ar_List 1, 2, 3) \"%\" (ar_List 1, 2, 3)))\nEnd\n",
+   "label": "showoff4.schur.flat.size",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Mat_ApplyOpWithMat (ar_List 1, 2, 3) \"%\" (ar_List 1, 2, 3)\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g %g %g\" (aR[0]) (aR[1]) (aR[2]))\nEnd\n",
+   "label": "showoff4.schur.flat",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Mat_ApplyOpWithMat (ar_List (ar_List 3, 4) (ar_List 5, 6)) \"/\" (ar_List (ar_List 3, 4) (ar_List 5, 6))\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g %g\" (aR[0][0]) (aR[1][1]))\nEnd\n",
+   "label": "showoff4.div.2x2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Mat_ApplyOpWithScal (ar_List (ar_List 3, 4) (ar_List 5, 6)) \"/\" 2\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (aR[0][0]) (aR[0][1]) (aR[1][0]) (aR[1][1]))\nEnd\n",
+   "label": "showoff4.scal.div",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (ar_Size (Mat_ApplyOpWithScal (ar_List (ar_List 3, 4) (ar_List 5, 6)) \"%\" 2))\nEnd\n",
+   "label": "showoff4.scal.mod.size",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Mat_ApplyOpWithScal (ar_List (ar_List 3, 4) (ar_List 5, 6)) \"/\" 0\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g\" (aR[0][0]))\nEnd\n",
+   "label": "showoff4.scal.div0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Mat_T (ar_List (ar_List 3, 4) (ar_List 5, 6))\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (aR[0][0]) (aR[0][1]) (aR[1][0]) (aR[1][1]))\nEnd\n",
+   "label": "showoff4.transpose.2x2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (ar_Size (Mat_T (ar_List 1, 2, 3)))\nEnd\n",
+   "label": "showoff4.transpose.flat.size",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Quat_GetMat (ar_List 0.70710678, 0, 0, 0.70710678)\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (aR[0][0]) (aR[0][1]) (aR[1][0]) (aR[2][2]))\nEnd\n",
+   "label": "showoff4.quat.z90",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Quat_GetMat (ar_List 2, 0, 0, 0)\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g %g %g\" (aR[0][0]) (aR[1][1]) (aR[2][2]))\nEnd\n",
+   "label": "showoff4.quat.unnormal",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Mat_GetQuat (ar_List (ar_List 0, -1, 0) (ar_List 1, 0, 0) (ar_List 0, 0, 1))\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (aR[0]) (aR[1]) (aR[2]) (aR[3]))\nEnd\n",
+   "label": "showoff4.quat.back",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Mat_GetQuat (ar_List (ar_List 0, 1, 0) (ar_List -1, 0, 0) (ar_List 0, 0, 1))\nif eval (ar_Size aR) < 1\nSetFunctionValue \"none\"\nreturn\nendif\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (aR[0]) (aR[1]) (aR[2]) (aR[3]))\nEnd\n",
+   "label": "showoff4.quat.back.270",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetFormIDString (rDoc.SayTo_GetTopic))\nEnd\n",
+   "label": "showoff4.sayto.topic.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetFormIDString (rDoc.SayTo_GetTopicInfo))\nEnd\n",
+   "label": "showoff4.sayto.info.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetPlayerCanPickpocketEquippedItems)\nEnd\n",
+   "label": "showoff4.pickpocket.default",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (ToggleQuestMessages)\nEnd\n",
+   "label": "showoff4.questmsgs.read",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fRes := ToggleQuestMessages 0\nSetFunctionValue (sv_Construct \"%g %g %g\" fRes (ToggleQuestMessages 0) (ToggleQuestMessages))\nEnd\n",
+   "label": "showoff4.questmsgs.off",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fRes := ToggleQuestMessages 1\nSetFunctionValue (sv_Construct \"%g %g\" fRes (ToggleQuestMessages))\nEnd\n",
+   "label": "showoff4.questmsgs.restore",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (FreezeAmmoRegen)\nEnd\n",
+   "label": "showoff4.freezeammo.read",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fRes := FreezeAmmoRegen 1\nSetFunctionValue (sv_Construct \"%g %g\" fRes (FreezeAmmoRegen))\nEnd\n",
+   "label": "showoff4.freezeammo.on",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fRes := FreezeAmmoRegen 0\nSetFunctionValue (sv_Construct \"%g %g\" fRes (FreezeAmmoRegen))\nEnd\n",
+   "label": "showoff4.freezeammo.restore",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nSetFunctionValue (sv_Construct \"[%z] [%z]\" (GetItemHotkeyIconPath rObj 1) (GetItemHotkeyIconPath rObj))\nEnd\n",
+   "label": "showoff4.hotkeyicon.pistol",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nSetItemHotkeyIconPath rObj \"interface\\icons\\nvfprobe.dds\"\nSetFunctionValue (GetItemHotkeyIconPath rObj 1)\nEnd\n",
+   "label": "showoff4.hotkeyicon.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nSetItemHotkeyIconPath rObj \"\"\nSetFunctionValue (sv_Construct \"[%z]\" (GetItemHotkeyIconPath rObj 1))\nEnd\n",
+   "label": "showoff4.hotkeyicon.restore",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (HasINISetting_Cached \"Main:fNone\" \"NVFExtProbe\\nvfso4missing\")\nEnd\n",
+   "label": "showoff4.hasini.missing",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (ReloadIniCache \"NVFExtProbe\\nvfso4missing\")\nEnd\n",
+   "label": "showoff4.reloadini.missing",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (TestExpr (ReadFromJSON \"nvfso4missing.json\"))\nEnd\n",
+   "label": "showoff4.readjson.missing",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nrDoc.DisableAlt\nlet fRes := rDoc.GetDisabled\nrDoc.EnableAlt 0\nSetFunctionValue (sv_Construct \"%g %g\" fRes (rDoc.GetDisabled))\nEnd\n",
+   "label": "showoff4.disablealt.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (PatchFreezeTime)\nEnd\n",
+   "label": "showoff4.patchfreezetime",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\narray_var aM\narray_var aR\nfloat fRes\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rDoc.GetActorFadeState)\nEnd\n",
+   "label": "showoff4.fadestate.doc",
+   "field": "value"
+  }
+ ]
+}

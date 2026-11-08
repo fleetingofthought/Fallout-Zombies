@@ -454,13 +454,15 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // GetWaterFormEffect]; with no water, the player's cell's [hypothesis].
         "getwaterformeffect" => {
             let w = form(args, 0).or_else(|| g.cell_of(FormId::PLAYER_REF).and_then(|c| cell_water(g, c)));
-            reff(w.and_then(|w| g.data.water_effects.get(&w).copied()))
+            // SetWaterFormEffect's change first (`crate::nvse_jip8`).
+            reff(w.and_then(|w| g.water_effect(w)))
         }
         // `ref.GetZone`: the encounter zone of the reference's parent cell
-        // [documented: GetZone], SetCellEncounterZone's change first (`nvse_jg2`).
+        // [documented: GetZone], SetCellEncounterZone's and SetWorldspaceEncounterZone's
+        // changes first (`nvse_jg5::cell_zone`).
         "getzone" => {
             let c = subject.and_then(|r| g.cell_of(r));
-            reff(c.and_then(|c| g.other.cell_zones.get(&c).copied().unwrap_or_else(|| g.world.placed.cell_zone(c))))
+            reff(c.and_then(|c| crate::nvse_jg5::cell_zone(g, c)))
         }
         // `zone flag`: 1 Never Resets, 2 Match PC Below Minimum Level [documented: the
         // pages' table]; 1 when every bit of `flag` is set.

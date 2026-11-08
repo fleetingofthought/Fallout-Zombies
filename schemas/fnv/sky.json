@@ -1565,6 +1565,12 @@
      "confidence": "documented",
      "note": "xEdit wbDefinitionsFNV.pas REGN RDWT: weather, chance, global (as CLMT WLST)"
     },
+    "RDMP": {
+     "name": "Map Name",
+     "type": "zstring",
+     "confidence": "observed",
+     "note": "FalloutNV.esm VMapGoodspringsRegion: RDMP follows an RDAT of type 4 and holds \"Goodsprings\" with its terminating zero (fnvtool esm decode, 2026-11-08); GECK wiki GetRegionMapName, SetRegionMapName (the Map data's name)"
+    },
     "RDMO": {
      "name": "Music",
      "type": "formid",

@@ -38,7 +38,7 @@
 //! <n> add-on models of DEBR <id> on <who> (…)`, `actor alpha: <who> <a> (<n> meshes)`,
 //! and at exit `effect shaders summary: …`.
 
-use bevy::camera::visibility::NoFrustumCulling;
+use bevy::camera::visibility::{NoFrustumCulling, RenderLayers};
 use bevy::mesh::skinning::SkinnedMesh;
 use bevy::prelude::*;
 use fnv_game::data::MagicEffectDef;
@@ -60,7 +60,7 @@ impl Plugin for EffectShadersPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Shaders>()
             .init_resource::<crate::effect_particles::EffectParticles>()
-            .add_systems(Update, (play, actor_alpha.after(crate::texture_swap::apply), crate::effect_particles::draw.after(play), addons_leaving.after(play)))
+            .add_systems(Update, (play.after(nvf_play::player::BodySet), sync_player_effects.after(play), actor_alpha.after(crate::texture_swap::apply), crate::effect_particles::draw.after(sync_player_effects), addons_leaving.after(play)))
             .add_systems(Last, (report, crate::effect_particles::report, release_faded));
     }
 }
@@ -97,6 +97,8 @@ pub(crate) struct Active {
     cut: HashMap<(AssetId<Image>, u8), Looks>,
     /// The meshes covered, and their overlays.
     pub(crate) covered: HashMap<Entity, Vec<Entity>>,
+    /// [design: sync_player_effects] Last reported camera-visible and total meshes.
+    camera_sees: Option<(usize, usize)>,
     /// The holes texture, when the shader has holes and it was found.
     holes_texture: Option<Handle<Image>>,
     /// Meshes given a material with holes: their own material and the copy.
@@ -121,7 +123,76 @@ struct Leaving {
 
 /// Put on an overlay mesh (not covered itself, not faded by actor alpha).
 #[derive(Component)]
-struct Overlay;
+pub(crate) struct Overlay;
+
+/// [design: sync_player_effects] Only player overlays need to follow view changes.
+#[derive(Component)]
+pub(crate) struct PlayerOverlay(Entity);
+
+/// [design: player_body::Seen] A player's add-on holder follows this body part.
+#[derive(Component)]
+pub(crate) struct PlayerAddon(crate::player_body::EffectPart);
+
+/// [design: particles::emit] Check the part directly, even before visibility propagates.
+#[derive(Component)]
+pub(crate) struct PlayerEffectEmitter(pub(crate) crate::player_body::EffectPart);
+
+fn overlay_layers(mesh: Option<&RenderLayers>) -> RenderLayers {
+    mesh.cloned().unwrap_or_default()
+}
+
+pub(crate) fn player_mesh_seen(mesh: Option<&RenderLayers>) -> bool {
+    use crate::sky::{ARMS_LAYER, BODY_LAYER};
+    overlay_layers(mesh).intersects(&RenderLayers::from_layers(&[0, ARMS_LAYER, BODY_LAYER]))
+}
+
+/// [design: player_body::show_rigs] Render layers do not propagate to children.
+pub(crate) fn sync_player_effects(
+    mut st: ResMut<Shaders>,
+    body: Option<Res<crate::player_body::PlayerBody>>,
+    meshes: Query<&RenderLayers, Without<Overlay>>,
+    shown: Query<&InheritedVisibility>,
+    mut overlays: Query<(&PlayerOverlay, &mut RenderLayers), With<Overlay>>,
+    mut addons: Query<(&PlayerAddon, &mut Visibility)>,
+) {
+    for (parent, mut layer) in &mut overlays {
+        let target = overlay_layers(meshes.get(parent.0).ok());
+        if *layer != target {
+            *layer = target;
+        }
+    }
+    for (part, mut visibility) in &mut addons {
+        let target = if body.as_deref().is_some_and(|b| b.sees_effect(part.0)) { Visibility::Inherited } else { Visibility::Hidden };
+        if *visibility != target {
+            *visibility = target;
+        }
+    }
+    for a in st.active.values_mut().filter(|a| a.on == FormId::PLAYER_REF.0) {
+        let seen = a.covered.keys().filter(|e| player_mesh_seen(meshes.get(**e).ok()) && !shown.get(**e).is_ok_and(|v| !v.get())).count();
+        let counts = (seen, a.covered.len());
+        if a.camera_sees != Some(counts) {
+            info!("effect shader: {} on the player: the camera sees {} of {} covered meshes", a.shader.edid, counts.0, counts.1);
+            a.camera_sees = Some(counts);
+        }
+    }
+}
+
+/// [design: shot_fx::spawn_attached] Mark only this player's add-on emitters once,
+/// after the commands that create the model's node tree have been applied.
+fn player_addon(commands: &mut Commands, holder: Entity, part: crate::player_body::EffectPart, seen: bool) {
+    commands.entity(holder).insert((PlayerAddon(part), if seen { Visibility::Inherited } else { Visibility::Hidden }));
+    commands.queue(move |world: &mut World| {
+        let mut pending = vec![holder];
+        while let Some(e) = pending.pop() {
+            if let Some(children) = world.get::<Children>(e) {
+                pending.extend(children.iter());
+            }
+            if world.get::<crate::particles::AddonEmitter>(e).is_some() || world.get::<crate::particles::ModelEmitter>(e).is_some() {
+                world.entity_mut(e).insert(PlayerEffectEmitter(part));
+            }
+        }
+    });
+}
 
 /// On a mesh drawn see-through for its actor's alpha: its own material and the alpha.
 /// Another system that changes the mesh's material meanwhile (`crate::texture_swap`)
@@ -198,6 +269,7 @@ fn play(
     mut models: ModelCtx,
     mut st: ResMut<Shaders>,
     drawn: Query<(Entity, &RefVisual, &Mesh3d, Option<&SkinnedMesh>, &MeshMaterial3d<NifMaterial>), Without<Overlay>>,
+    layers: Query<&RenderLayers>,
     (body, children, body_meshes): (
         Option<Res<crate::player_body::PlayerBody>>,
         Query<&Children>,
@@ -311,7 +383,7 @@ fn play(
                 (None, Source::Perk(..)) => "while the player aims (a companion perk)".to_string(),
             }
         );
-        st.active.insert(k, Active { on, shader: s, since: now, until, persist, fill, edge, cut: HashMap::new(), covered: HashMap::new(), holes_texture, holed: HashMap::new(), addons: Vec::new() });
+        st.active.insert(k, Active { on, shader: s, since: now, until, persist, fill, edge, cut: HashMap::new(), covered: HashMap::new(), camera_sees: None, holes_texture, holed: HashMap::new(), addons: Vec::new() });
     }
 
     // [documented: #1323] Ends and starts must run even when no shader remains to draw.
@@ -327,9 +399,8 @@ fn play(
             list.push((e, mesh, skin, mat));
         }
     }
-    // The player: the meshes of its third-person body (`player_body.rs`), which carry no
-    // RefVisual; hidden in first person, so are their overlays. Add-on models hanging
-    // from its bones are not its own.
+    // [design: player_body::show_rigs] The third-person body has no RefVisual. Its
+    // overlays copy its layers; attached add-on models are not the body's own meshes.
     if let Some((list, root)) = by_ref.get_mut(&FormId::PLAYER_REF.0).and_then(|list| {
         body.as_deref().and_then(|b| b.roots().first().copied()).map(|root| (list, root))
     }) {
@@ -379,7 +450,10 @@ fn play(
             };
             let mut overlays = Vec::new();
             for mat in look.iter().flatten() {
-                let mut c = commands.spawn((Mesh3d(mesh.0.clone()), MeshMaterial3d(mat.clone()), Transform::IDENTITY, Overlay, NoFrustumCulling, bevy::light::NotShadowCaster));
+                let mut c = commands.spawn((Mesh3d(mesh.0.clone()), MeshMaterial3d(mat.clone()), Transform::IDENTITY, Overlay, overlay_layers(layers.get(e).ok()), NoFrustumCulling, bevy::light::NotShadowCaster));
+                if a.on == FormId::PLAYER_REF.0 {
+                    c.insert(PlayerOverlay(e));
+                }
                 if let Some(skin) = skin {
                     c.insert(skin.clone());
                 }
@@ -468,6 +542,11 @@ fn play(
                     let Some(pm) = models.model(&path) else { continue };
                     let (scale, _) = ad.look(t, None);
                     let made = crate::shot_fx::spawn_attached(&mut commands, place, &pm, Transform::from_scale(Vec3::splat(scale)), &path);
+                    if a.on == FormId::PLAYER_REF.0 {
+                        let part = body.as_deref().map_or(crate::player_body::EffectPart::Body, |b| b.effect_part(place));
+                        let seen = body.as_deref().is_some_and(|b| b.sees_effect(part));
+                        player_addon(&mut commands, made.0, part, seen);
+                    }
                     if first_model.is_empty() {
                         first_model = path;
                     }
@@ -728,10 +807,54 @@ fn report(mut exit: MessageReader<AppExit>, st: Res<Shaders>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::sky::{BODY_LAYER, SHADOW_LAYER};
     use bevy::asset::{AssetApp, AssetPlugin};
     use bevy::ecs::message::Messages;
     use bevy::math::Affine2;
     use nvf_assets::nif_material::{Falloff, NO_HOLES};
+
+    #[test]
+    fn overlays_take_the_mesh_layer_or_the_default_world_layer() {
+        assert_eq!(overlay_layers(None), RenderLayers::default());
+        for layers in [RenderLayers::layer(BODY_LAYER), RenderLayers::layer(SHADOW_LAYER), RenderLayers::from_layers(&[0, 7]), RenderLayers::none()] {
+            assert_eq!(overlay_layers(Some(&layers)), layers);
+        }
+        assert!(player_mesh_seen(None));
+        assert!(player_mesh_seen(Some(&RenderLayers::layer(BODY_LAYER))));
+        assert!(!player_mesh_seen(Some(&RenderLayers::layer(SHADOW_LAYER))));
+        assert!(!player_mesh_seen(Some(&RenderLayers::none())));
+    }
+
+    #[test]
+    fn player_overlays_follow_layers_in_both_directions() {
+        let mut app = App::new();
+        app.init_resource::<Shaders>().add_systems(Update, sync_player_effects);
+        let parent = app.world_mut().spawn(RenderLayers::layer(SHADOW_LAYER)).id();
+        let overlay = app.world_mut().spawn((Overlay, PlayerOverlay(parent), RenderLayers::default(), bevy::light::NotShadowCaster)).id();
+        let other = app.world_mut().spawn((Overlay, RenderLayers::default())).id();
+        for layer in [SHADOW_LAYER, BODY_LAYER, SHADOW_LAYER, BODY_LAYER] {
+            app.world_mut().entity_mut(parent).insert(RenderLayers::layer(layer));
+            app.update();
+            assert_eq!(app.world().get::<RenderLayers>(overlay), Some(&RenderLayers::layer(layer)));
+            assert_eq!(app.world().get::<RenderLayers>(other), Some(&RenderLayers::default()));
+            assert!(app.world().get::<bevy::light::NotShadowCaster>(overlay).is_some());
+        }
+    }
+
+    #[test]
+    fn player_addon_emitters_are_marked_and_hidden_at_spawn() {
+        let mut world = World::new();
+        let holder = world.spawn(Visibility::Inherited).id();
+        let emitter = world.spawn((crate::particles::AddonEmitter::new(42), ChildOf(holder))).id();
+        let other = world.spawn(crate::particles::AddonEmitter::new(43)).id();
+        let mut queue = bevy::ecs::world::CommandQueue::default();
+        let mut commands = Commands::new(&mut queue, &world);
+        player_addon(&mut commands, holder, crate::player_body::EffectPart::Head, false);
+        queue.apply(&mut world);
+        assert_eq!(world.get::<Visibility>(holder), Some(&Visibility::Hidden));
+        assert_eq!(world.get::<PlayerEffectEmitter>(emitter).map(|p| p.0), Some(crate::player_body::EffectPart::Head));
+        assert!(world.get::<PlayerEffectEmitter>(other).is_none());
+    }
 
     fn material_app() -> (App, Handle<NifMaterial>) {
         let mut app = App::new();

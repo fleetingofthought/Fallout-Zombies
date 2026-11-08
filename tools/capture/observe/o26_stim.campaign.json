@@ -1,0 +1,226 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o26_stim",
+ "title": "Observer check 76 redo (#1743): player.SetHardcore (SetHardcore without a reference fails in a script), then a Stimpak used outside Hardcore and Hardcore turned on ~3 s and ~10 s later; controls: Hardcore never on, and on before the use. The player's Health, IsHardcore and Stimpak count every 2 loops; the damage, the use and the switch inside the observation",
+ "save": "nvfairport",
+ "defaults": {
+  "fields": "fight",
+  "every": 2,
+  "depth": 0,
+  "settle_frames": 200,
+  "hours": 0.15,
+  "max_actors": 1,
+  "console_first": [
+   "CloseAllMenus"
+  ],
+  "extra_header": [
+   [
+    "p_health",
+    "num",
+    "player.GetAV Health"
+   ],
+   [
+    "p_health_base",
+    "num",
+    "player.GetBaseAV Health"
+   ],
+   [
+    "hc",
+    "num",
+    "player.IsHardcore"
+   ],
+   [
+    "dehyd",
+    "num",
+    "player.GetAV Dehydration"
+   ],
+   [
+    "stims",
+    "num",
+    "player.GetItemCount 00015169"
+   ]
+  ]
+ },
+ "sessions": [
+  {
+   "name": "probe_on",
+   "hours": 0.08,
+   "timed": [
+    {
+     "after": 30,
+     "do": [
+      "SetHardcore 1"
+     ]
+    },
+    {
+     "after": 120,
+     "do": [
+      "player.SetHardcore 1"
+     ]
+    }
+   ],
+   "note": "SetHardcore 1 without and with player (nvfairport)"
+  },
+  {
+   "name": "probe_off",
+   "hours": 0.08,
+   "timed": [
+    {
+     "after": 30,
+     "do": [
+      "SetHardcore 0"
+     ]
+    },
+    {
+     "after": 120,
+     "do": [
+      "player.SetHardcore 0"
+     ]
+    }
+   ],
+   "note": "run on nvfHardcore"
+  },
+  {
+   "name": "none",
+   "timed": [
+    {
+     "after": 5,
+     "do": [
+      "player.SetHardcore 0"
+     ]
+    },
+    {
+     "after": 8,
+     "do": [
+      "player.RestoreAV Health 500"
+     ]
+    },
+    {
+     "after": 20,
+     "do": [
+      "player.DamageAV Health 120"
+     ]
+    },
+    {
+     "after": 40,
+     "do": [
+      "player.EquipItem {0}",
+      "0x00015169"
+     ]
+    }
+   ],
+   "note": "Hardcore off throughout: damage 120, Stimpak"
+  },
+  {
+   "name": "hc3",
+   "timed": [
+    {
+     "after": 5,
+     "do": [
+      "player.SetHardcore 0"
+     ]
+    },
+    {
+     "after": 8,
+     "do": [
+      "player.RestoreAV Health 500"
+     ]
+    },
+    {
+     "after": 20,
+     "do": [
+      "player.DamageAV Health 120"
+     ]
+    },
+    {
+     "after": 40,
+     "do": [
+      "player.EquipItem {0}",
+      "0x00015169"
+     ]
+    },
+    {
+     "after": 130,
+     "do": [
+      "player.SetHardcore 1"
+     ]
+    }
+   ],
+   "note": "Hardcore on 90 samples (~3 s) after the use"
+  },
+  {
+   "name": "hc10",
+   "timed": [
+    {
+     "after": 5,
+     "do": [
+      "player.SetHardcore 0"
+     ]
+    },
+    {
+     "after": 8,
+     "do": [
+      "player.RestoreAV Health 500"
+     ]
+    },
+    {
+     "after": 20,
+     "do": [
+      "player.DamageAV Health 120"
+     ]
+    },
+    {
+     "after": 40,
+     "do": [
+      "player.EquipItem {0}",
+      "0x00015169"
+     ]
+    },
+    {
+     "after": 340,
+     "do": [
+      "player.SetHardcore 1"
+     ]
+    }
+   ],
+   "note": "Hardcore on 300 samples (~10 s) after the use"
+  },
+  {
+   "name": "hcfirst",
+   "timed": [
+    {
+     "after": 5,
+     "do": [
+      "player.SetHardcore 0"
+     ]
+    },
+    {
+     "after": 8,
+     "do": [
+      "player.RestoreAV Health 500"
+     ]
+    },
+    {
+     "after": 12,
+     "do": [
+      "player.SetHardcore 1"
+     ]
+    },
+    {
+     "after": 20,
+     "do": [
+      "player.DamageAV Health 120"
+     ]
+    },
+    {
+     "after": 40,
+     "do": [
+      "player.EquipItem {0}",
+      "0x00015169"
+     ]
+    }
+   ],
+   "note": "Hardcore on before the damage and the use"
+  }
+ ]
+}

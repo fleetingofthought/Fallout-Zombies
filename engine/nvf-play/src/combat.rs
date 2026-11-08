@@ -46,9 +46,12 @@
 //!   (`NVF_PLAY_SCRIPTS=0`) hits are only logged.
 //! - **Limb hits** (step C8): an actor whose hit volume has body parts
 //!   (`crate::hitvol::ActorParts`) is hit on a part of its BPTD: the part's damage
-//!   multiplier, its location for `GetHitLocation`, and limb damage (the damage dealt
-//!   times the weapon's Limb Dmg Mult) on its condition (`Game::hit`), which cripples the
-//!   limb at 0. Explosions hit no part (location −1) [design]. Crippled limbs widen the
+//!   multiplier, its location for `GetHitLocation`, and limb damage (damage before the
+//!   part multiplier times the weapon's Limb Dmg Mult) on its condition (`Game::hit`),
+//!   which cripples the limb at 0. Player shots and blows select that part from the
+//!   single capsule's hit point (`player_body_part`); blows keep their existing Health
+//!   multiplier [hypothesis: melee is open, combat-rules.md §12]. Explosions hit no part
+//!   (location −1) [design]. Crippled limbs widen the
 //!   spread (the documented crippled-arm terms, the head's), weaken melee
 //!   (`Attacker::arm_condition`), slow movement by the game settings, make the torso
 //!   flinch from any hit ([`player_flinch`]), sway the aim ([`arm_sway`]) and disarm
@@ -664,9 +667,42 @@ fn limb_hit(bp: Option<&BodyPart>, d: &damage::Damage, w: &WeaponStats) -> Optio
     (damage > 0.0).then_some(LimbHit { condition, health_percent: bp.health_percent as f64, damage, points: false })
 }
 
-/// The human skeleton, whose body part data the player's limbs follow when the player's
-/// body is not posed (first person).
+/// The human skeleton, whose body part data the player's limbs follow [design:
+/// `CombatForms::body_parts_for`, docs/spec-notes/combat-rules.md §12].
 const HUMAN_SKELETON: &str = "characters\\_male\\skeleton.nif";
+
+// [design] Human skeleton proportions for the player's single capsule (combat-rules.md
+// §12). How the original chooses the player's hit part remains [hypothesis].
+const PLAYER_HEAD_HEIGHT: f32 = 0.86;
+const PLAYER_LEG_HEIGHT: f32 = 0.50;
+const PLAYER_ARM_RADIUS: f32 = 0.60;
+
+/// The condition of the part struck on the player's capsule [hypothesis: the bands
+/// above, not measured in the original]. Heading is clockwise from north, as `Player`.
+fn player_hit_condition(point: V3, feet: V3, height: f32, radius: f32, heading: f32) -> u16 {
+    use fnv_game::combat::{HEAD, LEFT_ARM, LEFT_MOBILITY, RIGHT_ARM, RIGHT_MOBILITY, TORSO};
+    let height = height.max(f32::EPSILON);
+    let z = (point[2] - feet[2]).clamp(0.0, height) / height;
+    let side = (point[0] - feet[0]) * heading.cos() - (point[1] - feet[1]) * heading.sin();
+    if z > PLAYER_HEAD_HEIGHT {
+        HEAD
+    } else if z < PLAYER_LEG_HEIGHT {
+        if side < 0.0 { LEFT_MOBILITY } else { RIGHT_MOBILITY }
+    } else if side.abs() > radius.max(0.0) * PLAYER_ARM_RADIUS {
+        if side < 0.0 { LEFT_ARM } else { RIGHT_ARM }
+    } else {
+        TORSO
+    }
+}
+
+/// Resolve the capsule's hit to the player's limb data by condition, never by BPTD
+/// index [design: the same human data as `blast_limb_hits`, in either view].
+fn player_body_part(c: &Combat, phys: &PhysState, player: Option<&Player>, point: V3) -> Option<BodyPart> {
+    let ch = phys.player.as_ref()?;
+    let condition = player_hit_condition(point, ch.feet, ch.params.height, ch.params.radius, player?.heading);
+    let data = c.forms.body_parts_for(FormId::PLAYER_BASE, HUMAN_SKELETON)?;
+    c.forms.body_parts.get(&data)?.parts.iter().find(|bp| bp.actor_value.as_deref().and_then(fnv_game::combat::limb_condition) == Some(condition)).cloned()
+}
 
 /// An explosion's limb damage on `target` (docs/spec-notes/crippled-limbs.md §5): the
 /// shares of `fnv_game::combat::blast_limb_shares` (the torso 1/30 of the blast's damage
@@ -1942,12 +1978,17 @@ fn init_combat(mut commands: Commands, d: Res<PlayWorld>) {
     let tracer_hold = std::env::var("NVF_PLAY_TEST_TRACERS").ok().and_then(|v| v.trim().parse().ok()).filter(|s: &f32| *s > 0.0);
     let forms = CombatForms::build(d.lo, d.schema);
     let rules = Rules::from_forms(&forms);
+    // A thrown grenade's restitution (combat-rules.md §5).
+    let grenade_restitution = forms.setting("fGrenadeRestitution").unwrap_or(CombatTuning::default().grenade_restitution);
     let fists = forms.by_edid("Fists");
     info!("combat: {} weapons, {} ammo, {} projectiles, {} explosions read in {:.0} ms", forms.weapons.len(), forms.ammo.len(), forms.projectiles.len(), forms.explosions.len(), t.elapsed().as_secs_f64() * 1000.0);
     commands.insert_resource(Combat {
         forms,
         rules,
-        tuning: CombatTuning::default(),
+        tuning: CombatTuning {
+            grenade_restitution,
+            ..CombatTuning::default()
+        },
         weapon: None,
         equipped: None,
         mods: 0,
@@ -2758,6 +2799,7 @@ pub(crate) fn fire(
     let total = if c.self_ammo { player_count(&sim, Some(id)) } else { player_count(&sim, c.ammo) };
     let carried = total.saturating_sub(cycle.magazine);
     let was_winding = matches!(cycle.phase, fnv_combat::attack::Phase::WindUp { .. });
+    cycle.regen_frozen = script.as_ref().and_then(|s| s.rt.as_ref()).is_some_and(|rt| rt.game.showoff.ammo_regen_frozen);
     let events = cycle.step(&c.tuning, Input { trigger: control.trigger, reload: reload && !god, dt, carried });
     // A pull whose shot waits for the clip's `Hit` key: the clip starts now (`wind_ups`).
     if !was_winding && cycle.timing.fire_delay > 0.0 && matches!(cycle.phase, fnv_combat::attack::Phase::WindUp { .. }) {
@@ -2926,7 +2968,20 @@ pub(crate) fn fire(
                         }
                         None => gun_dir,
                     };
-                    shot::leaving(&world, eye, aim, anim.muzzle, reach, Some(PLAYER), control.third_person_view())
+                    let leaving = shot::leaving(&world, eye, aim, anim.muzzle, reach, Some(PLAYER), control.third_person_view());
+                    // An arcing explosive round (a grenade launcher's) leaves the muzzle,
+                    // along the aim: the original's 40 mm round started 110 / 125 / 138
+                    // units above the feet and 55 ahead at aim 0 / 15 / 30 degrees up,
+                    // where our weapon's muzzle is (110 / 126 / 142, 64 ahead), not at the
+                    // eye; from the eye it fell 5 % short at 15 degrees [observed: o26_gl,
+                    // combat-rules.md §5, issue #1471]. Not when the barrel is in a wall.
+                    let arcing = vats_shot.is_none()
+                        && chain.explosion.is_some()
+                        && chain.projectile.and_then(|p| c.forms.projectiles.get(&p)).is_some_and(|p| p.gravity > 0.0 && !p.has("Hitscan") && p.kind.as_deref() == Some("Missile"));
+                    match anim.muzzle {
+                        Some(m) if arcing && !leaving.covered && world.ray(eye, m, &[PLAYER]).is_none() => shot::Leaving { origin: m, seen: Seen::ON_PATH, ..leaving },
+                        _ => leaving,
+                    }
                 };
                 let rng = &mut c.rng;
                 let mut rand = || rng.next_f32();
@@ -3474,7 +3529,11 @@ fn hit_player(rt: &mut crate::script::Runtime, sim: &mut SimState, dealt: f32, i
         return Some(HitResult { health, immune: true, ..HitResult::default() });
     }
     with_world(rt, sim, |rt| hit_effects::apply(&mut rt.game, &mut stats.hit_effects, FormId::PLAYER_REF, effects, info.attacker));
+    let limb_before = info.limb.and_then(|l| with_world(rt, sim, |rt| fnv_game::functions::actor_value(&mut rt.game, FormId::PLAYER_REF, l.condition).ok()));
     let mut r = with_world(rt, sim, |rt| rt.game.hit(FormId::PLAYER_REF, dealt as f64, info));
+    if let Some((before, (code, condition))) = limb_before.zip(r.limb).filter(|(before, (_, after))| before > after) {
+        info!("combat: the player's {} takes {:.1}, condition {condition:.1}", limb_name(code), before - condition);
+    }
     r.crippled |= !blast_limbs(rt, sim, FormId::PLAYER_REF, info, blast, &r).is_empty();
     stats.player_damage += r.dealt as f32;
     info!("combat: {by} hits the player for {:.1}, health {:.0}/{:.0}", r.dealt, r.health, r.max_health);
@@ -4049,7 +4108,11 @@ fn actor_attacks(
                 }
             }
         }
-        let info = HitInfo { attacker: Some(b.attacker), weapon: b.weapon, location: 0, critical: d.critical, limb: None };
+        // [hypothesis] Melee's part multipliers are unmeasured (combat-rules.md §12):
+        // keep Health on HitPart::default(), but give player blows a location and limb.
+        // A creature uses this path's Fists Limb Dmg Mult in the absence of its own weapon.
+        let bp = (b.target == FormId::PLAYER_REF).then(|| player_body_part(c, &phys, player.as_deref(), b.point)).flatten();
+        let info = HitInfo { attacker: Some(b.attacker), weapon: b.weapon, location: bp.as_ref().map_or(0, BodyPart::location), critical: d.critical, limb: limb_hit(bp.as_ref(), &d, &w) };
         if b.target != FormId::PLAYER_REF {
             pushes.write(ActorPush { form_id: b.target.0, point: b.point, dv: vec::scale(b.dir, MELEE_PUSH) });
         }
@@ -4147,7 +4210,7 @@ fn fly(
     mut hud: Option<ResMut<HudMessage>>,
     mut messages: MessageWriter<ActorHit>,
     mut pushes: MessageWriter<ActorPush>,
-    parts: Res<ActorParts>,
+    (parts, player): (Res<ActorParts>, Option<Res<Player>>),
     mut visuals: ResMut<ShotVisuals>,
     anim: Res<WeaponAnim>,
     sfx: Option<Res<Sfx>>,
@@ -4271,7 +4334,41 @@ fn fly(
             });
             let ghost = move |to: V3| Ghost { id, proj, owner, from: seen_before, to, speed, travelled: 0.0, beam, left: fade, fade, fresh: true, follow: follow && beam };
             let line = move |to: V3, life: f32| Mark { follow, ..Mark::tracer(seen_before, to, life) };
-            for e in f.p.step(&world, dt) {
+            let touched_before = f.p.first_contact.is_some();
+            let events = f.p.step(&world, dt);
+            // An explosive's arc, for comparing with the original's (combat-rules.md §5,
+            // issue #1471): where it left and how, and where it first touched something.
+            if let (false, Some((point, age)), Some((from, v)), Some(_)) = (touched_before, f.p.first_contact, f.p.launch, f.p.explosion) {
+                let edid = c.forms.projectiles.get(&f.proj).and_then(|p| p.edid.as_deref()).unwrap_or("?");
+                let across = |a: V3, b: V3| (a[0] - b[0]).hypot(a[1] - b[1]);
+                info!(
+                    "combat: projectile {edid} left ({:.0}, {:.0}, {:.0}) at {:.0} units/s, {:.1} deg up; first touched ({:.0}, {:.0}, {:.0}) after {:.2} s, {:.0} units across the ground and {:.0} below where it left",
+                    from[0],
+                    from[1],
+                    from[2],
+                    vec::len(v),
+                    v[2].atan2(v[0].hypot(v[1])).to_degrees(),
+                    point[0],
+                    point[1],
+                    point[2],
+                    age,
+                    across(point, from),
+                    from[2] - point[2]
+                );
+            }
+            if let (Some((from, _)), Some(ProjEvent::Explode { point, .. })) = (f.p.launch, events.iter().find(|e| matches!(e, ProjEvent::Explode { .. }))) {
+                let edid = c.forms.projectiles.get(&f.proj).and_then(|p| p.edid.as_deref()).unwrap_or("?");
+                info!(
+                    "combat: projectile {edid} went off after {:.2} s at ({:.0}, {:.0}, {:.0}), {:.0} units across the ground from where it left{}",
+                    f.p.age,
+                    point[0],
+                    point[1],
+                    point[2],
+                    (point[0] - from[0]).hypot(point[1] - from[1]),
+                    if f.p.rolling { ", after rolling" } else { "" }
+                );
+            }
+            for e in events {
                 match e {
                     ProjEvent::Hit { actor, part, object, point, delay, normal, material } => {
                         let from = if f.p.hitscan { f.origin } else { before };
@@ -4606,7 +4703,9 @@ fn fly(
         let ammo_effects: Vec<&AmmoEffect> = effect_ids.iter().filter_map(|e| c.forms.ammo_effects.get(e)).collect();
         let mut a = attacker(script.as_deref_mut(), &mut sim, &c.rules, shooter, &w, p.by.vats);
         a.sneaking = p.actor.is_some_and(|t| sneak_attack(script.as_deref(), shooter, p.by.sneaking, FormId(t as u32)));
-        let bp = p.actor.and_then(|a| body_part(c, &parts, a, p.part));
+        let bp = p.actor.and_then(|a| body_part(c, &parts, a, p.part)).or_else(|| {
+            (p.actor == Some(PLAYER)).then(|| player_body_part(c, &phys, player.as_deref(), p.point)).flatten()
+        });
         let part = bp.as_ref().map_or_else(HitPart::default, BodyPart::hit_part);
         let h = HitInput { weapon: &w, projectiles: p.projectiles, condition: item_condition(&sim, shooter, id), ammo_effects: &ammo_effects, part, power: 1.0 };
         let roll = c.rng.next_f32();
@@ -4661,7 +4760,7 @@ fn fly(
         let nerve = companion_nerve(script.as_deref_mut(), &mut sim, target);
         let d = damage::hit(&c.rules, &c.tuning, &h, &a, &Target { dt: dt_v, dr, resist, nerve, ..Target::default() }, &ap, &tp, roll);
         log_hit_perks(shooter, Some(target), &ap, &tp, &d);
-        // Without body parts the whole capsule counts as the torso (location 0).
+        // [design] Missing body part data keeps the whole-capsule fallback (location 0).
         let location = bp.as_ref().map_or(0, BodyPart::location);
         let limb = limb_hit(bp.as_ref(), &d, &w);
         let info = HitInfo { attacker: Some(shooter), weapon: Some(id), location, critical: d.critical, limb };
@@ -4914,6 +5013,56 @@ fn sound_edid(sfx: Option<&Sfx>, sound: FormId) -> String {
 mod tests {
     use super::*;
     use crate::phys::NpcBody;
+
+    #[test]
+    fn player_capsule_hit_bands_and_clamps() {
+        use fnv_game::combat::{HEAD, LEFT_ARM, LEFT_MOBILITY, RIGHT_ARM, RIGHT_MOBILITY, TORSO};
+        let part = |x: f32, z: f32| player_hit_condition([10.0 + x, 20.0, 30.0 + z], [10.0, 20.0, 30.0], 100.0, 10.0, 0.0);
+        for (x, z, expected) in [
+            (0.0, 87.0, HEAD), (-10.0, 1000.0, HEAD),
+            (-1.0, 49.0, LEFT_MOBILITY), (1.0, 49.0, RIGHT_MOBILITY),
+            (-1.0, -100.0, LEFT_MOBILITY), (1.0, -100.0, RIGHT_MOBILITY),
+            (-7.0, 65.0, LEFT_ARM), (7.0, 65.0, RIGHT_ARM),
+            (-6.0, 65.0, TORSO), (6.0, 65.0, TORSO), (0.0, 65.0, TORSO),
+            (0.0, 50.0, TORSO), (0.0, 86.0, TORSO), (7.0, 86.0, RIGHT_ARM),
+            (0.0, 0.0, RIGHT_MOBILITY),
+        ] {
+            assert_eq!(part(x, z), expected, "x {x}, z {z}");
+        }
+    }
+
+    #[test]
+    fn player_capsule_sides_follow_heading() {
+        use fnv_game::combat::{LEFT_ARM, LEFT_MOBILITY, RIGHT_ARM, RIGHT_MOBILITY};
+        for (heading, right) in [(std::f32::consts::FRAC_PI_2, [0.0, -8.0]), (std::f32::consts::PI, [-8.0, 0.0])] {
+            for (side, arm, leg) in [(1.0, RIGHT_ARM, RIGHT_MOBILITY), (-1.0, LEFT_ARM, LEFT_MOBILITY)] {
+                for (z, expected) in [(65.0, arm), (25.0, leg)] {
+                    assert_eq!(player_hit_condition([right[0] * side, right[1] * side, z], [0.0; 3], 100.0, 10.0, heading), expected);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn player_shot_head_multiplier_and_blocked_blow_limb_damage() {
+        let bp = BodyPart { damage_mult: 2.0, health_percent: 20, actor_value: Some("Perception Condition".into()), part_type: Some("Head 1".into()), ..Default::default() };
+        let w = WeaponStats { base_damage: 16, limb_dmg_mult: 1.0, ..Default::default() };
+        assert_eq!(bp.hit_part().damage_mult, 2.0);
+        assert_eq!(bp.location(), 1);
+        let hit = |part| damage::hit(&Rules::defaults(), &CombatTuning::default(), &HitInput { weapon: &w, projectiles: 1, condition: 1.0, ammo_effects: &[], part, power: 1.0 }, &Attacker::default(), &Target::default(), &NoPerks, &NoPerks, 1.0);
+        let mut d = hit(bp.hit_part());
+        let body = hit(HitPart::default());
+        assert!(body.dealt > 0.0);
+        assert_eq!(d.dealt, body.dealt * 2.0);
+        assert_eq!(limb_hit(Some(&bp), &d, &w).unwrap().damage, f64::from(body.dealt));
+        // [design: actor_attacks] Blows keep the default part and use damage left after blocking.
+        d.part_mult = HitPart::default().damage_mult;
+        d.dealt = damage::against_block(&CombatTuning::default(), 16.0, false).0;
+        assert_eq!(limb_hit(Some(&bp), &d, &w).map(|l| l.damage), (d.dealt > 0.0).then_some(f64::from(d.dealt)));
+        d.dealt = 0.0;
+        assert!(limb_hit(Some(&bp), &d, &w).is_none());
+        assert!(limb_hit(None, &d, &w).is_none());
+    }
 
     #[test]
     fn npc_weapons_wear_only_with_their_own_damage_to_weapon_mult() {

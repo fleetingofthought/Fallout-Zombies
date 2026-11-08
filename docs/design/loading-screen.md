@@ -87,6 +87,56 @@ A travel asked for under it goes out behind it and is waited for too.
 - [hypothesis] The original never shows the world before its scripts run: it reads the
   plugins, scripts and all, before the main menu.
 
+[design: `engine/nvforever/src/pipboy_arm.rs`, `player_body.rs`,
+`engine/nvf-play/src/pipboy.rs`, `loading.rs`; #1803] Once the start's picture hold is
+released and the real first-person rig exists, one hidden Pip-Boy warm-up borrows that
+rig at the raise clip's hold pose, swaps the screen/glare materials and activates the
+existing image camera. Without a worn Pip-Boy it warms only that camera and page. It
+draws STATS Status under the cover, since ITEMS needs an open inventory, then restores
+the player's page and STATS tab (`pipboy/items.rs::draw`, `pipboy/stats/mod.rs`). It
+opens no inventory or script menu and borrows no player POV, weapon or input state.
+The temporary animator pose is applied only after the normal body has supplied those
+states. Transforms, root visibility and only the warm-up's culling overrides are restored
+before the next body tick; materials and the inactive image camera follow in that tick's
+UI pass. Loading waits explicitly for this teardown as well as its existing pipeline gate.
+
+[design: `engine/nvforever/src/pipboy_arm.rs`, `pipboy_ready.rs`; #1803]
+The start's hidden interval has a four-render-report floor and a 250 ms wall-clock
+budget, followed by teardown. It waits for submission, not the global busy pipeline
+count: this screen already owns the compilation wait. If submission is incomplete at
+the budget, the rig stays cold. A first visible device opening verifies its own main
+queue, prepared materials, bind groups and main/prepass pipelines behind the camera;
+Tab/Escape can cancel it through the normal key handler. At three seconds it raises
+anyway and logs incomplete readiness, bounding failed shaders/uploads or a lost rig.
+The first visible report and device access sound wait for hidden-pose restoration.
+Real held openings report their remembered script page immediately; startup stays silent.
+
+[observed 2026-11-07, commit `4fbe5750d`, 8 alternating fresh launches, one machine] 4/4 clean first openings enabled and 4/4 blue or partial with `NVF_PLAY_TEST_NO_PIPBOY_WARM=1`. Screen-down medians 7.68 s enabled (7.38-7.98) and 6.81 s disabled (6.41-6.96): about +0.9 s in these launches.
+
+[observed: 2026-11-07, commit `8fa3f8a04`, superseded by the set above] An earlier set of
+eight alternating launches gave the same 4/4 and 4/4, with noisier screen-down medians
+(8.84 s enabled, 8.27 s disabled). A later run without the vendored main-pass retries passed the same scenarios with a
+clean first opening, so those retries were dropped (docs/spec-notes/pipboy.md §8).
+
+[observed: earlier supplied first-open log and disabled twin, 2026-11-07]
+The failed first attempt capped its startup warm-up at 3011 ms and took 12.98/10.79
+seconds in one enabled/disabled pair. Zero new pipelines during the raise still left
+blue silhouettes in the first three shots. See `docs/spec-notes/pipboy.md` section 8.
+
+[design: `engine/nvforever/src/pipboy_arm.rs`, `pipboy_ready.rs`, `pipeline_gate.rs`]
+The warm-up log's total requests still include concurrent world work. `own rig pipelines`
+now names the actual main/prepass IDs for this rig. The existing image camera requests
+four compatible UI/sprite/postprocessing/tonemapping keys; shared IDs are not extra
+compilations. `NVF_PLAY_TEST_PIPBOY_DRAW=1` logs the first visible submission and changes
+thereafter, including opaque entries and material/binding readiness; no logging system
+is registered by default. `NVF_PLAY_TEST_NO_PIPBOY_WARM=1` remains the disabled twin.
+
+[design: `tools/smoke/scenarios.toml`, `engine/nvforever/src/pipboy_arm.rs`]
+Compare the four first-open shots and the restored-pose readiness report. The startup
+hold is bounded by 250 ms plus teardown and scheduling; a cold first device opening
+has a separate three-second cap. Check save load, no device, screen-menu frame, key
+cancellation and a cold New Game gift at 16:9 and 4:3 after this review revision.
+
 ## 2. What is on hold
 
 - Everything that runs only in `PlayState::Playing`: the player's input, movement and
@@ -138,6 +188,9 @@ A travel asked for under it goes out behind it and is waited for too.
 - Travel without `--play` (the free camera following `--npc-travel` NPCs) is unchanged:
   no loading screen.
 - The game's rules for choosing a screen are open (spec note §3).
+- Whether a travel's screen should wait for the sun's shadow pipelines is open (#1732): test
+  aid `NVF_PLAY_TEST_TRAVEL_SKIP_SUN_SHADOWS=1` has it not wait, so that both can be measured
+  (`engine/nvforever/src/pipeline_gate.rs`, `sun_shadow`). The start's screen always waits.
 - Test aid: `NVF_PLAY_TEST_LOADING_SHOT=<png>` saves the window when the travel goes out
   (the screen is up); later screens of the run go to `<name>-2.png`, and so on.
 
@@ -152,3 +205,8 @@ A travel asked for under it goes out behind it and is waited for too.
   and the emblem's place at 1280x720 and 1280x1024, its turning).
 - Smoke: `loading-screen-look`.
 - In the game (owner's data): Doc Mitchell's front door, both ways; see the pull request.
+- Where a start's first seconds go (`engine/nvforever/src/start_times.rs`, every run): `start:
+  Startup <s> s; frame 1 <s> s: <s> s before Update, <s> s in Update, <s> s after it` and
+  `start: first render frame finished <s> s after frame 1 ended`. For the systems inside
+  them: a `--features profile` build with `NVF_PLAY_TEST_PROFILE=1`, whose first `profile:`
+  line covers the first frames.

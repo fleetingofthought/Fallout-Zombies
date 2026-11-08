@@ -1,0 +1,377 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o26_value",
+ "title": "Issue #982: a Varmint Rifle's value (ShowOff GetCalculatedItemValue on the player's inventory reference) with each set of its three mods (SetWeaponRefModFlags) at 100/75/50/25 % condition; values in the player's Variable01-05 (value, mod flags, condition fraction, base value, max condition)",
+ "save": "nvfairport",
+ "defaults": {
+  "fields": "fight",
+  "every": 2,
+  "depth": 0,
+  "settle_frames": 120,
+  "hours": 0.12,
+  "max_actors": 1,
+  "console_first": [
+   "CloseAllMenus"
+  ],
+  "extra_header": [
+   [
+    "v1",
+    "num",
+    "player.GetAV Variable01"
+   ],
+   [
+    "v2",
+    "num",
+    "player.GetAV Variable02"
+   ],
+   [
+    "v3",
+    "num",
+    "player.GetAV Variable03"
+   ],
+   [
+    "v4",
+    "num",
+    "player.GetAV Variable04"
+   ],
+   [
+    "v5",
+    "num",
+    "player.GetAV Variable05"
+   ],
+   [
+    "v6",
+    "num",
+    "player.GetAV Variable06"
+   ],
+   [
+    "v7",
+    "num",
+    "player.GetAV Variable07"
+   ],
+   [
+    "v8",
+    "num",
+    "player.GetAV Variable08"
+   ],
+   [
+    "v9",
+    "num",
+    "player.GetAV Variable09"
+   ],
+   [
+    "v10",
+    "num",
+    "player.GetAV Variable10"
+   ]
+  ]
+ },
+ "sessions": [
+  {
+   "name": "rifle2",
+   "do": [
+    "player.removeitem 0007EA24 99",
+    "player.additem 0007EA24 1",
+    "player.setav variable01 0",
+    "player.setav variable06 0",
+    "player.setav variable07 0",
+    "player.setav variable08 0",
+    "player.setav variable09 0",
+    "player.setav variable10 0"
+   ],
+   "timed": [
+    {
+     "after": 5,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase",
+       "float fA"
+      ],
+      "names": [
+       "0x0007EA24"
+      ],
+      "lines": [
+       "let rItem := player.GetFirstRefForItem {0}",
+       "player.SetAV Variable06 1"
+      ]
+     }
+    },
+    {
+     "after": 6,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase",
+       "float fA"
+      ],
+      "names": [
+       "0x0007EA24"
+      ],
+      "lines": [
+       "set rItem to player.GetFirstRefForItem {0}",
+       "player.SetAV Variable07 1"
+      ]
+     }
+    },
+    {
+     "after": 7,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase",
+       "float fA"
+      ],
+      "names": [],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "let rItem := player.GetFirstRefForItem rBase",
+       "player.SetAV Variable08 1"
+      ]
+     }
+    },
+    {
+     "after": 8,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase",
+       "float fA"
+      ],
+      "names": [
+       "0x0007EA24"
+      ],
+      "lines": [
+       "let fA := GetValueAlt {0}",
+       "player.SetAV Variable09 1"
+      ]
+     }
+    },
+    {
+     "after": 9,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase",
+       "float fA"
+      ],
+      "names": [],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "let fA := GetValueAlt rBase",
+       "player.SetAV Variable10 1"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase",
+       "float fA"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "if rItem != 0",
+       "  let fA := rItem.GetCalculatedItemValue",
+       "  player.SetAV Variable01 fA",
+       "  let fA := rItem.GetWeaponRefModFlags",
+       "  player.SetAV Variable02 fA",
+       "  let fA := rItem.GetItemRefCurrentHealth 1",
+       "  player.SetAV Variable03 fA",
+       "  let fA := rItem.GetItemRefCurrentHealth 2",
+       "  player.SetAV Variable05 fA",
+       "endif",
+       "let fA := GetValueAlt rBase",
+       "player.SetAV Variable04 fA"
+      ]
+     }
+    },
+    {
+     "after": 30,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 1",
+       "rItem.SetItemRefCurrentHealth 1 1"
+      ]
+     }
+    },
+    {
+     "after": 55,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 2",
+       "rItem.SetItemRefCurrentHealth 1 1"
+      ]
+     }
+    },
+    {
+     "after": 80,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 4",
+       "rItem.SetItemRefCurrentHealth 1 1"
+      ]
+     }
+    },
+    {
+     "after": 105,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 3",
+       "rItem.SetItemRefCurrentHealth 1 1"
+      ]
+     }
+    },
+    {
+     "after": 130,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 7",
+       "rItem.SetItemRefCurrentHealth 1 1"
+      ]
+     }
+    },
+    {
+     "after": 155,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 0",
+       "rItem.SetItemRefCurrentHealth 1 1"
+      ]
+     }
+    },
+    {
+     "after": 180,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 0",
+       "rItem.SetItemRefCurrentHealth 0.5 1"
+      ]
+     }
+    },
+    {
+     "after": 205,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 7",
+       "rItem.SetItemRefCurrentHealth 0.5 1"
+      ]
+     }
+    },
+    {
+     "after": 230,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 0",
+       "rItem.SetItemRefCurrentHealth 0.25 1"
+      ]
+     }
+    },
+    {
+     "after": 255,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 7",
+       "rItem.SetItemRefCurrentHealth 0.25 1"
+      ]
+     }
+    },
+    {
+     "after": 280,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 0",
+       "rItem.SetItemRefCurrentHealth 0.75 1"
+      ]
+     }
+    },
+    {
+     "after": 305,
+     "script": {
+      "decls": [
+       "ref rItem",
+       "ref rBase"
+      ],
+      "lines": [
+       "let rBase := GetFormFromMod \"FalloutNV.esm\" \"7EA24\"",
+       "set rItem to player.GetFirstRefForItem rBase",
+       "rItem.SetWeaponRefModFlags 7",
+       "rItem.SetItemRefCurrentHealth 0.75 1"
+      ]
+     }
+    }
+   ],
+   "note": "each change 25 samples apart from sample 30: flags 1,2,4,3,7,0 at full condition, then 0/7 at 50 %, 25 %, 75 %"
+  }
+ ]
+}

@@ -38,6 +38,17 @@ engine if needed, and delete the item here.
   `SetNumericINISetting "bGeneralSubtitles:Interface" 1` showed no subtitles; a timed
   cleanup by sample count can miss a session's end (samples run 15-60 a second) and
   `GameHour >= 10.13` fired at once (sessions start near 10.1, not 10.0).
+- **Observer notes from o26 (2026-11-06):** sessions of one campaign run in one game, one
+  after another: the save is loaded once, so each session starts where the last left
+  off (reset in a `timed` item). A `timed` script naming a ref variable `rW` or `rO`
+  did not compile ("script did not compile" for every hook), the same lines with
+  `rItem`, `rBase` did (like `fW` before). Values a script works out go to the header
+  through the player's `Variable01`-`Variable10` (`player.SetAV VariableNN x`, read as
+  `player.GetAV VariableNN`); they come back as whole numbers. Real time from a header:
+  `floor(days) × 24 + hour` (GameDaysPassed is fractional). `IsHardcore` and
+  `SetHardcore` need `player.` in a script. The capture job's `query` steps with a full
+  script all failed again (plugin version 10, o26_setav steps), so read through the
+  observer.
 - **Screenshots or video** (window in front, both locks): 7 (casino menus by key taps),
   12 (Ringo, Nash, Red Lucy, Doc Mitchell: nvftest/nvfdoc have them), 16, 17, 26, 27, 54.
 
@@ -131,10 +142,21 @@ engine if needed, and delete the item here.
    10mm Pistol, three runs to the player's death, 38 hits) [observed]: each body hit
    took 16.06 Health; the arm or leg hit lost the same 16.06 of its condition, the torso
    (EnduranceCondition) 6.69 (0.4167 of it); a head hit took 32.12 Health and 20.075
-   PerceptionCondition (0.625 of the Health lost, as on one larger 76.12 head hit). So
-   nothing halved arm and leg damage here; whether ours' `fCombatPlayerLimbDamageMult`
-   halving is cancelled by body-part multipliers is open (#1345). The lead-pipe trooper
-   never landed a blow in 0.15 h (no data).
+   PerceptionCondition (0.625 of the Health lost); one larger head hit took 76.12
+   Health and 47.575 PerceptionCondition. Maximum Health 200 remains [hypothesis]:
+   the run did not record base Health. At 200, with DefaultBodyPartData's shares
+   (arms and legs 25 %, torso 60 %, head 20 %, ×2 Health) and Limb Dmg Mult 1,
+   `damage before the part multiplier × 1 × 0.5 × 100 / (200 × part health % / 100)`
+   gives 16.06, 6.69, 20.075 and 47.575 [design: `Game::damage_limb`, `limb_hit`,
+   crippled-limbs.md §5]. The part ratios follow from the shares alone: nothing
+   cancels the halving, and the existing formula needs no change under that Health
+   hypothesis. Pinned by a synthetic 200-Health player test (#1345).
+   Still open: **how does the original choose the part on the player's capsule,
+   and what condition and Health do blows take?** Record base Health, hit point,
+   facing, GetHitLocation and all six conditions around shots and blows. NVForever's
+   capsule bands and unchanged melee Health multiplier are [hypothesis]
+   (combat-rules.md §12). The lead-pipe trooper never landed a blow in 0.15 h
+   [observed: o17_air], so that run gave no melee data.
 4. **Hardcore needs and waiting.** Partly answered 2026-10-31 (o7_00, o7_05, owner save
    nvfHardcore, TimeScale 30, about 59 frames a second):
    - The needs rise at our rates [observed]: Dehydration 2 every 0.168 game hours
@@ -145,7 +167,11 @@ engine if needed, and delete the item here.
      [observed, unexplained; one case].
    - `IsHardcore` read 0 in this Hardcore save, so it does not tell whether Hardcore is
      on. SetHardcore 1 on nvfairport still did nothing: the needs stayed 0 for two hours
-     (o6_00-01).
+     (o6_00-01). Explained 2026-11-06 (o26_stim): both need the player as calling
+     reference in a script. `IsHardcore` alone does not compile ("requires a calling
+     reference") and `SetHardcore 1` alone fails; `player.IsHardcore` reads 1 on
+     `nvfHardcore`, and `player.SetHardcore 1` / `0` switches it on `nvfairport` and
+     `nvfHardcore`. The needs-over-two-hours run could be redone that way.
    - Beer and Nuka-Cola, drunk by EquipItem, raised Dehydration by no more than the
      normal rate over 11 s (14, 14, 15 and 15, 15, 16) [observed]. The job had `tgm` on
      at the time (o7_00 steps 6 to 101; it went off before the Stimpak) [observed: the
@@ -1122,25 +1148,6 @@ The numbers above stay put so links to them hold; each item here gives its own p
     off the condition from a share of the limb's pool (of maximum Health), and whether the
     player's limbs take `fCombatPlayerLimbDamageMult`.
 
-## Added 2026-11-03 (a Stimpak's Hardcore effects outside Hardcore, issue #1438)
-
-76. **Does an aid effect whose conditions fail still count down its duration?** (P3;
-    aid-items.md §6.) The Stimpak's Health effects split by IsHardcore. NVForever now
-    holds a lasting effect whose conditions fail as inactive and lets its time run, so
-    outside Hardcore the Stimpak's 6 s heal over time is gone 6 s after the use
-    [hypothesis]. In the original (`nvfstrip`, Hardcore off): `player.damageav health
-    60`, use a Stimpak, wait 3 s, `SetHardcore 1` (or the settings switch), and log
-    `player.getav health` each second for 10 s: whether Health rises after Hardcore comes
-    on (the held effect taking hold) or not. Then again with 10 s between the use and
-    Hardcore on. Also whether STATS EFF lists the Stimpak at any point outside Hardcore.
-    The answer: the Health log and the EFF screenshots.
-    Tried 2026-11-06 (o25_stim, `nvfairport`), no answer: the observer's compiler refused
-    `IsHardcore` as a field ("Let fV := IsHardcore"), and the damage and the use ran
-    before the first sample (Health read 180 of 200 throughout both runs, before and after
-    `SetHardcore 1`). Next try: read Health in a `timed` script around the use, and check
-    that SetHardcore takes hold first (check 4 saw it do nothing on `nvfairport`), or start
-    from `nvfHardcore` and turn Hardcore off instead.
-
 ## Added 2026-11-03 (collision of animated objects, issue #1396)
 
 77. **Does an animated activator's collision move with it, keep its pose after a load,
@@ -1313,6 +1320,14 @@ The numbers above stay put so links to them hold; each item here gives its own p
     standing at a negative Health, and GetDead); on the lone NPC, the player's XP and karma
     before and after (is the kill anyone's?). Also: does Health stay negative or stop at 0?
     The answer: the logs.
+    Answered in part [observed: campaign o29_dmg, 2026-11-08, `nvfairport`, issue #1858]:
+    a lone trooper and the player both die in the next game loop, Health stays at the
+    negative value (-9949), OnDeath names no killer and karma does not move, as ours does
+    (unconscious.md §2.2). Still open: an essential NPC (SetEssential on a spawned leveled
+    trooper's base did not take; needs a save with a real essential NPC near) and the XP.
+    Trap: a session that kills the player loops, since the death reload reloads the save and
+    the plugin starts the pending job again; give it `--retries 0` and take its job file out
+    of `jobs\` once the first death is logged.
 
 ## Added 2026-11-04 (the container menu from its file, issue #1468)
 
@@ -1342,3 +1357,114 @@ The numbers above stay put so links to them hold; each item here gives its own p
     pipe swings still land (GetHealthPercentage or OnHit per swing, the player backing off
     5 units a swing). And a deathclaw (VCrTier4DeathClawMed) on the standing god-mode
     player again: o12_reach had one start at 88 units, far nearer than its RNAM 192 gives.
+
+## Added 2026-11-06 (observer batch o27: issues #970, #986, #1401)
+
+Answered [observed, 2026-11-06, `nvfairport`]: the light at an actor (#970, o27_light:
+the brightest channel of the sunlight outdoors, of the cell's ambient indoors;
+detection.md §3) and the tumbleweeds (#1401, o27_tumble: awake after a load, rolling
+north-north-west until they rest; wind.md §2). Open:
+
+93. **The light at an actor where something shades it, and a lamp's share.** (P3;
+    detection.md §3.) `player.GetActorLightAmount` at noon under a roof outdoors (the
+    Goodsprings gas station's canopy, SCOLgsGasStation at (-75584, 4562)), and indoors
+    at set distances from one lamp of known radius (a dark interior such as
+    SLGoodspringsCaveINT, which reads 36.08 away from its lamps). NVForever gives a
+    shaded target the weather's ambient and adds the lamps' brightest channel ×
+    (1 − (d/r)²) [hypothesis].
+    Lamp answered [observed: job o29_light, 2026-11-08]: a RedLight of radius 384 reads 100
+    to 192 units, about 96 at 256, 68 at 320 and only the ambient from 384 out; ours comes
+    within about 5 (detection.md §3). Shade still open: 14 spots around the gas station read
+    100, but which stood under the canopy is not known; take a frame at each next time.
+94. **Tumbleweeds against the wind's speed, and whether they start again.** (P3; wind.md
+    §4.) Force HVDustStorm (127) and then load the save (or `coc` away and back) so the
+    tumbleweeds wake under it; compare their speeds with o27_tumble's 150–210 units a
+    second under 50. Then watch one at rest for an hour of game time at TimeScale 30.
+95. **Holotapes: subtitles and the radio.** (P2; holotapes.md §3, #986.) Tried
+    2026-11-06 (o27_holotape, `nvfairport`): the job gives VMQ01BeagleJournalNote and
+    waits; the Pip-Boy was to be driven by hand (computer use) with the game's sound
+    recorded by loopback (the `soundcard` module records the default output device), but
+    the input was interrupted before the Pip-Boy opened, so the run was stopped. Still to
+    do: tune the Pip-Boy radio to Radio New Vegas, play the note from DATA > Misc, close
+    the Pip-Boy; screenshots during the tape show whether a subtitle is drawn (the
+    owner's INI has dialogue subtitles on, general subtitles off), and the recording
+    whether the radio goes quiet under the tape, ducks or plays on, and comes back
+    after. The plugin cannot pick a menu entry, so this needs the owner or hand input.
+
+## Added 2026-11-06 (observer batch o28, sound: issues #989, #990, #992)
+
+Answered in this batch (audio.md §15.5, §16.1): talking activators' lines are not
+filtered by the original and their files are already processed (#992); a creature's Idle,
+Aware and Attack sounds play only from clip keys, and the Securitrons' siren played in
+none of the five situations tried (#989); no shipped master sets an acoustic space's walla
+(#990). Tools for this batch (scratchpad, not committed): JIP `IsSoundPlaying <sound>
+<ref>` read every sample through the player's `Variable01`-`09`, and the WASAPI loopback
+recorded with Python `soundcard` (ffmpeg has no loopback device on this machine), fitted
+to the decoded file by cross-correlation and a per-band transfer estimate.
+
+96. **When does a Securitron sound its siren (`NPCSecuritronSiren`, CREA sound type 21)?**
+    (P3; audio.md §16.1.) Not on spawning, standing 20 s, `StartCombat`, an assault or
+    trespass alarm, nor while hurt to death (o28_creature_sounds, o28_creature_sounds2).
+    Left to try: a Strip Securitron reacting to a crime it sees for itself in `nvfstrip`
+    (the player shooting a Strip NPC by `FireWeapon`, IsSoundPlaying without a ref), a
+    Securitron switching to its Mk II (Lucky 38 upgrade), and the Hoover Dam battle's
+    Securitrons (VHDSecuritronBattle…). If none, it is unused data.
+97. **Does the original filter a helmet wearer's voice?** (P3; audio.md §15.5.) A line
+    said by an NPC given a power armour helmet (Modulates Voice) recorded on the loopback
+    beside the same line bare-headed, fitted to the file as o28_intercom was. Needs a
+    line the observer can make an NPC say with a known file (`SayTo player <topic>` with
+    a topic whose line has conditions only on the speaker).
+
+## Added 2026-11-06 (exploding pants, issue #1640)
+
+98. **A planted explosive: who dies, who panics, who sees.** (P3; pickpocket.md §5.)
+    Reverse-pickpocket while sneaking and unseen, each in its own run from a fresh load: (a)
+    a Pulse Grenade on an ordinary NPC (a Goodsprings settler): does it die? Note its
+    Health before and after; NVForever keeps it alive [hypothesis]. (b) The same on a
+    robot (a Protectron or Mister Handy): does it die? (c) A Frag Grenade on a child (Freeside
+    or Westside) and on an essential NPC (Sunny Smiles before Back in the Saddle, or Doc
+    Mitchell): does it go live (GetPlantedExplosive 1 after 0.1 s) and go off? Is it still
+    in their inventory afterwards? NVForever: neither goes live. (d) During the panic,
+    stand within 2 m in view with Sneak low: does the victim detect the player
+    (`GetDetected` on it, then hostility after the blast)? (e) The panic on a creature that
+    can be pickpocketed (a giant rat): does it play anything, does it stop, or does it go
+    on walking? (f) Seen by a third NPC halfway through the fuse, then hidden at the blast:
+    does that NPC turn hostile? NVForever counts it as a witness.
+
+## Added 2026-11-06 (the power fist's hand, issue #1586)
+
+99. **The power fist's hand on Veronica: what is left open.** (P3; actors.md §9.2.) Capture
+    `pf_h2h_rest3` (nvfairport, Veronica at her placed spot at the 188, power fist drawn
+    with SetAlert, AI off, first-person camera 110 units off in front, to her right and to
+    her side; brass knuckles the same way): the gauntlet sits on the forearm where
+    NVForever puts it. At its front the original shows the weapon's metal hand (the WEAP's
+    BIPL addon `ARMAPowerfist`), not her bare hand. Still to look at: the same with the
+    weapon holstered, and in the player's first person.
+
+## Added 2026-11-06 (burning in first person, issue #1772)
+
+100. **What does burning draw on the first-person arms?** (P2; effect-shaders.md §4.)
+    NVForever puts shader overlays only on the third-person body and leaves the
+    first-person arms alone [design: `effect_shaders.rs::play`]. Whether the original
+    puts Flames01's membrane, flames or add-on models on the arms is unconfirmed
+    [hypothesis]. Capture the same first-person view before and during
+    `player.PlayMagicShaderVisuals 0005F9B6`, with a weapon lowered and then raised;
+    switch to third person while it plays for comparison. Do the arms change colour,
+    carry flame sprites, or emit particles, and does switching perspective change that?
+    Answered in part 2026-11-06 (private job ov_burn, the Prospector Saloon) [observed]: with
+    the weapon holstered first person shows nothing of the burn, third person shows flames at
+    the head, and back in first person nothing again. The raised weapon's arms are still open.
+
+## Added 2026-11-07 (interior light direction, issue #1645)
+
+101. **Interior lighting: which way does the cell's directional light point, and does it
+    cast shadows?** (P3; world.md §8 "Interior cells".) NVForever reads XCLL's pitch as
+    the direction the light shines in (270 straight down) [hypothesis, from the templates'
+    values]; the azimuth's zero and sense are unknown, and whether the original draws
+    shadows from it at all is too (outdoors it casts no sun shadows from the world, world.md
+    §6). Capture GSGasStation (azimuth 180, pitch 250) at hour 12 from the door, looking
+    down at the tiled floor under the hanging lamps, then up at the ceiling: (a) are there
+    shadows under the lamps, the crates and the counter, or on the ceiling beside the
+    lamps, or none; (b) which side of the crates and counter is lit brighter (that gives
+    the azimuth). The same frame of a cell with azimuth 0 and pitch 270 (a cave on
+    CavesDefaultTemplate) shows whether straight down holds.

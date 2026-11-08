@@ -120,7 +120,7 @@ fn shape(code: u16, attributes: bool) -> Shape {
 
 // ---- the model -------------------------------------------------------------------------------
 
-/// The sheet the menu edits, and the one Reset goes back to.
+/// The sheet the menu edits, and the one it opened with, which Reset works from.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Sheet {
     Tags { now: TagSheet, start: TagSheet },
@@ -245,6 +245,11 @@ impl ListMenu {
         self.trait_sheet()?.traits.iter().position(|&t| t == key)
     }
 
+    /// [design] A skill row still on the tag sheet; attribute and trait sheets have none.
+    pub fn tag_row(&self, key: u16) -> Option<usize> {
+        match &self.sheet { Sheet::Tags { now, .. } => now.skills.iter().position(|&s| s == key), _ => None }
+    }
+
     /// Choose row `i` (pointer or keys), scrolling it into the list.
     pub fn select(&mut self, i: usize) {
         if i >= self.rows() {
@@ -305,11 +310,13 @@ impl ListMenu {
         }
     }
 
-    /// Reset: the sheet as the menu opened with it [hypothesis: the original's Reset
-    /// may clear every choice instead; not captured].
+    /// Reset: the tag-skill sheet clears every tag but the locked ones, whatever it opened
+    /// with [observed 2026-11-06: docs/spec-notes/chargen.md §3; hypothesis: the locked
+    /// ones, which no capture has seen]. The others go back to the sheet as the menu opened
+    /// with it [hypothesis: not captured].
     pub fn reset(&mut self) {
         match &mut self.sheet {
-            Sheet::Tags { now, start } => *now = start.clone(),
+            Sheet::Tags { now, start } => now.tagged = start.locked.clone(),
             Sheet::Traits { now, start, .. } => *now = start.clone(),
             Sheet::Special { now, start } => *now = *start,
         }
@@ -690,6 +697,27 @@ mod tests {
         assert!(!m.can_finish());
         assert_eq!((special_title(0, 1), special_title(1, 1)), ("ATTRIBUTES: 0/1 Points Assigned".to_string(), "ATTRIBUTES: 1/1 Points Assigned".to_string()));
         assert_eq!((special_counter(1), special_counter(0)), ("Distribute 1 Point".to_string(), String::new()));
+    }
+
+    fn tags(tagged: &[u16], locked: &[u16]) -> ListMenu {
+        let sheet = TagSheet { skills: vec![1, 2, 3, 4], tagged: tagged.iter().copied().collect(), count: 3, locked: locked.iter().copied().collect() };
+        ListMenu { code: menus::TAG_SKILLS, sheet: Sheet::Tags { now: sheet.clone(), start: sheet }, ..traits(0) }
+    }
+
+    #[test]
+    fn reset_clears_the_tags_it_opened_with_but_not_the_locked_ones() {
+        let tagged = |m: &ListMenu| match &m.sheet {
+            Sheet::Tags { now, .. } => now.tagged.iter().copied().collect::<Vec<_>>(),
+            _ => unreachable!(),
+        };
+        let mut m = tags(&[1, 2, 3], &[]);
+        assert!(m.can_finish());
+        m.reset();
+        assert_eq!(tagged(&m), Vec::<u16>::new());
+        assert!(!m.can_finish(), "Done dims at 0 of 3");
+        let mut m = tags(&[1, 2, 3], &[1, 2]);
+        m.reset();
+        assert_eq!(tagged(&m), vec![1, 2]);
     }
 
     #[test]

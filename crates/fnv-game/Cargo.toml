@@ -23,5 +23,12 @@ rand_chacha = "0.9"
 rayon = "1"
 tracing = "0.1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+# SUP's screenshots and QR codes (image_files.rs): PNG, the version the engine already
+# builds; QR codes for TextToQRCode (docs/design/dependencies.md).
+png = "0.18"
+qrcodegen = "1.8"
 # The runner's save_load op writes and reads the save container.
 fnv-save = { path = "../fnv-save" }
+
+[dev-dependencies]
+tracing-subscriber = "0.3"

@@ -50,7 +50,7 @@ pub enum RefSlot {
 }
 
 /// Where a unit lives. FormIDs are load-order (global) FormIDs.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[serde(tag = "owner", rename_all = "snake_case")]
 pub enum UnitOwner {
     /// A standalone `SCPT` record.
@@ -73,7 +73,7 @@ pub enum UnitOwner {
     Other { sig: String, form: u32, ordinal: u32 },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PackageEvent {
     Begin,

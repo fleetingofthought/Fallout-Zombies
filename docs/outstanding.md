@@ -75,8 +75,8 @@ From [status.md](status.md); the playthrough blockers above are not repeated.
   fit a free slot, attaching one uses it up and sets the weapon's mod flags (kept in
   saves), the player's figures and model in hand change; MenuMode 1061. ~~Modded models in the world and NPCs' hands, Decrease Weight's carried weight, rows
   picking units by mods~~ (#499), ~~projectile speed and ammo regeneration~~ (claude/em3, weapon-data-fields.md),
-  the mod shoot sounds (claude/e12-silencer-sounds, weapon-mods.md §7). Left (weapon-mods.md §6): a modded
-  weapon's value, NPCs' modded figures in combat, equip time, GetMenuTargetRef 1061. (The ITEMS page's DPS, ammo badge and Mod hint,
+  the mod shoot sounds (claude/e12-silencer-sounds, weapon-mods.md §7). ~~A modded weapon's value~~ (o26, #982). Left (weapon-mods.md §6):
+  NPCs' modded figures in combat, equip time, GetMenuTargetRef 1061. (The ITEMS page's DPS, ammo badge and Mod hint,
   the clickable Pip-Boy repair list, the +10 XP line and Locations Discovered are built,
   2026-10-19.)
 - **Audio and video**: spatial sinks; ~~holotapes~~ (built 2026-10-21, [holotapes](spec-notes/holotapes.md); left: subtitles, the JIP note functions, GetNoteRead); ~~reverb's SOUN `GNAM` attenuation~~ (built 2026-10-24, #667, audio.md §15.5), ~~voices in rooms~~ (built 2026-11-01, #987, audio.md §14.6); ~~a film's `muteAudio 0` (world sounds under a film)~~ (done 2026-10-21, [bink-films](spec-notes/bink-films.md) §2).

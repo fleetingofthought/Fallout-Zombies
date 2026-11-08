@@ -1,0 +1,2 @@
+; Runs after restore and before the first tick, while the saved fuse is still live.
+PrintC "nvf planted load live=%g dead=%g count=%g", (GSChetRef.GetPlantedExplosive), (GSChetRef.GetDead), (GSChetRef.GetItemCount WeapNVDynamite)

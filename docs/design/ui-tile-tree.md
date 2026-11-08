@@ -300,7 +300,8 @@ at the same view size). That is the work of each migration task, not guessed up 
      `HUDMainMenu` (T12), `MessageMenu` and `QuantityMenu` (T15a), `SleepWaitMenu` (T15b) and
      `ContainerMenu` (T15c, a candidate: barter-menu.md §8; its prompt follows from
      `QuantityMenu`'s file with no switch of its own, while the container is so drawn) are
-     acted on, `TraitMenu` (chargen.md §4.1), `DialogMenu` (its contract and fallback:
+     acted on, and `BarterMenu` (candidate: barter-menu.md section 9, with the same
+     prompt rule) [design: `tiles/barter_menu.rs`]. Also `TraitMenu` (chargen.md §4.1), `CharGenMenu` (tag skills only, chargen.md §3.1), `DialogMenu` (its contract and fallback:
      spec-notes/dialogue-menu.md §6), and `StatsMenu` for the Pip-Boy's S.P.E.C.I.A.L. tab
      alone, painted in the Pip-Boy's image (issue #1513, pipboy.md §5.1.1).
    - The game rules stay where they are (`menu::model`, `pipboy::items`,

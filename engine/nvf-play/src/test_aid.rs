@@ -300,6 +300,11 @@ pub fn real_input(rest: &str) -> Result<(RealInput, f32), String> {
         "down" => RealInput::Key(KeyCode::ArrowDown),
         "left" => RealInput::Key(KeyCode::ArrowLeft),
         "right" => RealInput::Key(KeyCode::ArrowRight),
+        // [design] Names for the item-menu smoke scenarios' existing keyboard controls.
+        "pageup" => RealInput::Key(KeyCode::PageUp),
+        "pagedown" => RealInput::Key(KeyCode::PageDown),
+        "bracketleft" => RealInput::Key(KeyCode::BracketLeft),
+        "bracketright" => RealInput::Key(KeyCode::BracketRight),
         "wheel-up" => RealInput::Wheel(1.0),
         "wheel-down" => RealInput::Wheel(-1.0),
         "mouse-left" => RealInput::Mouse(MouseButton::Left),
@@ -819,6 +824,9 @@ mod tests {
     #[test]
     fn the_key_aid_names_arrows_and_wheel_notches() {
         assert_eq!(real_input("down"), Ok((RealInput::Key(KeyCode::ArrowDown), 0.0)));
+        for (name, key) in [("pageup", KeyCode::PageUp), ("pagedown", KeyCode::PageDown), ("bracketleft", KeyCode::BracketLeft), ("bracketright", KeyCode::BracketRight)] {
+            assert_eq!(real_input(name), Ok((RealInput::Key(key), 0.0)));
+        }
         assert_eq!(real_input("left:0.5"), Ok((RealInput::Key(KeyCode::ArrowLeft), 0.5)));
         assert_eq!(real_input("wheel-down"), Ok((RealInput::Wheel(-1.0), 0.0)));
         assert_eq!(real_input("wheel-up"), Ok((RealInput::Wheel(1.0), 0.0)));

@@ -129,6 +129,23 @@ const ENEMY_METER_GAP: f32 = 2.0;
 /// Texture columns scaled to the measured 500-wide bracket [design; observed: private
 /// job hud_enemy3, g2_gecko_half]. Previously unscaled (56, 307).
 const ENEMY_MARKS: (f32, f32) = (56.0 * 500.0 / 512.0, 307.0 * 500.0 / 512.0);
+/// The enemy bar's visible middle in `EnemyHealth`: halfway between the bracket's corner
+/// marks, where its ticks are centred. The name and the Living Anatomy line are centred
+/// here, not on the piece's width (175), which put them right of the bar (#1826) [design].
+const ENEMY_MIDDLE: f32 = ENEMY_BRACKET_AT.x + (ENEMY_MARKS.0 + ENEMY_MARKS.1) / 2.0;
+
+/// The left `x` that centres a line's drawn letters on `middle`: from the first letter's
+/// picture to the end of the last one's, leaving out the empty room after the last letter
+/// that `Line::width` counts (and the room before the first) [design: #1826].
+fn centred_x(font: &Font, line: &fnv_font::Line, middle: f32) -> f32 {
+    let drawn = line.glyphs.iter().map(|p| (p, font.glyph(p.code))).filter(|(_, g)| g.drawn());
+    let (left, right) = drawn.fold((f32::INFINITY, f32::NEG_INFINITY), |(l, r), (p, g)| (l.min(p.x + g.before), r.max(p.x + g.before + g.width)));
+    if left > right {
+        // Nothing drawn (stand-in font, spaces): its set width.
+        return middle - line.width / 2.0;
+    }
+    middle - (left + right) / 2.0
+}
 
 // ---- set here; the files leave these to the game's code [hypothesis, §4] --------------
 
@@ -988,7 +1005,7 @@ fn texts(
         if let Ok(e) = name.single() {
             commands.entity(e).despawn_related::<Children>().with_children(|p| {
                 if let Some(line) = enemy.as_deref().and_then(|n| font.lines(n, None).into_iter().next()) {
-                    set_line(p, face_, &line, (ENEMY.x - line.width) / 2.0, ENEMY_NAME_BASE, crime_colour());
+                    set_line(p, face_, &line, centred_x(font, &line, ENEMY_MIDDLE), ENEMY_NAME_BASE, crime_colour());
                 }
             });
             shown.1 = enemy;
@@ -1000,7 +1017,7 @@ fn texts(
         if let Ok(e) = stats.single() {
             commands.entity(e).despawn_related::<Children>().with_children(|p| {
                 if let Some(line) = anatomy.as_deref().and_then(|n| font.lines(n, None).into_iter().next()) {
-                    set_line(p, face_, &line, (ENEMY.x - line.width) / 2.0, ENEMY_STATS_BASE, crime_colour());
+                    set_line(p, face_, &line, centred_x(font, &line, ENEMY_MIDDLE), ENEMY_STATS_BASE, crime_colour());
                 }
             });
             shown.3 = anatomy;
@@ -1259,5 +1276,34 @@ mod tests {
         let room = ENEMY_MARKS.1 - ENEMY_MARKS.0;
         let (lefts, width) = tick_lefts(room, TICK_BLOCK, ENEMY_PIPS);
         assert!((lefts[ENEMY_PIPS - 1] + width - room).abs() < 0.6);
+    }
+
+    /// The enemy's name, and the Living Anatomy line, stand centred on its tick row, not
+    /// on the piece's width, whatever their length (#1826).
+    #[test]
+    fn the_enemy_name_is_centred_on_its_ticks() {
+        // Letters with room before and after their pictures, as the game's fonts have.
+        let mut font = plain_font(36.0, 0.0);
+        for g in font.glyphs.iter_mut().skip(0x21).take(0x5E) {
+            *g = fnv_font::Glyph { width: 10.0, height: 20.0, before: 1.0, after: 4.0, ascent: 16.0, ..*g };
+        }
+        font.glyphs[b' ' as usize].after = 6.0;
+        let from = ENEMY_BRACKET_AT.x + ENEMY_MARKS.0;
+        let (lefts, width) = tick_lefts(ENEMY_MARKS.1 - ENEMY_MARKS.0, TICK_BLOCK, ENEMY_PIPS);
+        let ticks = from + (lefts[0] + lefts[ENEMY_PIPS - 1] + width) / 2.0;
+        assert!((ticks - ENEMY_MIDDLE).abs() < 0.5, "ticks {ticks} middle {ENEMY_MIDDLE}");
+        for name in ["Fiend", "Gecko", "Cazador", "NCR Trooper", "Legion Veteran Decanus", "HP:120 DT:4"] {
+            let line = font.lines(name, None).remove(0);
+            let x = centred_x(&font, &line, ENEMY_MIDDLE);
+            let first = &line.glyphs[0];
+            let last = line.glyphs.last().unwrap();
+            let left = x + first.x + font.glyph(first.code).before;
+            let right = x + last.x + font.glyph(last.code).before + font.glyph(last.code).width;
+            assert!(((left + right) / 2.0 - ticks).abs() < 0.5, "{name}: {left}..{right} against {ticks}");
+        }
+        // Nothing drawn: its set width is centred.
+        let blank = font.lines("x", None).remove(0);
+        let x = centred_x(&plain_font(36.0, 15.0), &blank, ENEMY_MIDDLE);
+        assert_eq!(x, ENEMY_MIDDLE - blank.width / 2.0);
     }
 }

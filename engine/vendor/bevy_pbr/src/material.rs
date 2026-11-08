@@ -1184,6 +1184,14 @@ pub(crate) fn specialize_material_meshes(
         .retain(|view, _| all_views.contains(view));
 }
 
+/// Optional observation of selected main-pass entries, retained just like the phases.
+/// [design: nvforever/pipboy_ready.rs, #1803] No resource is installed by Bevy itself.
+#[derive(Resource, Default)]
+pub struct MaterialQueueProbe {
+    pub watched: MainEntityHashSet,
+    pub queued: HashMap<RetainedViewEntity, MainEntityHashMap<(CachedRenderPipelineId, bool)>>,
+}
+
 /// For each view, iterates over all the meshes visible from that view and adds
 /// them to [`BinnedRenderPhase`]s or [`SortedRenderPhase`]s as appropriate.
 pub fn queue_material_meshes(
@@ -1208,7 +1216,9 @@ pub fn queue_material_meshes(
     )>,
     specialized_material_pipeline_cache: ResMut<SpecializedMaterialPipelineCache>,
     dirty_specializations: Res<DirtySpecializations>,
-    mut mesh_instances_queued_this_iteration_scratch_space: Local<MainEntityHashSet>,
+    (mut mesh_instances_queued_this_iteration_scratch_space, mut probe): (
+        Local<MainEntityHashSet>, Option<ResMut<MaterialQueueProbe>>,
+    ),
 ) {
     for (view, visible_entities, has_transmission) in &views {
         let (
@@ -1240,6 +1250,11 @@ pub fn queue_material_meshes(
         for &main_entity in dirty_specializations
             .iter_to_dequeue(view.retained_view_entity, render_visible_mesh_entities)
         {
+            if let Some(probe) = probe.as_mut() {
+                if let Some(queued) = probe.queued.get_mut(&view.retained_view_entity) {
+                    queued.remove(&main_entity);
+                }
+            }
             opaque_phase.remove(main_entity);
             alpha_mask_phase.remove(main_entity);
             transmissive_phase.remove(Entity::PLACEHOLDER, main_entity);
@@ -1453,6 +1468,14 @@ pub fn queue_material_meshes(
                         // Filled in later.
                         distance: 0.0,
                     });
+                }
+            }
+            if let Some(probe) = probe.as_mut() {
+                if probe.watched.contains(visible_entity) {
+                    probe.queued.entry(view.retained_view_entity).or_default().insert(
+                        *visible_entity,
+                        (pipeline_id, matches!(render_phase_type, RenderPhaseType::Opaque)),
+                    );
                 }
             }
         }

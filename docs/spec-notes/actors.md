@@ -2148,6 +2148,35 @@ Per prefix (length of equip / unequip in seconds; where the weapon hangs, §9.2)
   clip's and the change came at the `prn:` keys: NPCs held the baseball bat end over
   end (hung from the left hand, owner's playtest 2026-10-16), and every stance's weapon
   sat in the wrong place between the `prn:` key and `Attach` / `Detach`.
+- **Hand-to-hand weapons and the hand** (#1586). The `h2h` clips' `Weapon` track is
+  the same in all four (`h2hequip`, `h2haim`, `h2hunequip`, `h2hholster`): (29.29, 0,
+  −6.50) with no rotation, under `Bip01 R ForeTwist`, which sits at the elbow ((0, 0, 0)
+  under `Bip01 R Forearm`; the hand is 18.13 along x). `powerfistrigid.nif`'s main shape
+  runs x −28.5…−8.3 in the model's frame. So the gauntlet goes from the elbow to just past
+  the wrist, and the hand would show in front of it [observed: `fnvtool nif decode`].
+  The weapon also names its own hand: WEAP `BIPL` "Biped Model List" [documented: xEdit
+  WEAP] is a form list of armour addons. `WeapPowerFistVeronica` (0x00176E5A) →
+  `WeaponPowerfist` → `ARMAPowerfist` (0x00044947, BMDT Right Hand, `PowerFist.NIF`: one
+  shape skinned to the hand bones, dismember partition 5, a metal hand). `WeapBrassKnuckles`
+  (0x00004324) → `WeaponBrassKnuckles` → `ARMABrassKnuckles` (Right Hand,
+  `BrassKnuckles.NIF` / `BrassKnucklesf.NIF`: the knuckles and a `RightHand:0` skin,
+  both skinned). The Ballistic Fist, the zap gloves and the Displacer Gloves name theirs
+  the same way [observed: FalloutNV.esm; `fnvtool actor appearance --all` draws such a
+  hand on 25 placed NPCs]. In the original, Veronica with the power fist drawn shows the
+  metal hand at the gauntlet's front and no bare hand, and the rigid gauntlet sits where
+  NVForever puts it [observed: capture `pf_h2h_rest3`, 2026-11-06, nvfairport save, her
+  placed spot at the 188, first-person camera 110 units in front and to her side, frames
+  private]. Rule (`fnv_actor::Resolver`): a held weapon's addons are worn like an outfit's.
+  They cover their slots (the race's right hand is not drawn), and a worn addon that
+  shares any slot with them (an outfit's right glove, or one glove model for both hands)
+  gives way to them, one hand model per hand; the race's bare hand shows in a slot the
+  given-way addon left [observed for the drawn power fist; hypothesis: the same while it
+  is holstered, since h2h weapons hang on the forearm either way; hypothesis: the
+  both-hands case, no such addon checked]. An NPC is dressed again when its weapon
+  changes to one with other addons (`outfits::same_worn`). The player's third-person body
+  wears them too. The first-person arms keep the bare hand [hypothesis: the first-person
+  weapon model is drawn over it, as before]. The placement was left as it was: the
+  frames show the gauntlet in the same place in both.
 - That NPCs show holstered weapons at the pelvis or on the back is [hypothesis, from the
   holster clips]; an in-game screenshot of an NPC with a holstered pistol and one with a
   rifle would settle it.

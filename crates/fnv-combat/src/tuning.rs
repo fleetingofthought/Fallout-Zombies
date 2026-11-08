@@ -323,6 +323,15 @@ pub struct CombatTuning {
     pub explosion_edge: f32,
     /// The share of its speed a lobber keeps at a bounce, before its PROJ's Bouncy Mult.
     pub default_bounce: f32,
+    /// A thrown grenade's contacts (combat-rules.md §5): the share of the speed into a
+    /// surface it keeps, out of it (the game setting `fGrenadeRestitution`, 0.01 in
+    /// FalloutNV.esm [observed]; its meaning [hypothesis: from its name]); the share of the
+    /// speed along the surface it keeps when it first lands; and how fast its roll slows,
+    /// per second (the speed falls by e^(-rate × time)) [observed: both fitted to the
+    /// original's frag grenade, o26_gl frag0].
+    pub grenade_restitution: f32,
+    pub grenade_roll_keep: f32,
+    pub grenade_roll_damping: f32,
     /// Reload when the trigger is pulled on an empty magazine and ammo is carried.
     pub auto_reload: bool,
     /// Reload time when no reload clip length is known, seconds.
@@ -392,6 +401,9 @@ impl Default for CombatTuning {
             melee_arc_deg: 35.0,
             explosion_edge: 0.25,
             default_bounce: 0.3,
+            grenade_restitution: 0.01,
+            grenade_roll_keep: 0.9,
+            grenade_roll_damping: 0.66,
             auto_reload: true,
             fallback_reload: 2.0,
             power_hold: 0.4,

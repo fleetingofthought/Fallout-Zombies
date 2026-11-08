@@ -81,7 +81,17 @@ on screen).
    fatigue only].
    **DamageActorValue** on Health that leaves an actor at 0 or less: a non-essential NPC
    dies, an essential actor is knocked out as by KillActor, and the player dies
-   [hypothesis: observer-checks.md check 89 asks]. The only sighting is check 22: two super
+   [non-essential NPC and player: observed, below; the essential actor: hypothesis,
+   observer-checks.md check 89]. In the original, an unarmed NCR trooper alone on the
+   runway with nobody shooting (Health 50), given `DamageAV Health 9999` by script, read
+   GetDead 1 in the very next game loop, Health **-9949** from then on (no floor at 0), and
+   OnDeath named no killer (0); the player's karma did not move. The player without god
+   mode, given the same, read GetDead 1 and Health -9799 at once, OnDeath fired for the
+   player with no killer, and the game went to its death reload. DamageAV on a corpse
+   still lowers its Health (-9949 to -19948) [observed: campaign o29_dmg, 2026-11-08,
+   `nvfairport`]. `SetEssential` on a spawned leveled trooper's base did not stop it dying
+   the same way, so it tells nothing of an essential actor [observed, same run]. XP was not
+   read. The only sighting is check 22: two super
    mutants hurt by DamageAV 300 died [observed, run o21_air: not isolated from the NCR
    troopers firing in the scene, no GetDead read, their Health not known to be below 300].
    Health stays where the damage left it, with no floor of 1, and an essential actor still

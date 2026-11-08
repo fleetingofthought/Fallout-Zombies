@@ -196,7 +196,7 @@ pub fn set_faction_reaction(g: &mut Game, _ctx: &Ctx, a: &Args) -> Result<Value,
 // ---- Cells and the world ----------------------------------------------------------------
 
 /// Whether `cell` is an exterior cell (in a worldspace).
-fn exterior(g: &Game, cell: FormId) -> bool {
+pub(crate) fn exterior(g: &Game, cell: FormId) -> bool {
     g.world.placed.cell_world.contains_key(&cell)
 }
 

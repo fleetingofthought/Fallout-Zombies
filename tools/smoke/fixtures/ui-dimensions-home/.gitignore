@@ -1,0 +1,4 @@
+# Only the authored mods layer belongs to the fixture.
+/*
+!/.gitignore
+!/mods/

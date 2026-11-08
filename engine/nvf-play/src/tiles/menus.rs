@@ -1,6 +1,6 @@
 //! T15a: the message box and the "How many?" prompt drawn from their files, behind
 //! `[UI] TileMenus=MessageMenu,QuantityMenu` (the prompt also over a container menu drawn from
-//! its tiles, `[UI] TileMenus=ContainerMenu`, [`quantity_tiled`]) [design: ui-tile-tree.md
+//! its tiles, `[UI] TileMenus=ContainerMenu` or `BarterMenu`, [`quantity_tiled`]) [design: ui-tile-tree.md
 //! §6.2 step 3; plan: docs/handoff/ui-tile-tree-tasks.md, T15a].
 //!
 //! - **The switch** (`super::vanilla::TileMenus`): with a menu on and the game's menu files
@@ -140,14 +140,18 @@ pub struct TileMenuBlur {
     pub tutorial: bool,
     /// `ContainerMenu` is drawn from its tiles.
     pub container: bool,
+    /// `BarterMenu` is drawn from its tiles [design: barter-menu.md section 9].
+    pub barter: bool,
     /// `TraitMenu` is drawn from its tiles.
     pub traits: bool,
+    /// [design: chargen.md §3.1] CharGenMenu is drawn from its tiles.
+    pub tags: bool,
 }
 
 impl TileMenuBlur {
     /// Any menu drawn from its tiles wants the world blurred.
     pub fn any(self) -> bool {
-        self.tutorial || self.container || self.traits
+        self.tutorial || self.container || self.barter || self.traits || self.tags
     }
 }
 
@@ -160,21 +164,18 @@ pub fn message_tiled(on: bool, game: &fnv_game::Game<'_>) -> bool {
     on && game.ui_files.is_some() && game.menu == Some(fnv_game::game::menus::MESSAGE) && message_status(&game.ui_tree).yes()
 }
 
-/// Whether the "How many?" prompt of the container, barter and inventory menus is drawn
-/// from `QuantityMenu`'s tiles: its switch `on` (any of the three), or `container_tiled`, the
-/// container menu under it being drawn from its tiles now (not merely switched on: a container
-/// menu that fell back keeps the hand-built prompt, as do the barter and inventory menus); the
-/// menu files read, the prompt `open` and its file built into the tree (`Game::ui_prompt`; a
-/// missing or failed file keeps the hand-built prompt, and the frame the prompt opens, before
-/// the tree builds it, draws the hand-built one once) [design]. The crafting menu's prompt
-/// (`crate::crafting`) stays hand-built.
-pub fn quantity_tiled(on: bool, game: &fnv_game::Game<'_>, open: bool, container_tiled: bool) -> bool {
-    prompt_tiled(on, container_tiled, open, game.ui_files.is_some(), &game.ui_tree)
+/// Whether the "How many?" prompt is drawn from `QuantityMenu`'s tiles: its switch,
+/// or the container or barter menu beneath it actually drawing from its tiles, with
+/// files read and the prompt's required paths built [design: barter-menu.md sections 7-9].
+/// A missing or short prompt file, and the frame before its tree builds, keep the
+/// hand-built prompt. The crafting menu's prompt stays hand-built.
+pub fn quantity_tiled(on: bool, game: &fnv_game::Game<'_>, open: bool, item_tiled: bool) -> bool {
+    prompt_tiled(on, item_tiled, open, game.ui_files.is_some(), &game.ui_tree)
 }
 
 /// [`quantity_tiled`]'s decision, `files` being whether the menu files were read.
-fn prompt_tiled(on: bool, container_tiled: bool, open: bool, files: bool, ui: &Ui) -> bool {
-    (on || container_tiled) && open && files && quantity_built(ui).yes()
+fn prompt_tiled(on: bool, item_tiled: bool, open: bool, files: bool, ui: &Ui) -> bool {
+    (on || item_tiled) && open && files && quantity_built(ui).yes()
 }
 
 /// What a prompt or box puts under the pointer: nothing (not shown), its hand-built
@@ -231,7 +232,9 @@ pub fn hand_built_takes(menu: &str, key: &str) -> bool {
         &super::stats_menu::HAND_BUILT_KEYS
     } else if menu.eq_ignore_ascii_case(super::container_menu::CONTAINER_MENU) {
         &super::container_menu::HAND_BUILT_KEYS
-    } else if menu.eq_ignore_ascii_case(super::trait_menu::TRAIT_MENU) {
+    } else if menu.eq_ignore_ascii_case(super::barter_menu::BARTER_MENU) {
+        &super::barter_menu::HAND_BUILT_KEYS
+    } else if menu.eq_ignore_ascii_case(super::trait_menu::TRAIT_MENU) || menu.eq_ignore_ascii_case(super::tag_menu::TAG_MENU) {
         &super::trait_menu::HAND_BUILT_KEYS
     } else if menu.eq_ignore_ascii_case(super::dialog_menu::DIALOG_MENU) {
         &super::dialog_menu::HAND_BUILT_KEYS

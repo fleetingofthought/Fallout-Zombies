@@ -2182,3 +2182,16 @@ fn fallout_3_functions_cells_screen_and_faces() {
     // The blend: halfway, a missing coefficient counting as 0.
     assert_eq!(fnv_game::appearance::blend_coefficients(&[0.0, 2.0], &[2.0], 50.0), [1.0, 1.0]);
 }
+
+/// A grenade placed in a child's pocket does not go live: it stays an ordinary item
+/// [documented: Fallout Wiki, Fallout 3 Pickpocket; hypothesis for New Vegas]
+/// (docs/spec-notes/pickpocket.md §5).
+#[test]
+fn a_planted_explosive_stays_an_item_on_a_child() {
+    let f = fixture();
+    let mut g = game(&f);
+    let frag = fnv_game::pickpocket::Explosive { damage: 125.0, ..Default::default() };
+    assert_eq!(g.plant_explosive(FormId(CHILD_REF), FormId(0x4330), frag), Err(fnv_game::pickpocket::NotLive::Child));
+    assert!(g.pickpocket.planted.is_empty());
+    assert_eq!(g.plant_explosive(FormId(ADULT_REF), FormId(0x4330), frag), Ok(()));
+}

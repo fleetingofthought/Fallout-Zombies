@@ -1,0 +1,139 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o26_setav",
+ "title": "Issue #1575: SetActorValue on the player's skills, from the console and from a script; the skills, their base and the attributes in the header (run on nvfdoc, level 1, and nvfstrip, points spent)",
+ "save": "nvfdoc",
+ "defaults": {
+  "fields": "fight",
+  "every": 4,
+  "depth": 0,
+  "settle_frames": 120,
+  "hours": 0.05,
+  "max_actors": 1,
+  "console_first": [
+   "CloseAllMenus"
+  ],
+  "extra_header": [
+   [
+    "lvl",
+    "num",
+    "player.GetLevel"
+   ],
+   [
+    "ch",
+    "num",
+    "player.GetAV Charisma"
+   ],
+   [
+    "in",
+    "num",
+    "player.GetAV Intelligence"
+   ],
+   [
+    "ag",
+    "num",
+    "player.GetAV Agility"
+   ],
+   [
+    "lk",
+    "num",
+    "player.GetAV Luck"
+   ],
+   [
+    "repair",
+    "num",
+    "player.GetAV Repair"
+   ],
+   [
+    "repair_base",
+    "num",
+    "player.GetBaseAV Repair"
+   ],
+   [
+    "guns",
+    "num",
+    "player.GetAV Guns"
+   ],
+   [
+    "guns_base",
+    "num",
+    "player.GetBaseAV Guns"
+   ],
+   [
+    "science",
+    "num",
+    "player.GetAV Science"
+   ],
+   [
+    "science_base",
+    "num",
+    "player.GetBaseAV Science"
+   ],
+   [
+    "barter",
+    "num",
+    "player.GetAV Barter"
+   ],
+   [
+    "barter_base",
+    "num",
+    "player.GetBaseAV Barter"
+   ]
+  ]
+ },
+ "sessions": [
+  {
+   "name": "read",
+   "note": "no change"
+  },
+  {
+   "name": "console",
+   "do": [
+    "player.setav repair 35",
+    "player.setav guns 50",
+    "player.setav science 0"
+   ],
+   "note": "console SetAV before the first sample"
+  },
+  {
+   "name": "script",
+   "timed": [
+    {
+     "after": 15,
+     "do": [
+      "player.SetActorValue Repair 35"
+     ]
+    },
+    {
+     "after": 30,
+     "do": [
+      "player.SetActorValue Guns 50"
+     ]
+    },
+    {
+     "after": 45,
+     "do": [
+      "player.SetActorValue Science 0"
+     ]
+    },
+    {
+     "after": 60,
+     "do": [
+      "player.SetActorValue Repair 35"
+     ]
+    }
+   ],
+   "note": "script SetActorValue at samples 15/30/45, Repair again at 60"
+  },
+  {
+   "name": "modset",
+   "do": [
+    "player.modav barter 10",
+    "player.setav barter 35",
+    "player.setav repair 35",
+    "player.setav repair 35"
+   ],
+   "note": "ModAV +10 then SetAV on Barter; SetAV Repair twice"
+  }
+ ]
+}

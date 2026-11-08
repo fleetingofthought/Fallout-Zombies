@@ -1,0 +1,4 @@
+# Only authored mod fixtures belong here; runs write saves and settings beside them.
+/*
+!/.gitignore
+!/mods/

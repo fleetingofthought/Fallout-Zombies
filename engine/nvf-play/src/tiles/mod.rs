@@ -37,6 +37,8 @@
 //! anyway ([`fnv_ui::Ui::trait_write_counts`]).
 
 pub mod container_menu;
+pub mod barter_menu;
+mod item_menu;
 pub mod dialog_menu;
 pub mod draw;
 pub mod input;
@@ -48,6 +50,8 @@ pub mod model;
 pub mod mods;
 pub mod notices;
 pub mod stats_menu;
+pub(crate) mod selection_menu;
+pub mod tag_menu;
 pub mod trait_menu;
 pub mod tutorial_menu;
 pub mod vanilla;
@@ -69,6 +73,21 @@ pub(crate) struct MenuFiles<'w, 's> {
 }
 
 impl MenuFiles<'_, '_> {
+    /// Install before startup/load scripts, and retry if GameData arrived later.
+    /// Game::restore creates fresh UiExtra, so every new game gets its own cache [design].
+    pub(crate) fn install_measure(&self, game: &mut fnv_game::Game<'_>) {
+        if game.ui_extra.measure.is_some() {
+            return;
+        }
+        let Some(data) = self.data.as_ref() else { return };
+        let vfs = data.vfs.clone();
+        game.ui_extra.measure = Some(draw::string_measure(move |number| {
+            let path = crate::interface::font_file(crate::interface::FONT_FILES[number as usize - 1]);
+            let bytes = vfs.read(&path)?.ok()?;
+            fnv_font::Font::parse(&bytes).ok()
+        }));
+    }
+
     pub(crate) fn load(&self, game: &mut fnv_game::Game<'_>, world: &fnv_sim::World<'_>) {
         let Some(data) = self.data.as_ref() else { return };
         let files = UiFiles::new(data.vfs.clone(), world);
@@ -85,6 +104,7 @@ impl MenuFiles<'_, '_> {
     }
 
     pub(crate) fn write(&self, game: &mut fnv_game::Game<'_>) {
+        self.install_measure(game);
         if game.ui_files.is_none() {
             return;
         }
@@ -104,7 +124,7 @@ impl MenuFiles<'_, '_> {
 }
 
 /// Whether `screen()` is written in interface units ([`write_screen`]): only while a T15
-/// menu (`MessageMenu`, `QuantityMenu`, `SleepWaitMenu`, `TutorialMenu`, `ContainerMenu`, `TraitMenu`, `DialogMenu`) or the start menu's Mods page
+/// menu (`MessageMenu`, `QuantityMenu`, `SleepWaitMenu`, `TutorialMenu`, `ContainerMenu`, `TraitMenu`, `CharGenMenu`, `DialogMenu`) or the start menu's Mods page
 /// (T11, `mods`) is switched on, whose files centre their boxes by `screen()` (MCM's `x`
 /// and `y`, menu-xml.md §10), or `StatsMenu`, whose lines take their thickness from the
 /// converter and whose hotrects' `alpha` 0 this same gate lets pass (pipboy.md §5.1.1). The
@@ -115,7 +135,7 @@ impl MenuFiles<'_, '_> {
 /// interface units [observed: hud_menus capture 2026-10-31, three window sizes]; applying them
 /// unconditionally is a follow-up.
 pub fn interface_screen(menus: vanilla::TileMenus) -> bool {
-    menus.message || menus.quantity || menus.sleep_wait || menus.tutorial || menus.container || menus.traits || menus.start || menus.stats || menus.dialog
+    menus.message || menus.quantity || menus.sleep_wait || menus.tutorial || menus.container || menus.barter || menus.traits || menus.tags || menus.start || menus.stats || menus.dialog
 }
 
 /// Write `screen()`'s traits for a window `window_width` x `window_height` (logical
@@ -457,7 +477,7 @@ impl MenuTiles<'_, '_> {
     /// (each measured again only when its string changed), before scripts [design:
     /// ui-tile-tree.md §4.1]. Off, or without the menu files, nothing.
     fn write(&mut self, game: &mut fnv_game::Game<'_>, switch: vanilla::TileMenus, fonts: &mut draw::FontKit, calendar: Option<fnv_sim::clock::Calendar>) {
-        if !(switch.message || switch.quantity || switch.sleep_wait || switch.container) || game.ui_files.is_none() {
+        if !(switch.message || switch.quantity || switch.sleep_wait || switch.container || switch.barter) || game.ui_files.is_none() {
             return;
         }
         self.write_wait(game, switch, fonts, calendar);
@@ -465,12 +485,13 @@ impl MenuTiles<'_, '_> {
         // tiled decision here would prevent a later short box from being written.
         let message_open = switch.message && game.menu == Some(fnv_game::game::menus::MESSAGE);
         let message = (message_open && menus::message_built(&game.ui_tree).yes()).then(|| game.ui_tree.menu(menus::MESSAGE_MENU)).flatten();
-        // [design] Over a container menu drawn from tiles the prompt is too. This frame's
-        // decision, the one `write_container` takes after this writer: `ContainerTiles::menu`
+        // [design] Over either item menu drawn from tiles the prompt is too. This frame's
+        // decision, the one the item-menu writers take after this writer: their menu state
         // here would still be last frame's.
         let shown = self.active.as_ref().and_then(|a| a.0.as_ref());
         let prompt_open = shown.is_some_and(|m| m.quantity.is_some());
-        let container_tiled = prompt_open && container_menu::tiled(switch.container, game, container_menu::is_container(shown));
+        let container_tiled = prompt_open && (container_menu::tiled(switch.container, game, container_menu::is_container(shown))
+            || barter_menu::tiled(switch.barter, game, barter_menu::is_barter(shown)));
         let quantity = self.quantity().filter(|_| menus::quantity_tiled(switch.quantity, game, true, container_tiled));
         let prompt = quantity.and_then(|q| game.ui_tree.menu(menus::QUANTITY_MENU).map(|m| (m, q)));
         // Which showing the box on screen is (counted up for every box shown, one alike
@@ -860,7 +881,8 @@ fn write_container(
 /// Works the tree out after the scripts; nothing to do on a frame where nothing changed
 /// it (`fnv_ui::Ui::update`). The scripts' gradual changes step first, on real time
 /// (`fnv_game::ui_gradients`, task T9).
-fn update(mut script: ResMut<ScriptState>, time: Res<Time<Real>>, mut wait_check: ResMut<input::WaitSliderCheck>, mut tutorial_check: ResMut<TutorialScrollCheck>, mut container: ResMut<container_menu::ContainerTiles>, mut traits: ResMut<trait_menu::TraitTiles>) {
+#[allow(clippy::too_many_arguments)]
+fn update(mut script: ResMut<ScriptState>, time: Res<Time<Real>>, mut wait_check: ResMut<input::WaitSliderCheck>, mut tutorial_check: ResMut<TutorialScrollCheck>, mut container: ResMut<container_menu::ContainerTiles>, mut barter: ResMut<barter_menu::BarterTiles>, mut traits: ResMut<trait_menu::TraitTiles>, mut tags: ResMut<tag_menu::TagTiles>) {
     let Some(rt) = script.rt.as_mut() else { return };
     rt.game.ui_gradients.step(&mut rt.game.ui_tree, f64::from(time.delta_secs()));
     if rt.game.ui_files.is_some() {
@@ -873,9 +895,17 @@ fn update(mut script: ResMut<ScriptState>, time: Res<Time<Real>>, mut wait_check
             container_menu::mark_tiles(&mut rt.game.ui_tree);
             container.check_drawn(&rt.game.ui_tree, &mut |line| info!("{line}"));
         }
+        if barter.menu().is_some() {
+            barter_menu::mark_tiles(&mut rt.game.ui_tree);
+            barter.view.check_drawn(&rt.game.ui_tree, &mut |line| info!("{line}"));
+        }
         if traits.menu.is_some() {
             trait_menu::mark_tiles(&mut rt.game.ui_tree);
             traits.check_drawn(&rt.game.ui_tree, &mut |line| info!("{line}"));
+        }
+        if tags.menu.is_some() {
+            selection_menu::mark_tiles::<{ fnv_game::game::menus::TAG_SKILLS }>(&mut rt.game.ui_tree);
+            tags.check_drawn(&rt.game.ui_tree, &mut |line| info!("{line}"));
         }
         // Once, if something changes the tree's shape every frame (#1061).
         if let Some(line) = rt.game.ui_tree.take_reshape_warning() {
@@ -901,7 +931,10 @@ impl Plugin for TilesPlugin {
         app.init_resource::<draw::TileFonts>()
             .init_resource::<TutorialScrollCheck>()
             .init_resource::<container_menu::ContainerTiles>()
+            .init_resource::<barter_menu::BarterTiles>()
             .init_resource::<container_menu::TileWheelTitle>()
+            .init_resource::<tag_menu::TagTiles>()
+            .insert_resource(tag_menu::aid_from_env())
             .init_resource::<trait_menu::TraitTiles>()
             .insert_resource(trait_menu::aid_from_env())
             .init_resource::<menus::TileMenuBlur>()
@@ -912,8 +945,10 @@ impl Plugin for TilesPlugin {
             .add_systems(Update, write.after(PlaySet::Physics).after(crate::compass::place).before(PlaySet::Activation))
             // T15c: the container menu's state for this frame's input.
             .add_systems(Update, write_container.after(write).before(input::feed))
-            // The trait menu's, likewise.
+            .add_systems(Update, barter_menu::write_system.after(write).before(input::feed))
+            // [design] The trait and tag-skill lists, likewise.
             .add_systems(Update, trait_menu::write_system.after(write).before(input::feed))
+            .add_systems(Update, selection_menu::write_system::<{ fnv_game::game::menus::TAG_SKILLS }>.after(write).before(input::feed))
             // T8: the pointer and keys after the engine's writes, before scripts (§4.1 step 1).
             .add_systems(Update, input::feed.after(write).after(crate::menu::WheelHoldSet).before(PlaySet::Activation))
             .add_systems(Update, update.after(PlaySet::Scripts).before(PlaySet::Ui))
@@ -939,6 +974,49 @@ impl Plugin for TilesPlugin {
 mod tests {
     use super::*;
     use fnv_ui::{MemSource, Ui};
+
+    #[test]
+    fn string_metrics_install_when_source_arrives_and_again_after_restore() {
+        fn install(files: MenuFiles, mut scripts: ResMut<ScriptState>) {
+            files.install_measure(&mut scripts.rt.as_mut().unwrap().game);
+        }
+        let mut app = App::new();
+        app.insert_resource(ScriptState::over_no_plugins()).add_systems(Update, install);
+        app.update();
+        assert!(app.world().resource::<ScriptState>().rt.as_ref().unwrap().game.ui_extra.measure.is_none());
+
+        // A synthetic, empty source: installation must not depend on GPU assets or a HUD.
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../target-check").join(format!("string-metrics-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let schema = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../schemas/nif");
+        app.insert_resource(GameData::open_for_plugins(&dir, &[] as &[&str], &schema).unwrap());
+        app.update();
+        {
+            let mut scripts = app.world_mut().resource_mut::<ScriptState>();
+            let game = &mut scripts.rt.as_mut().unwrap().game;
+            assert!(game.ui_extra.measure.is_some());
+            assert_eq!(game.ui_extra.measure.as_ref().unwrap()(9.0, "ab", 0.0), (0.0, 0.0, 0.0));
+            // A later frame preserves the installed callback rather than replacing its cache.
+            game.ui_extra.measure = Some(Box::new(|_, _, _| (12.0, 34.0, 1.0)));
+        }
+        app.update();
+        {
+            let mut scripts = app.world_mut().resource_mut::<ScriptState>();
+            let game = &mut scripts.rt.as_mut().unwrap().game;
+            assert_eq!(game.ui_extra.measure.as_ref().unwrap()(9.0, "ab", 0.0), (12.0, 34.0, 1.0));
+            let snapshot = game.snapshot();
+            let world = fnv_sim::World::restore(game.world.forms, game.world.placed, &snapshot.sim).unwrap();
+            *game = fnv_game::Game::restore(game.data, world, game.cfg, &snapshot).unwrap();
+            assert!(game.ui_extra.measure.is_none());
+        }
+        // This is the same installation used before the restart/load script runners.
+        app.update();
+        let scripts = app.world().resource::<ScriptState>();
+        let game = &scripts.rt.as_ref().unwrap().game;
+        assert_eq!(game.ui_extra.measure.as_ref().unwrap()(9.0, "ab", 0.0), (0.0, 0.0, 0.0));
+        drop(app);
+        std::fs::remove_dir(&dir).unwrap();
+    }
 
     #[test]
     fn fallback_reasons_are_warned_once_across_reopens() {
@@ -1021,7 +1099,9 @@ mod tests {
         assert!(interface_screen(vanilla::TileMenus { sleep_wait: true, ..Default::default() }));
         assert!(interface_screen(vanilla::TileMenus { tutorial: true, ..Default::default() }));
         assert!(interface_screen(vanilla::TileMenus { container: true, ..Default::default() }));
+        assert!(interface_screen(vanilla::TileMenus { barter: true, ..Default::default() }));
         assert!(interface_screen(vanilla::TileMenus { traits: true, ..Default::default() }));
+        assert!(interface_screen(vanilla::TileMenus { tags: true, ..Default::default() }));
         assert!(interface_screen(vanilla::TileMenus { dialog: true, ..Default::default() }));
         write_screen(&mut ui, 1280.0, 720.0, true);
         ui.update();

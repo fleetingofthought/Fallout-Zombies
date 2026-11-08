@@ -4,7 +4,7 @@
 //! getters (this file's and the earlier batches').
 
 use crate::game::{Game, RunCtx};
-use crate::nvse::{field_number, F32, U32, U8};
+use crate::nvse::{field_number, F32, U8};
 use fnv_script::vm::XVal;
 use fnv_sim::FormId;
 use serde_json::Value as Json;
@@ -34,6 +34,8 @@ pub struct Jip7State {
     pub armor_condition_penalty: Option<f64>,
     /// SetDamageToArmorMaxPercent's share (`None`: not set).
     pub damage_to_armor_max: Option<f64>,
+    /// SetImpactDataTraitNumeric 13's flags as set, read back by GetImpactDataTrait 16.
+    pub impact_flags: HashMap<FormId, u32>,
 }
 
 fn form(args: &[XVal], k: usize) -> Option<FormId> {
@@ -66,6 +68,35 @@ fn fit(v: f64, range: (f64, f64)) -> Option<f64> {
     Some(if range == F32 { v } else { v.trunc() })
 }
 
+/// How a trait setter takes a number the field cannot hold, as the original showed
+/// [observed: jip7, jip7b, 2026-11-08].
+#[derive(Clone, Copy, PartialEq)]
+enum Take {
+    /// clamped to the range (`fit`)
+    Clamp((f64, f64)),
+    /// cut to a whole number and kept as a byte: 300 reads 44, -1 reads 255
+    Wrap8,
+    /// cut to a whole number, sign kept, no range
+    Int,
+    /// an f32 that refuses a negative number
+    NonNeg,
+    /// only these values; any other sets nothing
+    OneOf(&'static [f64]),
+}
+
+fn take(v: f64, how: Take) -> Option<f64> {
+    if !v.is_finite() {
+        return None;
+    }
+    match how {
+        Take::Clamp(r) => fit(v, r),
+        Take::Wrap8 => Some(f64::from(v.trunc() as i64 as u8)),
+        Take::Int => Some(v.trunc()),
+        Take::NonNeg => (v >= 0.0).then_some(v),
+        Take::OneOf(ok) => ok.contains(&v).then_some(v),
+    }
+}
+
 fn yes(b: bool) -> XVal {
     XVal::Num(f64::from(u8::from(b)))
 }
@@ -77,40 +108,58 @@ fn json_form(v: Option<&Json>) -> Option<FormId> {
 /// AMMO numeric traits 0-3 [documented: SetAmmoTraitNumeric's table: 0 speed, 1
 /// projectiles per shot, 2 ammo consumed percent, 3 clip rounds]; the fields: xEdit AMMO.
 /// Each with its field's range (u32 projectiles, u8 clip rounds).
-const AMMO_NUMERIC: [(&str, &str, (f64, f64)); 4] = [("DATA", "speed", F32), ("DAT2", "projectiles_per_shot", U32), ("DAT2", "consumed_percentage", F32), ("DATA", "clip_rounds", U8)];
+// Projectiles per shot keeps its sign (-5 reads -5, -2.5 reads -2) and the clip rounds wrap
+// as a byte (300 reads 44) [observed: jip7 ammo.trait.*, jip7b ammo.clip.*, ammo.pps.*].
+const AMMO_NUMERIC: [(&str, &str, Take); 4] =
+    [("DATA", "speed", Take::Clamp(F32)), ("DAT2", "projectiles_per_shot", Take::Int), ("DAT2", "consumed_percentage", Take::Clamp(F32)), ("DATA", "clip_rounds", Take::Wrap8)];
 
 /// AMEF numeric traits 0-2 [documented: SetAmmoEffectTraitNumeric's table] as
 /// GetAmmoEffectTraitNumeric reads them (`nvse_gaps`).
 /// The type is 0-5 and the operation 0-2 [documented: the page's tables].
-const AMEF_NUMERIC: [(&str, (f64, f64)); 3] = [("type", (0.0, 5.0)), ("operation", (0.0, 2.0)), ("value", F32)];
+// A type past 0-5 and a negative value set nothing [observed: jip7 amef.trait.0.9, jip7b amef.*].
+const AMEF_NUMERIC: [(&str, Take); 3] =
+    [("type", Take::OneOf(&[0.0, 1.0, 2.0, 3.0, 4.0, 5.0])), ("operation", Take::Clamp((0.0, 2.0))), ("value", Take::NonNeg)];
 
 /// PROJ numeric traits 0-14 [documented: SetProjectileTraitNumeric's table]; 14 the
 /// detection sound level is VNAM [the field: xEdit PROJ].
 /// The type is one of 1-16 and the sound level 0-2 [documented: the page's tables]; the
 /// rest are f32 fields.
-const PROJ_NUMERIC: [(&str, &str, (f64, f64)); 15] = [
-    ("DATA", "type", (1.0, 16.0)),
-    ("DATA", "gravity", F32),
-    ("DATA", "speed", F32),
-    ("DATA", "range", F32),
-    ("DATA", "tracer_chance", F32),
-    ("DATA", "explosion_alt_trigger_proximity", F32),
-    ("DATA", "explosion_alt_trigger_timer", F32),
-    ("DATA", "muzzle_flash_duration", F32),
-    ("DATA", "fade_duration", F32),
-    ("DATA", "impact_force", F32),
-    ("DATA", "rotation.x", F32),
-    ("DATA", "rotation.y", F32),
-    ("DATA", "rotation.z", F32),
-    ("DATA", "bouncy_mult", F32),
-    ("VNAM", "", (0.0, 2.0)),
+// The type takes 0 or one of the type bits 1, 2, 4, 8, 16 (3 and 17 set nothing); the
+// sound level only 1 or 2 (0, 3, 5 and -1 set nothing) [observed: jip7 proj.settrait.*,
+// jip7b proj.*].
+const PROJ_NUMERIC: [(&str, &str, Take); 15] = [
+    ("DATA", "type", Take::OneOf(&[0.0, 1.0, 2.0, 4.0, 8.0, 16.0])),
+    ("DATA", "gravity", Take::Clamp(F32)),
+    ("DATA", "speed", Take::Clamp(F32)),
+    ("DATA", "range", Take::Clamp(F32)),
+    ("DATA", "tracer_chance", Take::Clamp(F32)),
+    ("DATA", "explosion_alt_trigger_proximity", Take::Clamp(F32)),
+    ("DATA", "explosion_alt_trigger_timer", Take::Clamp(F32)),
+    ("DATA", "muzzle_flash_duration", Take::Clamp(F32)),
+    ("DATA", "fade_duration", Take::Clamp(F32)),
+    ("DATA", "impact_force", Take::Clamp(F32)),
+    ("DATA", "rotation.x", Take::Clamp(F32)),
+    ("DATA", "rotation.y", Take::Clamp(F32)),
+    ("DATA", "rotation.z", Take::Clamp(F32)),
+    ("DATA", "bouncy_mult", Take::Clamp(F32)),
+    ("VNAM", "", Take::OneOf(&[1.0, 2.0])),
 ];
 
 /// EXPL numeric traits 0-7 [documented: SetExplosionTraitNumeric's table].
 /// f32 fields but the sound level, 0-2 [documented: the sound levels of the projectile
 /// page].
-const EXPL_NUMERIC: [(&str, (f64, f64)); 8] =
-    [("force", F32), ("damage", F32), ("radius", F32), ("is_radius", F32), ("radiation_level", F32), ("radiation_dissipation_time", F32), ("radiation_radius", F32), ("sound_level", (0.0, 2.0))];
+// The sound level wraps as a byte with no range (9 reads 9, 300 reads 44) [observed: jip7
+// expl.settrait.7.9, jip7b expl.7.*].
+const EXPL_NUMERIC: [(&str, Take); 8] = [
+    ("force", Take::Clamp(F32)),
+    ("damage", Take::Clamp(F32)),
+    ("radius", Take::Clamp(F32)),
+    ("is_radius", Take::Clamp(F32)),
+    ("radiation_level", Take::Clamp(F32)),
+    ("radiation_dissipation_time", Take::Clamp(F32)),
+    ("radiation_radius", Take::Clamp(F32)),
+    ("sound_level", Take::Wrap8),
+];
 
 /// IPCT numeric traits of SetImpactDataTraitNumeric, 0-14 [documented: its table]: the
 /// impact data (DATA) 0-4, the decal data (DODT) 5-12; 13 the flags and 14 the colour are
@@ -219,8 +268,8 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // ---- ammunition
         "setammotraitnumeric" => {
             let t = usize::try_from(num(args, 1, -1.0) as i64).ok().and_then(|i| AMMO_NUMERIC.get(i));
-            if let (Some(a), Some(&(sub, path, range))) = (of_sig(g, form(args, 0), b"AMMO"), t) {
-                if let Some(v) = fit(num(args, 2, f64::NAN), range) {
+            if let (Some(a), Some(&(sub, path, how))) = (of_sig(g, form(args, 0), b"AMMO"), t) {
+                if let Some(v) = take(num(args, 2, f64::NAN), how) {
                     g.set_field(a, sub, path, XVal::Num(v));
                 }
             }
@@ -253,8 +302,8 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         }
         "setammoeffecttraitnumeric" => {
             let t = usize::try_from(num(args, 1, -1.0) as i64).ok().and_then(|i| AMEF_NUMERIC.get(i));
-            if let (Some(e), Some(&(path, range))) = (of_sig(g, form(args, 0), b"AMEF"), t) {
-                if let Some(v) = fit(num(args, 2, f64::NAN), range) {
+            if let (Some(e), Some(&(path, how))) = (of_sig(g, form(args, 0), b"AMEF"), t) {
+                if let Some(v) = take(num(args, 2, f64::NAN), how) {
                     g.set_field(e, "DATA", path, XVal::Num(v));
                 }
             }
@@ -263,8 +312,8 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // ---- projectiles and explosions
         "setprojectiletraitnumeric" => {
             let t = usize::try_from(num(args, 1, -1.0) as i64).ok().and_then(|i| PROJ_NUMERIC.get(i));
-            if let (Some(p), Some(&(sub, path, range))) = (of_sig(g, form(args, 0), b"PROJ"), t) {
-                if let Some(v) = fit(num(args, 2, f64::NAN), range) {
+            if let (Some(p), Some(&(sub, path, how))) = (of_sig(g, form(args, 0), b"PROJ"), t) {
+                if let Some(v) = take(num(args, 2, f64::NAN), how) {
                     g.set_field(p, sub, path, XVal::Num(v));
                 }
             }
@@ -287,8 +336,8 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         }
         "setexplosiontraitnumeric" => {
             let t = usize::try_from(num(args, 1, -1.0) as i64).ok().and_then(|i| EXPL_NUMERIC.get(i));
-            if let (Some(e), Some(&(path, range))) = (of_sig(g, form(args, 0), b"EXPL"), t) {
-                if let Some(v) = fit(num(args, 2, f64::NAN), range) {
+            if let (Some(e), Some(&(path, how))) = (of_sig(g, form(args, 0), b"EXPL"), t) {
+                if let Some(v) = take(num(args, 2, f64::NAN), how) {
                     g.set_field(e, "DATA", path, XVal::Num(v));
                 }
             }
@@ -309,9 +358,16 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
                 }),
                 t @ 8..=15 => {
                     let (sub, path, _) = IPCT_NUMERIC[(t - 3) as usize];
-                    XVal::Num(g.num_field(i, sub, path))
+                    if crate::nvse::record_value(g, i, "DODT", path).is_none() {
+                        // An impact without decal data reads these: widths and heights 8 to
+                        // 32, depth 32, shininess 4, parallax scale 1 and 4 passes [observed:
+                        // jip7 ipct.trait.8-15 on BaseBallBatMetalImpact, which has no DODT].
+                        XVal::Num([8.0, 32.0, 8.0, 32.0, 32.0, 4.0, 1.0, 4.0][(t - 8) as usize])
+                    } else {
+                        XVal::Num(g.num_field(i, sub, path))
+                    }
                 }
-                16 => XVal::Num(impact_flags(g, i) as f64),
+                16 => XVal::Num(g.other.jip7.impact_flags.get(&i).map_or(impact_flags(g, i) as f64, |&f| f64::from(f))),
                 17 => XVal::Num(impact_colour(g, i)),
                 _ => zero,
             }
@@ -327,19 +383,27 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
                     }
                 }
                 // The four flag bits.
+                // Kept whole, to nine bits (99 reads 99, 256 reads 256, -1 reads 511), and read
+                // back as set [observed: jip7 ipct.settrait.13.99, jip7b ipct.flags.*]; the four
+                // known bits reach the records.
                 13 => {
-                    let Some(f) = fit(v, (0.0, 15.0)) else { return Some(Ok(zero)) };
-                    let f = f as u64;
+                    let Some(f) = take(v, Take::Int) else { return Some(Ok(zero)) };
+                    let f = (f as i64 as u64) & 0x1FF;
+                    g.other.jip7.impact_flags.insert(i, f as u32);
+                    let f = f & 15;
                     let data = g.num_field(i, "DATA", "flags") as u64;
                     g.set_field(i, "DATA", "flags", XVal::Num(((data & !1) | (f & 1)) as f64));
                     let decal = g.num_field(i, "DODT", "flags") as u64;
                     g.set_field(i, "DODT", "flags", XVal::Num(((decal & !7) | ((f >> 1) & 7)) as f64));
                 }
                 14 => {
-                    let Some(c) = fit(v, (0.0, 255_255_255.0)) else { return Some(Ok(zero)) };
+                    // past 0-255255255 nothing is set [observed: jip7b ipct.setcolour.255255256, .m1]
+                    let Some(c) = take(v, Take::Int).filter(|c| (0.0..=255_255_255.0).contains(c)) else { return Some(Ok(zero)) };
                     let c = c as u64;
                     for (k, p) in [(c / 1_000_000) % 1000, (c / 1000) % 1000, c % 1000].into_iter().zip(["color.red", "color.green", "color.blue"]) {
-                        g.set_field(i, "DODT", p, XVal::Num(k.min(255) as f64));
+                        // a channel past 255 is kept as given (300 reads 300) [observed: jip7b
+                        // ipct.setcolour.300]
+                        g.set_field(i, "DODT", p, XVal::Num(k as f64));
                     }
                 }
                 _ => {}
@@ -348,8 +412,11 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         }
         "setimpactdatatraitform" => {
             let t = usize::try_from(num(args, 1, -1.0) as i64).ok().and_then(|i| IPCT_FORMS.get(i));
+            // A form of the wrong type (a creature for a sound) sets none [observed: jip7
+            // ipct.setform.sound1; a sound is taken, jip7b ipct.setform.sound].
             if let (Some(i), Some(sub)) = (of_sig(g, form(args, 0), b"IPCT"), t) {
-                g.set_field(i, sub, "", XVal::Ref(form(args, 2).map_or(0, |f| f.0)));
+                let want: &[u8; 4] = if *sub == "DNAM" { b"TXST" } else { b"SOUN" };
+                g.set_field(i, sub, "", XVal::Ref(of_sig(g, form(args, 2), want).map_or(0, |f| f.0)));
             }
             zero
         }
@@ -446,19 +513,24 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // [documented: SetArmorConditionPenalty]. 0-2: past 2 the formula's mult would go
         // below zero at 0% condition [hypothesis: the page's formula,
         // `1.0 - (0.5 - condition) * multiplier`].
+        // Both return the value before the call; the penalty takes any number (3 and -1),
+        // the share only 0-1 (2 and -1 set nothing) [observed: jip7 armor.condpenalty,
+        // armor.maxpercent; jip7b armor.*].
         "setarmorconditionpenalty" => {
-            if let Some(m) = args.first().and_then(|v| v.num().ok()).and_then(|m| field_number(m, 0.0, 2.0)) {
+            let was = g.armor_condition_penalty();
+            if let Some(m) = args.first().and_then(|v| v.num().ok()).filter(|m| m.is_finite()) {
                 g.other.jip7.armor_condition_penalty = Some(m);
             }
-            XVal::Num(g.armor_condition_penalty())
+            XVal::Num(was)
         }
         // `[maxPercent]` 0-1, the same way [documented: SetDamageToArmorMaxPercent]; 1
         // (no cap) until a script sets it [hypothesis: the page gives no default].
         "setdamagetoarmormaxpercent" => {
-            if let Some(m) = args.first().and_then(|v| v.num().ok()).and_then(|m| field_number(m, 0.0, 1.0)) {
+            let was = g.other.jip7.damage_to_armor_max.unwrap_or(1.0);
+            if let Some(m) = args.first().and_then(|v| v.num().ok()).filter(|m| (0.0..=1.0).contains(m)) {
                 g.other.jip7.damage_to_armor_max = Some(m);
             }
-            XVal::Num(g.other.jip7.damage_to_armor_max.unwrap_or(1.0))
+            XVal::Num(was)
         }
         _ => return None,
     };

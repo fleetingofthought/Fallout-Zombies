@@ -122,7 +122,7 @@ pub struct ChargenMenus {
     kit: Option<draw::Kit>,
 }
 
-/// The open trait menu, as the tile drawing reads it (`crate::tiles::trait_menu`). The sheet
+/// [design] The open trait or tag-skill list, as the tile drawing reads it. The sheet
 /// stays [`ListMenu`]'s: the drawing never makes one of its own, as the sheets' constructors
 /// use up what the scripts asked for.
 pub struct TraitsOpen<'a> {
@@ -134,18 +134,22 @@ pub struct TraitsOpen<'a> {
 }
 
 impl ChargenMenus {
-    /// The trait menu, when it is the menu open.
-    pub fn traits_open(&self) -> Option<TraitsOpen<'_>> {
+    /// [design] The requested selection page, from the sheet already opened by sync.
+    /// SpecialSheet uses menu 1048 too and deliberately stays with its hand-built drawing.
+    pub fn list_open(&self, code: u16) -> Option<TraitsOpen<'_>> {
         match &self.open {
-            Some(OpenMenu::List(m)) if m.code == menus::TRAITS => Some(TraitsOpen { menu: m, generation: self.generation, navigated: self.navigated, answered: self.answered }),
+            Some(OpenMenu::List(m)) if m.code == code && (code == menus::TRAITS || (code == menus::TAG_SKILLS && matches!(m.sheet, lists::Sheet::Tags { .. }))) =>
+                Some(TraitsOpen { menu: m, generation: self.generation, navigated: self.navigated, answered: self.answered }),
             _ => None,
         }
     }
+    pub fn traits_open(&self) -> Option<TraitsOpen<'_>> { self.list_open(menus::TRAITS) }
+    pub fn tags_open(&self) -> Option<TraitsOpen<'_>> { self.list_open(menus::TAG_SKILLS) }
 }
 
-/// What a click or the pointer on the trait menu's tiles asks of the menu, for [`input`] to
+/// What a click or the pointer on a selection menu's tiles asks of the menu, for [`input`] to
 /// turn into the same changes as the hand-built parts ([`tile_ops`]). A row is named by its
-/// trait, not its place, so an act queued before anything changed acts on that trait or on
+/// trait or skill, not its place, so an act queued before anything changed acts on that row or on
 /// nothing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TileAct {
@@ -153,6 +157,9 @@ pub enum TileAct {
     Hover(FormId),
     /// A click on a row: it is chosen, then taken or given back.
     Click(FormId),
+    /// [design] A skill actor-value code, kept apart from trait FormIDs.
+    SkillHover(u16),
+    SkillClick(u16),
     Reset,
     Done,
     /// The pointer came onto Reset or Done, for its sound (text_box.xml's).
@@ -165,6 +172,8 @@ fn tile_ops(m: &ListMenu, act: TileAct) -> Vec<(Op, &'static str)> {
     match act {
         TileAct::Hover(key) => m.trait_row(key).map_or_else(Vec::new, |i| vec![(Op::Select(i), "pointer")]),
         TileAct::Click(key) => m.trait_row(key).map_or_else(Vec::new, |i| vec![(Op::Select(i), "pointer"), (Op::Click, "click")]),
+        TileAct::SkillHover(key) => m.tag_row(key).map_or_else(Vec::new, |i| vec![(Op::Select(i), "pointer")]),
+        TileAct::SkillClick(key) => m.tag_row(key).map_or_else(Vec::new, |i| vec![(Op::Select(i), "pointer"), (Op::Click, "click")]),
         TileAct::Reset => vec![(Op::Reset, "click")],
         TileAct::Done => vec![(Op::Done, "click")],
         TileAct::ButtonFocus => Vec::new(),
@@ -307,6 +316,7 @@ fn input(
     sim: Option<ResMut<SimState>>,
     mut sounds: MessageWriter<UiSound>,
     mut traits: Option<ResMut<crate::tiles::trait_menu::TraitTiles>>,
+    mut tags: Option<ResMut<crate::tiles::tag_menu::TagTiles>>,
 ) {
     use KeyCode::*;
     let typed: Vec<KeyboardInput> = typed.read().cloned().collect();
@@ -317,6 +327,7 @@ fn input(
         if let Some(t) = traits.as_mut().filter(|t| t.menu.is_some()) {
             t.drop_acts();
         }
+        if let Some(t) = tags.as_mut() { t.drop_acts(); }
         return;
     }
     let mut ops: Vec<(Op, &str)> = Vec::new();
@@ -352,7 +363,11 @@ fn input(
         Some(OpenMenu::List(m)) => {
             // Drawn from its tiles the rows' place and the scroll are the drawing's; while it
             // takes nothing (the pause menu over it) neither do these.
-            let tiles = traits.as_mut().filter(|t| t.menu.is_some() && m.code == menus::TRAITS && t.is_for(st.generation));
+            let tiles: Option<&mut dyn crate::tiles::selection_menu::SelectionInput> = if m.code == menus::TRAITS {
+                traits.as_deref_mut().filter(|t| t.menu.is_some() && t.is_for(st.generation)).map(|t| t as &mut dyn crate::tiles::selection_menu::SelectionInput)
+            } else if m.code == menus::TAG_SKILLS && !m.attributes() {
+                tags.as_deref_mut().filter(|t| t.menu.is_some() && t.is_for(st.generation)).map(|t| t as &mut dyn crate::tiles::selection_menu::SelectionInput)
+            } else { None };
             let tiled = tiles.is_some();
             let page = tiles.as_ref().map_or(m.visible() as i32, |t| t.page_rows());
             let keys_on = tiles.as_ref().is_none_or(|t| t.takes().is_some());
@@ -361,7 +376,7 @@ fn input(
                     t.wheel(-f64::from(wheel.round()));
                 }
                 // NVForever's addition [design]: the keyboard and controller route to the end
-                // of a long description. They move nothing in the original [observed: its job
+                // of a long description. They move nothing in the original trait menu [observed: its job
                 // `trait`, chargen.md §4.1].
                 for (k, by) in [(ArrowLeft, -1.0), (ArrowRight, 1.0)] {
                     if keys.just_pressed(k) {
@@ -633,12 +648,14 @@ fn draw_menus(
     mut images: ResMut<Assets<Image>>,
     formats: Option<Res<CompressedImageFormatSupport>>,
     traits: Option<Res<crate::tiles::trait_menu::TraitTiles>>,
+    tags: Option<Res<crate::tiles::tag_menu::TagTiles>>,
 ) {
     // The drawing's own decision, this frame's (`crate::tiles::trait_menu::drawn`): the menu
     // goes the frame its tiles draw, and comes back whole, its sheet as it stands, when they
     // cannot, and a menu the scripts put in its place is drawn at once. Off, this stays false.
     let game = script.as_ref().and_then(|s| s.rt.as_ref()).map(|rt| &rt.game);
-    let tiled = traits.as_ref().is_some_and(|t| crate::tiles::trait_menu::drawn(t, st.traits_open(), game).is_some());
+    let tiled = traits.as_ref().is_some_and(|t| crate::tiles::trait_menu::drawn(t, st.traits_open(), game).is_some())
+        || tags.as_ref().is_some_and(|t| crate::tiles::tag_menu::drawn(t, st.tags_open(), game).is_some());
     if tiled != st.tiles_draw {
         st.tiles_draw = tiled;
         st.dirty = true;
@@ -717,4 +734,22 @@ mod tests {
         assert!(has_own_menu(menus::NAME) && has_own_menu(menus::TRAITS) && has_own_menu(menus::TAG_SKILLS) && has_own_menu(menus::LOVE_TESTER));
         assert!(!has_own_menu(menus::RACE) && !has_own_menu(menus::MESSAGE));
     }
+    #[test]
+    fn tag_tile_acts_resolve_skill_codes_and_special_stays_hand_built() {
+        use fnv_game::chargen::{TagSheet, SpecialSheet};
+        let tags = TagSheet { skills: vec![32, 35], tagged: Default::default(), locked: Default::default(), count: 4 };
+        let menu = ListMenu { code: menus::TAG_SKILLS, sheet: lists::Sheet::Tags { now: tags.clone(), start: tags }, selected: 0, scroll: 0, hover: None };
+        assert_eq!(tile_ops(&menu, TileAct::SkillClick(35)), vec![(Op::Select(1), "pointer"), (Op::Click, "click")]);
+        assert_eq!(tile_ops(&menu, TileAct::SkillHover(32)), vec![(Op::Select(0), "pointer")]);
+        assert!(tile_ops(&menu, TileAct::Click(FormId(35))).is_empty());
+        assert!(tile_ops(&menu, TileAct::SkillClick(99)).is_empty());
+        let mut st = ChargenMenus { open: Some(OpenMenu::List(menu)), generation: 8, ..Default::default() };
+        assert_eq!(st.tags_open().unwrap().generation, 8); assert!(st.traits_open().is_none());
+        let special = SpecialSheet::new([5; 7]);
+        st.open = Some(OpenMenu::List(ListMenu { code: menus::TAG_SKILLS, sheet: lists::Sheet::Special { now: special, start: special }, selected: 0, scroll: 0, hover: None }));
+        assert!(st.tags_open().is_none());
+        let Some(OpenMenu::List(menu)) = st.open.as_ref() else { panic!("missing sheet") };
+        assert!(tile_ops(menu, TileAct::SkillClick(32)).is_empty());
+    }
+
 }

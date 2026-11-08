@@ -1,0 +1,4 @@
+Begin Function { }
+SetUIFloat "HUDMainMenu/NVFTypewriter/_calls" ((GetUIFloat "HUDMainMenu/NVFTypewriter/_calls") + 1)
+SetUIFloat "HUDMainMenu/NVFTypewriter/Letter/red" 255
+End

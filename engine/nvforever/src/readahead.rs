@@ -27,7 +27,7 @@ use crate::actors::{ActorPose, ActorWorld};
 use crate::world::{Streamer, WorldData};
 use bevy::prelude::*;
 use fnv_world::placed::{base_object, placement};
-use bevy::tasks::{futures::check_ready, AsyncComputeTaskPool, Task, TaskPool};
+use bevy::tasks::{futures::check_ready, Task};
 use fnv_actor::locomotion::Body;
 use fnv_actor::weapon::AnimType;
 use nvf_assets::actor::{ActorCtx, ActorParts, ClipReader, PartState};
@@ -99,6 +99,10 @@ pub struct Plan {
     pub facegen: Vec<String>,
     /// Parts morphed by FaceGen; prepared shape names may add fallback EGMs.
     pub morphs: Vec<String>,
+    /// Textures its materials take beyond its parts' own (`actors::part_uses`): a part's
+    /// given texture and the race's body and hand skin, which worn models' skin shapes
+    /// take too (`ActorCtx::textures_ready`).
+    pub textures: Vec<String>,
 }
 
 /// What actor `reference` (base `base`) is drawn from. `None`: it cannot be resolved
@@ -116,7 +120,7 @@ pub fn actor_plan(world: &ActorWorld, sim: Option<&fnv_sim::World<'_>>, referenc
 fn plan_wearing(world: &ActorWorld, equipment: Option<crate::outfits::Equipment>, reference: u32, base: u32, creature: bool) -> Option<Plan> {
     if creature {
         let c = world.resolve_creature(base, reference).ok()?;
-        Some(Plan { parts: c.parts.iter().map(|p| p.model.clone()).collect(), skeleton: c.skeleton, body: Body::Male, prefix: None, facegen: Vec::new(), morphs: Vec::new() })
+        Some(Plan { parts: c.parts.iter().map(|p| p.model.clone()).collect(), skeleton: c.skeleton, body: Body::Male, prefix: None, facegen: Vec::new(), morphs: Vec::new(), textures: Vec::new() })
     } else {
         let a = crate::outfits::appearance(world, base, reference, equipment.as_ref()).ok()?;
         let w = a.weapon.and_then(|id| world.actors.weapons.get(&id)).filter(|_| world.weapon_mode != crate::weapons::WeaponMode::None);
@@ -133,7 +137,10 @@ fn plan_wearing(world: &ActorWorld, equipment: Option<crate::outfits::Equipment>
             facegen.extend(body_egt.iter().flat_map(|e| [Some(e.clone()), fnv_actor::resolve::hand_egt(e, true)]).flatten());
         }
         let morphs = if world.facegen_enabled && a.shape_facegen(world.race_facegen).is_some() { a.parts.iter().map(|p| p.model.clone()).collect() } else { Vec::new() };
-        Some(Plan { parts, skeleton: a.skeleton, body, prefix: Some(held.unwrap_or(AnimType::HandToHand).prefix()), facegen, morphs })
+        let mut textures: Vec<String> = a.parts.iter().filter_map(|p| p.texture.clone()).chain(a.body_texture.clone()).chain(a.hand_texture.clone()).collect();
+        textures.sort();
+        textures.dedup();
+        Some(Plan { parts, skeleton: a.skeleton, body, prefix: Some(held.unwrap_or(AnimType::HandToHand).prefix()), facegen, morphs, textures })
     }
 }
 
@@ -301,6 +308,8 @@ impl ReadAhead {
         if self.off {
             return read;
         }
+        // Behind a loading screen the frame is not seen: read in the frame it is drawn.
+        let textures = ctx.textures_ready(plan.textures.iter().map(String::as_str)) || self.unseen;
         // A known missing/broken skeleton cannot spawn; do not wait forever for clips
         // that cannot be bound. `spawn` will report the unresolved actor [design].
         if ctx.cache.part_state(&plan.skeleton) == PartState::Prepared && ctx.skeleton(&plan.skeleton).is_none() {
@@ -323,7 +332,7 @@ impl ReadAhead {
         let ready = self.queue_plan(plan, creature, world.pose == ActorPose::Idle,
             world.anims.loaded(&plan.skeleton, plan.body, plan.prefix),
             |p| ctx.cache.part_state(p), |p| cache.has(p));
-        read && morphs_ready && ready
+        read && textures && morphs_ready && ready
     }
 
     /// Queue missing work once and check the whole plan. Separated from asset access
@@ -495,7 +504,7 @@ pub fn read_ahead(
                     continue;
                 }
                 let (data, job) = ((*ctx.models.data).clone(), path.clone());
-                let task = AsyncComputeTaskPool::get_or_init(TaskPool::default).spawn(async move { crate::facegen::read_file(&data, &job) });
+                let task = nvf_assets::read_pool::read_pool().spawn(async move { crate::facegen::read_file(&data, &job) });
                 ahead.facegen.push((path, task));
             }
             Job::Anims { skeleton, body, creature, prefix } => match ctx.cache.part_state(&skeleton) {
@@ -507,7 +516,7 @@ pub fn read_ahead(
                         continue;
                     };
                     let (anims, data) = (aw.anims.clone(), (*ctx.models.data).clone());
-                    let pool = AsyncComputeTaskPool::get_or_init(TaskPool::default);
+                    let pool = nvf_assets::read_pool::read_pool();
                     let task = pool.spawn(async move { anims.warm(&mut ClipReader::new(data), &skeleton, &skel, body, creature, prefix) });
                     ahead.anims.push((key, task));
                 }
@@ -597,7 +606,7 @@ mod tests {
         // No sleeps or timing assumptions about when the worker gets scheduled.
         let gate: Arc<Mutex<(bool, Option<Waker>)>> = Arc::default();
         let worker_gate = gate.clone();
-        let task = AsyncComputeTaskPool::get_or_init(TaskPool::default).spawn(async move {
+        let task = nvf_assets::read_pool::read_pool().spawn(async move {
             anims.warm(&mut ClipReader::new(data), &skeleton, &skel, body, creature, prefix);
             std::future::poll_fn(move |cx| {
                 let mut gate = worker_gate.lock().unwrap();
@@ -652,7 +661,7 @@ mod tests {
     #[test]
     fn refreshed_plan_waits_for_new_models_stance_and_facegen() {
         let old = Plan { parts: vec!["bare.nif".into()], skeleton: "skeleton.nif".into(),
-            body: Body::Male, prefix: Some("h2h"), facegen: vec!["bare.egm".into()], morphs: vec![] };
+            body: Body::Male, prefix: Some("h2h"), facegen: vec!["bare.egm".into()], morphs: vec![], textures: vec![] };
         let new = Plan { parts: vec!["armour.nif".into(), "rifle.nif".into()], prefix: Some("2hr"),
             facegen: vec!["armour.egm".into(), "head.egt".into()], ..old.clone() };
         let mut ahead = ReadAhead::default();
@@ -675,7 +684,7 @@ mod tests {
     #[test]
     fn going_indoors_drops_the_rings_work_but_not_a_waiting_actors() {
         let ring = Plan { parts: vec!["Outside.nif".into()], skeleton: "outside_skel.nif".into(),
-            body: Body::Male, prefix: Some("h2h"), facegen: vec!["outside.egm".into()], morphs: vec![] };
+            body: Body::Male, prefix: Some("h2h"), facegen: vec!["outside.egm".into()], morphs: vec![], textures: vec![] };
         let waiting = Plan { parts: vec!["inside.nif".into()], skeleton: "inside_skel.nif".into(),
             prefix: Some("2hr"), facegen: vec!["inside.egm".into()], ..ring.clone() };
         let mut ahead = ReadAhead::default();
@@ -701,7 +710,7 @@ mod tests {
     #[test]
     fn in_play_an_actor_waits_for_its_parts_to_be_prepared() {
         let plan = Plan { parts: vec!["armour.nif".into()], skeleton: "skeleton.nif".into(),
-            body: Body::Male, prefix: None, facegen: vec![], morphs: vec![] };
+            body: Body::Male, prefix: None, facegen: vec![], morphs: vec![], textures: vec![] };
         let mut ahead = ReadAhead::default();
         // Read but not prepared: not drawn in a frame that is seen, and queued to prepare.
         assert!(!ahead.queue_plan(&plan, false, false, true, |_| PartState::Read, |_| true));

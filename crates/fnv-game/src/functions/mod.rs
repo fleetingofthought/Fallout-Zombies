@@ -20,7 +20,7 @@ mod ai_state;
 pub mod camera;
 pub mod console;
 mod fighting;
-mod fo3;
+pub(crate) mod fo3;
 pub mod toggles;
 pub(crate) mod furniture;
 pub(crate) mod items;

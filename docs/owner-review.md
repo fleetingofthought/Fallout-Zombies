@@ -116,8 +116,14 @@ the spec it links to.
     lagging 90 units and is thrown at up to 600 units/s. Nothing over 100 kg can be
     picked up, and you can only walk while holding over 25 kg. All guessed.
     ([grab](spec-notes/grab.md))
-14. **Steps.** Body and view lag over a step (95 % in 0.19 s, up to 24 units; over 48
-    counts as a teleport). A step-up counts from 0.25 units of rise. Smooth enough?
+14. **Steps and road bumps.** Body and view follow the ground through a 0.2 s speed
+    prediction and a spring (2026-11-07, after "every bump" on roads): road ripples are
+    about 2.5-3x smoother, but running onto a steep hill the body is drawn up to 8 units
+    below the feet for a moment (up to 24 units allowed; over 48 counts as a teleport). A
+    step-up counts from 0.25 units of rise. Where a slope or stairs end the body carries
+    on up: up to 9.9 units over the top of a 30° slope and 4.2 over the top stair at a
+    run (6.1 and 1.2 walking; the old rule never overshot) [observed: replays, physics
+    §6.11]; cutting it halves the slope's overshoot but doubles the road roughness. Smooth enough, or too floaty?
     ([physics §6.8.1, §6.9.1](spec-notes/physics.md))
 15. **Third-person aim.** Shots and the activate prompt go to what is under the
     third-person crosshair, but the shot still leaves from the eye, so cover near you
@@ -272,6 +278,19 @@ the spec it links to.
     unanswered ([observer check 86](handoff/observer-checks.md)). If you want people choosing
     crosses again, the exclusion can apply to creatures alone.
     ([furniture.md §9](spec-notes/furniture.md))
+50. **Every thrown grenade with a fuse rolls (#1785).** You said only thrown frag
+    grenades roll. The rule takes every hand-thrown projectile with a fuse (a Lobber
+    with an Alt. Trigger timer and no proximity), not mines, C-4 or launcher rounds, since
+    nothing in the data sets the frag grenade apart. If you want the frag grenade alone, the rule can key on
+    its PROJ. ([combat-rules §5](spec-notes/combat-rules.md))
+
+51. **Corpses shot again move for 1 s (#1798), decided 2026-11-08.** A corpse moves for at
+   most 3 s and is then held. A shot or blow on a held corpse now shoves it and lets it
+   move for at most 1 s (`MAX_AWAKE_SHOVED`; it was 3 s). A blast, a fresh death, a body
+   in water or one carried keep their limits. In the 50-a-side battle the ragdoll solver
+   went from 4.4–6.2 to 3.4–3.6 ms a frame. Say if re-shot corpses should move longer
+   (or not at all). ([ragdoll §4](spec-notes/ragdoll.md),
+   [frame-rate-audit §5](design/frame-rate-audit.md))
 
 ## Not a gameplay decision: what the extender work needs from you (2026-10-25)
 
@@ -331,10 +350,11 @@ by runtime-compiled queries (tools/capture/jip_probes.py), results in the jip-* 
 - **`GetLNVersion` returns 57.3** in your game, where the wiki says it always returns 0;
   NVForever follows the game.
 - **UI functions (J8):** *answered 2026-10-26*, a tile tree (extender-compat.md §5.6 A).
-- **Three wiki pages missing from the export:** *Auxiliary Variables*, *RefMap Array* and
-  *Template:ModIndexOverride*. The game showed that a `*` name prefix makes an auxiliary
-  variable temporary. It did not show how a variable becomes private or public
-  (docs/spec-notes/jip-variable-stores.md §1). Exporting those three pages settles it.
+- **Two wiki pages missing from the export:** *Auxiliary Variables* and *RefMap Array*
+  (export them by exact title: the 2026-11-08 category exports held only the function
+  pages). *Template:ModIndexOverride* came in 2026-11-08: a private variable belongs to its
+  plugin's mod index. The `*` name prefix makes a variable temporary [observed]; what makes
+  it public is still open (docs/spec-notes/jip-variable-stores.md §1).
 - **JIP implementation choices (J4–J7, branch claude/ext-compiler, 2026-10-26).**
   *Check* any you would rather have differently:
   - An invalid regular expression is an extender run-time error (the statement fails,

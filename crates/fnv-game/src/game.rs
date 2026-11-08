@@ -545,6 +545,10 @@ pub struct FormChanges {
     /// ResetInterior: interior cells reset at their next load (`crate::respawn`).
     #[serde(skip_serializing_if = "std::collections::BTreeSet::is_empty", default)]
     pub expired_cells: std::collections::BTreeSet<FormId>,
+    /// ShowOff's ResetInteriorAlt: cells reset at their next load with their dead
+    /// respawning actors brought back (`crate::respawn`) [documented: ResetInteriorAlt].
+    #[serde(skip_serializing_if = "std::collections::BTreeSet::is_empty", default)]
+    pub expired_cells_full: std::collections::BTreeSet<FormId>,
     /// RemapWaterType: water type → the one drawn in its place ([`Game::water_type`]).
     #[serde(skip_serializing_if = "BTreeMap::is_empty", default)]
     pub water_remaps: BTreeMap<FormId, FormId>,
@@ -1248,6 +1252,8 @@ pub struct Game<'a> {
     pub scene: crate::nif_blocks::SceneMirror,
     /// The xNVSE "other" functions' and the control locks' session state.
     pub other: crate::nvse_other::OtherState,
+    /// Scripts' edits to topics and lines for the session (`crate::dialogue_edits`).
+    pub dialogue_edits: crate::dialogue_edits::DialogueEdits,
     /// The 1111 NVSE plugin's condition lists, weapon stat vectors and damage event
     /// (`crate::nvse_one111`).
     pub one111: crate::nvse_one111::One111State,
@@ -1738,6 +1744,9 @@ pub struct GameSnapshot {
     pub queued: Vec<QueuedBox>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub speech: Vec<Speech>,
+    /// Live inventory explosives, on the saved `time` clock (pickpocket.md section 5).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub planted: Vec<crate::pickpocket::Planted>,
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     pub said: BTreeSet<(FormId, FormId)>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -1877,8 +1886,9 @@ impl GameSnapshot {
     /// dropped), script instances whose key or script is gone, magic effects whose effect,
     /// source, target or script is gone (and their effect scripts; a co-op player's
     /// likewise), NX form variables naming a gone form, and the radio station
-    /// or weather shown. A dropped reference's detection state and place among the fighters
-    /// go with it: in Combat and not among them, it would start a fight on the next tick.
+    /// or weather shown. Live plants lose missing victims, items and object effects;
+    /// their witness lists lose missing or dropped references. A dropped reference's
+    /// detection state and place among the fighters go with it: in Combat and not among them, it would start a fight on the next tick.
     /// Other fields keep the gone ID, which names no form: a lookup of it
     /// fails as one of any form that does not exist [hypothesis: the original's behaviour
     /// with a missing plugin is not documented]. Returns how many were dropped.
@@ -1887,6 +1897,12 @@ impl GameSnapshot {
         let dropped: BTreeSet<FormId> = self.sim.refs.iter().filter(|(_, r)| gone(r.base) || r.cell.is_some_and(&gone)).map(|(&id, _)| id).collect();
         self.sim.refs.retain(|id, _| !dropped.contains(id));
         n += dropped.len();
+        let before = self.planted.len();
+        self.planted.retain(|p| !gone(p.victim) && !dropped.contains(&p.victim) && !gone(p.item) && !p.blast.enchantment.is_some_and(&gone));
+        n += before - self.planted.len();
+        for p in &mut self.planted {
+            p.seen_by.retain(|w| !gone(*w) && !dropped.contains(w));
+        }
         self.awareness.retain(|id, _| !dropped.contains(id));
         if let Some(fighting) = &mut self.fighting {
             fighting.retain(|id| !dropped.contains(id));
@@ -2034,6 +2050,8 @@ pub struct Session {
     sr_registered: Vec<String>,
     /// JIP's session settings (ash-pile activators, terminal art).
     jip_kept: crate::jip_events::JipKept,
+    /// The dialogue records scripts changed (`crate::dialogue_edits`).
+    dialogue_edits: crate::dialogue_edits::DialogueEdits,
 }
 
 /// An event handler: the event (lower case), the function or lambda, the filters by
@@ -2109,6 +2127,8 @@ impl fnv_script::compile::Env for GameEnv<'_, '_> {
 
 impl<'a> Game<'a> {
     pub fn new(data: &'a GameData, mut world: World<'a>, cfg: GameConfig) -> Game<'a> {
+        // GetTimePlayed counts from the first game the process makes (`nvse_jg5`).
+        crate::nvse_jg5::mark_launch();
         // Placed actors carry their template's items (template flag "Inventory").
         // Each at the level it would be fixed at now (`crate::zones`); a cell load fixes it.
         let player_level = world.config().player_level;
@@ -2149,6 +2169,7 @@ impl<'a> Game<'a> {
             jip_flags: std::collections::HashSet::new(),
             box_callback: None,
             other: Default::default(),
+            dialogue_edits: Default::default(),
             one111: Default::default(),
             ini: Default::default(),
             pp: Default::default(),
@@ -2793,7 +2814,7 @@ impl<'a> Game<'a> {
                 return Some(id);
             }
         }
-        let bytes = crate::mod_files::read_data(&format!("nvse\\user_defined_functions\\{key}"))?;
+        let bytes = crate::mod_files::read_data_file(&format!("nvse\\user_defined_functions\\{key}"))?;
         // UTF-8 when it is, else 8-bit text in this run's code page (#1439).
         let src = std::str::from_utf8(&bytes).map_or_else(|_| fnv_util::text::decode(&bytes), str::to_owned);
         let id = self.compile_source(&format!("CompileScript {path}"), src)?;
@@ -3117,7 +3138,7 @@ impl<'a> Game<'a> {
             .collect();
         let pp = self.pp_take_session();
         let sr_registered = self.sr.take_registered();
-        Session { handlers, main_loop, restarted_seen: std::mem::take(&mut self.restarted_seen), handler_seq: self.handler_seq, pp, itr_kept: std::mem::take(&mut self.other.itr.kept), sr_registered, jip_kept: std::mem::take(&mut self.jip.kept) }
+        Session { handlers, main_loop, restarted_seen: std::mem::take(&mut self.restarted_seen), handler_seq: self.handler_seq, pp, itr_kept: std::mem::take(&mut self.other.itr.kept), sr_registered, jip_kept: std::mem::take(&mut self.jip.kept), dialogue_edits: self.dialogue_edits.for_session() }
     }
 
     /// Take over what lasts for the session ([`Game::take_session`]).
@@ -3130,6 +3151,7 @@ impl<'a> Game<'a> {
         self.other.itr.kept = s.itr_kept;
         self.sr.put_registered(s.sr_registered);
         self.jip.kept = s.jip_kept;
+        self.dialogue_edits = s.dialogue_edits;
     }
 
     /// Run every handler registered for `event` whose filters match, highest priority
@@ -4099,11 +4121,13 @@ impl<'a> Game<'a> {
 
     /// The speaker starts saying the line `info` outside a conversation with the player:
     /// a line it was saying stops, the line is remembered for Say Once, and its begin
-    /// result script runs ([`Game::say`]; [`LineKind`]). A line of a conversation
+    /// result script runs, followed by a Run Immediately end result (dialogue.md section
+    /// 3.6 [design]; [`Game::say`]; [`LineKind`]). A line of a conversation
     /// between actors lasts as long as its first response.
     pub(crate) fn say_line(&mut self, speaker: FormId, target: Option<FormId>, topic: FormId, info: FormId, kind: LineKind) {
         let data = self.data;
-        let Some(def) = data.infos.get(&info) else { return };
+        let dv = self.dialogue_view();
+        let Some(def) = dv.info(&info) else { return };
         self.cut_line(speaker);
         self.mark_said(speaker, info, false);
         let conversation = match kind {
@@ -4117,11 +4141,17 @@ impl<'a> Game<'a> {
         self.emit(EventKind::LineStarted { speaker, target, topic, info, seconds });
         self.cover_info(info);
         let (say_to, greeting, hello) = (kind == LineKind::SayTo, kind == LineKind::Greeting, kind == LineKind::Hello);
-        self.speech.push(Speech { speaker, target, topic, info, remaining: seconds, say_to, greeting, farewell: false, conversation, earlier_topics: Vec::new(), hello, look: LineLook::Both, response: 0, force_subtitles: false, two_d: false, end_ran: false });
+        // [design] Mark this line before callbacks can finish it or replace it.
+        let immediate = def.has(crate::data::info_flag::RUN_IMMEDIATELY);
+        self.speech.push(Speech { speaker, target, topic, info, remaining: seconds, say_to, greeting, farewell: false, conversation, earlier_topics: Vec::new(), hello, look: LineLook::Both, response: 0, force_subtitles: false, two_d: false, end_ran: immediate });
         if let Some(&first) = def.response_order().first() {
             self.ask_response_idles(speaker, target, info, first);
         }
         if let Some(u) = def.begin {
+            self.emit(EventKind::ResultScript { unit: data.unit(u).key(), on: Some(speaker) });
+            self.run_result(u, RunCtx { self_ref: Some(speaker), action_ref: None, quest: def.quest });
+        }
+        if let Some(u) = def.end.filter(|_| immediate) {
             self.emit(EventKind::ResultScript { unit: data.unit(u).key(), on: Some(speaker) });
             self.run_result(u, RunCtx { self_ref: Some(speaker), action_ref: None, quest: def.quest });
         }
@@ -4131,7 +4161,7 @@ impl<'a> Game<'a> {
     /// the time of each passes: the idles of a response that starts are asked for
     /// (`crate::idles`; the first response's when the line starts).
     fn speech_responses(&mut self) {
-        let data = self.data;
+        let dv = self.dialogue_view();
         let mut started = Vec::new();
         for k in 0..self.speech.len() {
             let s = &self.speech[k];
@@ -4139,7 +4169,7 @@ impl<'a> Game<'a> {
             if s.conversation.is_some() {
                 continue;
             }
-            let Some(def) = data.infos.get(&s.info) else { continue };
+            let Some(def) = dv.info(&s.info) else { continue };
             let order = def.response_order();
             if order.len() < 2 {
                 continue;
@@ -4254,13 +4284,14 @@ impl<'a> Game<'a> {
     /// its speaker, then what follows the kind of line ([`Game::update_speech`]).
     fn end_line(&mut self, k: usize) {
         let data = self.data;
+        let dv = self.dialogue_view();
         let s = self.speech.remove(k);
         let (speaker, info) = (s.speaker, s.info);
         self.emit(EventKind::LineEnded { speaker, info, cut: false });
         // The force greet this line's end script holds, if it is a farewell
         // (`Game::hold_force_greet`).
         let mut then = None;
-        if let Some(def) = data.infos.get(&info) {
+        if let Some(def) = dv.info(&info) {
             if let Some(u) = def.end.filter(|_| !s.end_ran) {
                 self.emit(EventKind::ResultScript { unit: data.unit(u).key(), on: Some(speaker) });
                 // A farewell's end script may ask for the next conversation. The state is
@@ -4634,7 +4665,8 @@ impl<'a> Game<'a> {
             let names: Vec<String> = by.iter().map(|a| self.data.name(a.perk)).collect();
             tracing::info!("perks: drinking from {target}: rads x {rads:.4} ({})", names.join(", "));
         }
-        let Some(&spell) = self.data.water_effects.get(&water) else {
+        // SetWaterFormEffect's change first (`crate::nvse_jip8`).
+        let Some(spell) = self.water_effect(water) else {
             tracing::info!("drink: {target}'s water {water} has no actor effect");
             return;
         };
@@ -4686,7 +4718,8 @@ impl<'a> Game<'a> {
     /// a line would not be said. Returns whether the conditions passed.
     pub fn run_info(&mut self, info: FormId, speaker: Option<FormId>, force: bool) -> Result<bool, String> {
         let data = self.data;
-        let def = data.infos.get(&info).ok_or_else(|| format!("{info} is not a dialogue line (INFO)"))?;
+        let dv = self.dialogue_view();
+        let def = dv.info(&info).ok_or_else(|| format!("{info} is not a dialogue line (INFO)"))?;
         let speaker = speaker.or(def.speaker);
         let pass = self.conditions_pass(&def.conditions, speaker, Some(FormId::PLAYER_REF), &format!("INFO {info}"));
         if !pass && !force {
@@ -4715,6 +4748,7 @@ impl<'a> Game<'a> {
     /// [hypothesis: the tape plays the line it began].
     pub fn holotape_script(&mut self, note: FormId, which: usize) -> Option<FormId> {
         let data = self.data;
+        let dv = self.dialogue_view();
         let started = self.tape_playing.take().filter(|&(n, _)| n == note && which == 1).map(|(_, i)| i);
         let info = match started {
             Some(i) => i,
@@ -4726,7 +4760,7 @@ impl<'a> Game<'a> {
         if which == 0 {
             self.tape_playing = Some((note, info));
         }
-        let def = data.infos.get(&info)?;
+        let def = dv.info(&info)?;
         if let Some(u) = [def.begin, def.end][which.min(1)] {
             self.emit(EventKind::ResultScript { unit: data.unit(u).key(), on: Some(FormId::PLAYER_REF) });
             self.run_result(u, RunCtx { self_ref: Some(FormId::PLAYER_REF), action_ref: None, quest: def.quest });
@@ -5296,7 +5330,19 @@ impl<'a> Game<'a> {
     // ---- snapshots -----------------------------------------------------------------
 
     pub fn snapshot(&self) -> GameSnapshot {
-        let sim = self.world.snapshot();
+        let mut sim = self.world.snapshot();
+        // SetOwnershipTemp's owners are not saved: the owner before it is (`nvse_showoff4`).
+        let mut forms = self.forms.clone();
+        for (&t, &before) in &self.showoff.temp_owners {
+            if let Some(st) = sim.refs.get_mut(&t) {
+                st.extra.owner = before;
+            } else {
+                match before {
+                    Some(o) => forms.cell_owners.insert(t, o),
+                    None => forms.cell_owners.remove(&t),
+                };
+            }
+        }
         GameSnapshot {
             format: SNAPSHOT_FORMAT.into(),
             ext: self.ext.clone(),
@@ -5318,6 +5364,7 @@ impl<'a> Game<'a> {
             boxes: self.boxes.clone(),
             queued: self.queued.clone(),
             speech: self.speech.clone(),
+            planted: self.pickpocket.planted.clone(),
             said: self.said.clone(),
             said_day: self.said_day.clone(),
             said_day_days_clock: true,
@@ -5326,7 +5373,7 @@ impl<'a> Game<'a> {
             time: self.time,
             pending_onload: self.pending_onload.clone(),
             rng_word_pos: self.rng.get_word_pos().to_string(),
-            forms: self.forms.clone(),
+            forms,
             effects: self.effects.clone(),
             next_effect: self.next_effect,
             image_modifiers: self.image_modifiers.clone(),
@@ -5396,6 +5443,7 @@ impl<'a> Game<'a> {
         // An older snapshot has no `queued`: each box its own showing, buttons not known.
         g.align_queued();
         g.speech = s.speech.clone();
+        g.pickpocket.planted = s.planted.clone();
         g.said = s.said.clone();
         if s.said_day_days_clock {
             g.said_day = s.said_day.clone();
@@ -5742,7 +5790,7 @@ impl Host for Exec<'_, '_> {
             // Its own buttons: no Message form to count them from (`Game::queued`).
             self.game.show_box_buttons(none, count);
         } else {
-            self.game.queue_corner_message();
+            self.game.queue_corner_message(text, "", crate::nvse_hud::CORNER_SECONDS);
         }
     }
 
@@ -5880,7 +5928,8 @@ impl Host for Exec<'_, '_> {
     }
 
     fn body_part_name(&mut self, form: u32, part: i64) -> Option<String> {
-        self.game.data.body_part_name(FormId(form), part)
+        // SetBodyPartName's change first (`crate::nvse_jip8`).
+        self.game.body_part_text(FormId(form), part, "BPTN").or_else(|| self.game.data.body_part_name(FormId(form), part))
     }
 
     fn calling_plugin(&mut self) -> Option<String> {

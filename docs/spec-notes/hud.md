@@ -336,7 +336,11 @@ long line is level with the upper of the corner pieces' two solid lines; the tic
 same tick picture as the player's bars) stand right on it, with no gap (the player's
 bars stand 4 units over theirs), between the corner marks, about 32 of them (31 here, as
 many as fit); the actor's name is centred under the line in font 7, standing on y 53 of
-the piece. On that hostile screenshot it is red: about (248, 68, 45),
+the piece. [design: #1826] The hand-built HUD centres the name, and the Living Anatomy
+line under it, on the ticks' middle (halfway between the corner marks, x 170.3 of the
+piece), measuring the letters' pictures only, not the room after the last letter;
+centred on the piece's width (x 175) and its set width, the name stood right of the bar
+on the owner's screenshot (2026-11-01). On that hostile screenshot it is red: about (248, 68, 45),
 `iSystemColorHUDAlt*` 255, 67, 42 (`reticle.md`).
 
 [observed: private job hud_enemy3, n2_away, g2_gecko_half] The whole piece's colour

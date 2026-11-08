@@ -315,6 +315,38 @@ fn the_players_skills_come_from_the_formula_and_follow_the_attributes() {
     assert_eq!(get(&mut g, PLAYER, av::SPEED_MULTIPLIER), 100.0);
 }
 
+/// `SetActorValue Repair 35` on the player reads 35 plus the attributes' part, value and
+/// base alike; set again it stays there, 0 leaves the attributes' part, and a ModAV stays
+/// on top [observed: o26_setav, 2026-11-06, nvfdoc at level 1, every skill 17 from the
+/// attributes: Repair read 52 (base 52) after `player.setav repair 35` from the console
+/// and from a script, 52 again after a second one; Science 17 after SetAV 0; Barter
+/// ModAV +10 then SetAV 35 read 62, base 52] (issue #1575).
+#[test]
+fn set_actor_value_on_a_player_skill_adds_the_attributes_part() {
+    let f = fixture();
+    let mut g = game(&f);
+    let formula = get(&mut g, PLAYER, av::REPAIR);
+    assert!(formula > 0.0);
+    call(&mut g, SET, PLAYER, &[code(av::REPAIR), n(35.0)]);
+    assert_eq!(get(&mut g, PLAYER, av::REPAIR), formula + 35.0);
+    assert_eq!(call(&mut g, GET_BASE, PLAYER, &[code(av::REPAIR)]), formula + 35.0);
+    call(&mut g, SET, PLAYER, &[code(av::REPAIR), n(35.0)]);
+    assert_eq!(get(&mut g, PLAYER, av::REPAIR), formula + 35.0);
+    call(&mut g, SET, PLAYER, &[code(av::REPAIR), n(0.0)]);
+    assert_eq!(get(&mut g, PLAYER, av::REPAIR), formula);
+    let barter = get(&mut g, PLAYER, av::BARTER);
+    call(&mut g, MOD, PLAYER, &[code(av::BARTER), n(10.0)]);
+    call(&mut g, SET, PLAYER, &[code(av::BARTER), n(35.0)]);
+    assert_eq!(get(&mut g, PLAYER, av::BARTER), barter + 35.0 + 10.0);
+    assert_eq!(call(&mut g, GET_BASE, PLAYER, &[code(av::BARTER)]), barter + 35.0);
+    // A tagged skill keeps its tag bonus (15 here) [observed: o26_setav, nvfLanius, Guns
+    // 15 above the attributes' part after SetAV 50; the tag is a hypothesis].
+    g.player.tag_skills.insert(av::SCIENCE);
+    let science = get(&mut g, PLAYER, av::SCIENCE);
+    call(&mut g, SET, PLAYER, &[code(av::SCIENCE), n(50.0)]);
+    assert_eq!(get(&mut g, PLAYER, av::SCIENCE), science + 50.0);
+}
+
 #[test]
 fn the_pools_are_kept_apart() {
     let f = fixture();

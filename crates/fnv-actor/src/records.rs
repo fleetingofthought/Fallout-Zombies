@@ -242,6 +242,15 @@ pub struct Weapon {
     /// the Backpack biped slot" [documented: GECK wiki Weapons]. Not part of any report.
     #[serde(skip)]
     pub hide_backpack: bool,
+    /// BIPL "Biped Model List": a form list of armour addons (ARMA) worn with the weapon,
+    /// as for an ARMO ([`Armor::addons`]) [documented: xEdit WEAP BIPL]. Every
+    /// hand-to-hand weapon of FalloutNV.esm with a hand model names one: the power fist's
+    /// `WeaponPowerfist` holds `ARMAPowerfist` (Right Hand, `PowerFist.NIF`, a skinned
+    /// metal hand), the brass knuckles' `ARMABrassKnuckles` (Right Hand,
+    /// `BrassKnuckles.NIF` / `BrassKnucklesf.NIF`, a skinned hand with the knuckles)
+    /// [observed]. Its members, as load-order FormIDs. Not part of any report.
+    #[serde(skip)]
+    pub addons: Vec<FormId>,
 }
 
 /// A WEAP's `MOD4` "World Model" when the third-person view holds it in place of `MODL`:
@@ -566,7 +575,12 @@ fn load_one(lo: &LoadOrder, pi: usize, id: FormId, sig: &[u8; 4], d: &[Decoded],
         // Armour addons (BIPL members): the same biped data and models [documented:
         // xEdit ARMA].
         b"ARMA" => Loaded::Armor(armor(d)),
-        b"WEAP" => Loaded::Weapon(Box::new(weapon(lo, pi, id, d, issues))),
+        b"WEAP" => {
+            let mut w = weapon(lo, pi, id, d, issues);
+            let list = fid(lo, pi, id, "BIPL", first(d, b"BIPL"), issues);
+            w.addons = list.map(|l| crate::furniture::list_members(lo, l)).unwrap_or_default();
+            Loaded::Weapon(Box::new(w))
+        }
         b"LVLN" => Loaded::Leveled(leveled_npc(lo, pi, id, d, issues)),
         b"CREA" => Loaded::Creature(Box::new(creature(lo, pi, id, d, issues))),
         b"LVLC" => Loaded::LeveledCreature(leveled_npc(lo, pi, id, d, issues)),
@@ -771,6 +785,7 @@ fn weapon(lo: &LoadOrder, pi: usize, id: FormId, d: &[Decoded], issues: &mut Iss
         held_world_model: held_world_model(path(first(d, b"MODL")).as_deref(), path(first(d, b"MOD4")).as_deref()),
         grip: dnam.and_then(|v| v.get("grip_animation")).and_then(text).as_deref().and_then(hand_grip),
         hide_backpack: flags.is_some_and(|f| has_flag(f, "Hide Backpack")),
+        addons: Vec::new(),
     }
 }
 
@@ -791,7 +806,7 @@ mod tests {
 
     #[test]
     fn a_modded_weapon_draws_the_model_of_its_mods() {
-        let mut w = Weapon { edid: None, model: Some("plain.nif".into()), anim_type: None, damage: 0, projectile: None, explosion_damage: 0.0, skill: None, embedded: false, non_playable: false, not_for_npcs: false, first_person: None, first_person_model: Some("1st.nif".into()), mod_models: Default::default(), mod_first_person: [None; 7], mod_first_person_models: Default::default(), held_world_model: None, grip: None, hide_backpack: false };
+        let mut w = Weapon { edid: None, model: Some("plain.nif".into()), anim_type: None, damage: 0, projectile: None, explosion_damage: 0.0, skill: None, embedded: false, non_playable: false, not_for_npcs: false, first_person: None, first_person_model: Some("1st.nif".into()), mod_models: Default::default(), mod_first_person: [None; 7], mod_first_person_models: Default::default(), held_world_model: None, grip: None, hide_backpack: false, addons: Vec::new() };
         w.mod_models[0] = Some("ext.nif".into());
         w.mod_models[2] = Some("ext_scope.nif".into());
         w.mod_first_person_models[2] = Some("1st_ext_scope.nif".into());
@@ -817,7 +832,7 @@ mod tests {
     #[test]
     fn a_weapon_without_first_person_forms_shows_its_mods_in_first_person() {
         // As a mod's weapon may be: MODL and MWD models, no WNAM or WNM forms.
-        let mut w = Weapon { edid: None, model: Some("plain.nif".into()), anim_type: None, damage: 0, projectile: None, explosion_damage: 0.0, skill: None, embedded: false, non_playable: false, not_for_npcs: false, first_person: None, first_person_model: None, mod_models: Default::default(), mod_first_person: [None; 7], mod_first_person_models: Default::default(), held_world_model: None, grip: None, hide_backpack: false };
+        let mut w = Weapon { edid: None, model: Some("plain.nif".into()), anim_type: None, damage: 0, projectile: None, explosion_damage: 0.0, skill: None, embedded: false, non_playable: false, not_for_npcs: false, first_person: None, first_person_model: None, mod_models: Default::default(), mod_first_person: [None; 7], mod_first_person_models: Default::default(), held_world_model: None, grip: None, hide_backpack: false, addons: Vec::new() };
         w.mod_models[3] = Some("ext.nif".into());
         assert_eq!(w.model_for(true, 0), Some("plain.nif"));
         assert_eq!(w.model_for(true, 4), Some("ext.nif"));

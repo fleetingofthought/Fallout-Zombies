@@ -422,12 +422,12 @@ pub struct MenuBefore {
     selected: [usize; 2],
     category: [Category; 2],
     row: Option<Row>,
-    balance: Option<i64>,
+    paid: Option<i64>,
 }
 
 impl MenuBefore {
     pub fn of(m: &MenuModel) -> MenuBefore {
-        MenuBefore { focus: m.focus, selected: m.selected, category: m.category, row: m.selected_row(m.focus).cloned(), balance: m.trade.as_ref().map(|t| t.balance) }
+        MenuBefore { focus: m.focus, selected: m.selected, category: m.category, row: m.selected_row(m.focus).cloned(), paid: m.trade.as_ref().map(|t| t.paid()) }
     }
 }
 
@@ -445,7 +445,7 @@ pub fn menu_event(cmd: Command, before: &MenuBefore, after: &MenuModel, a: &Appl
         // Ok on "How many?": what asked is done now (a drop sounds when it lands).
         Command::AmountOk if !matches!(after.mode, Mode::Inventory) => act(after, before, a),
         Command::TakeAll if matches!(after.mode, Mode::Container(_)) => Some(if a.changed { UiEvent::TakeAll } else { UiEvent::Refused }),
-        Command::Accept if matches!(after.mode, Mode::Barter(_)) => Some(if a.changed { UiEvent::Traded { caps: before.balance.unwrap_or(0) } } else { UiEvent::Refused }),
+        Command::Accept if matches!(after.mode, Mode::Barter(_)) => Some(if a.changed { UiEvent::Traded { caps: before.paid.unwrap_or(0) } } else { UiEvent::Refused }),
         _ => None,
     }
 }
@@ -556,6 +556,7 @@ pub struct UiSounds {
     /// ALCH: the consume sound, where the record names one.
     consume: HashMap<FormId, FormId>,
     seen: Seen,
+    pending_inventory_open: bool,
     by_edid: Option<HashMap<String, FormId>>,
     pub stats: UiSoundStats,
 }
@@ -605,11 +606,33 @@ fn d_selected(d: Option<&crate::dialogue_menu::DialogueMenu>) -> usize {
     d.map_or(0, |d| d.selected)
 }
 
+/// [design: pipboy.rs, nvforever/player_body.rs] Access follows the visible raise;
+/// ordinary openings and the screen menu retain their opening-frame sound.
+fn inventory_access(events: &mut Vec<UiSound>, pending: &mut bool, inventory: bool, hidden: bool) {
+    events.retain(|sound| {
+        if sound.menu != UiMenu::Inventory {
+            return true;
+        }
+        if sound.event == UiEvent::Opened && hidden {
+            *pending = true;
+            return false;
+        }
+        !(sound.event == UiEvent::Closed && *pending)
+    });
+    if !inventory {
+        *pending = false;
+    } else if *pending && !hidden {
+        events.push(UiSound { menu: UiMenu::Inventory, event: UiEvent::Opened });
+        *pending = false;
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn play(
     mut ui: ResMut<UiSounds>,
     mut sent: MessageReader<UiSound>,
     active: Res<ActiveMenu>,
+    pip: Option<Res<crate::pipboy::PipBoy>>,
     wait: Option<Res<crate::wait::WaitMenu>>,
     dialogue: Option<Res<crate::dialogue_menu::DialogueMenu>>,
     paused: Option<Res<crate::pause::Paused>>,
@@ -624,6 +647,8 @@ fn play(
     let mut events = watched(&ui.seen, &now);
     ui.seen = now;
     events.extend(sent.read().copied());
+    let hidden = pip.is_some_and(|p| p.frame == crate::pipboy::Frame::Device && (p.warming.is_some() || p.pose_hidden));
+    inventory_access(&mut events, &mut ui.pending_inventory_open, ui.seen.menu == Some(Mode::Inventory), hidden);
     let Some(sfx) = sfx.as_deref() else { return };
     for UiSound { menu, event } in events {
         *ui.stats.by_menu.entry(menu).or_default() += 1;
@@ -696,6 +721,33 @@ impl Plugin for UiSoundsPlugin {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn inventory_access_waits_for_pose_restoration_and_cancels_silently() {
+        let opened = UiSound { menu: UiMenu::Inventory, event: UiEvent::Opened };
+        let closed = UiSound { menu: UiMenu::Inventory, event: UiEvent::Closed };
+        let mut pending = false;
+        let mut events = vec![opened];
+        inventory_access(&mut events, &mut pending, true, true);
+        assert!(pending && events.is_empty());
+        inventory_access(&mut events, &mut pending, true, true);
+        assert!(pending && events.is_empty());
+        inventory_access(&mut events, &mut pending, true, false);
+        assert_eq!(events, vec![opened]);
+        assert!(!pending);
+        events.clear();
+        inventory_access(&mut events, &mut pending, true, false);
+        assert!(events.is_empty());
+        events.push(opened);
+        inventory_access(&mut events, &mut pending, true, true);
+        events.push(closed);
+        inventory_access(&mut events, &mut pending, false, true);
+        assert!(!pending && events.is_empty());
+        // [design: this file] Screen-menu, ordinary and disabled-warm openings are immediate.
+        events.push(opened);
+        inventory_access(&mut events, &mut pending, true, false);
+        assert_eq!(events, vec![opened]);
+    }
 
     #[test]
     fn the_files_decide_where_they_name_a_sound() {

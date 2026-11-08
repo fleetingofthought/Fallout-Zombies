@@ -771,6 +771,7 @@ mod tests {
             shape: Shape::Box { half_extents: half }.into(),
             shell: 0.0,
             material: None,
+            wind: false,
         };
         phys.world.add_ref(&fnv_phys::RefPose { form_id: 0x10, position: at, rotation: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0], scale: 1.0 }, &[o]);
         phys

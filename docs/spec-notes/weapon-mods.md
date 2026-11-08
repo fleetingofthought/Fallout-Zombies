@@ -218,7 +218,19 @@ being modded (Inventory Reference)"]. NVForever counts it among the Pip-Boy's co
 
 ## 6. Not built
 
-- A modded weapon's value; an NPC's modded figures in combat.
+- An NPC's modded figures in combat.
+- Built 2026-11-06 (#982): **a modded weapon's value** is the weapon's value at its
+  condition (barter.rs, the GECK wiki's "Item Condition And Value") plus the IMOD DATA
+  value of each attached mod, which the condition does not lower [observed: campaign
+  o26_value, 2026-11-06, `nvfairport`, ShowOff's GetCalculatedItemValue on the player's
+  inventory reference, mods set with JIP SetWeaponRefModFlags and condition with
+  SetItemRefCurrentHealth: a Varmint Rifle (value 75; Extended Mags 75, Night Scope 125,
+  Silencer 100) read 75, 150, 200, 175, 275, 375 with mods 0, 1, 2, 4, 3, 7 at full
+  condition; 26, 9, 49 without mods at 50, 25, 75 %; 326, 309, 349 with all three]. The
+  page of GetCalculatedItemValue says it returns what the screen shows; the barter
+  screen itself was not read [hypothesis that they agree]. NVForever: `Row::mods_value`
+  (`FormStore::mods_value`, WEAP WMI1-3) added in `Row::worth`, which the barter prices,
+  the item card and the totals read.
 - Equip time (no master mod has it) and VATS bonus (unused in game). Increase Projectile
   Speed and both Regenerate Ammo effects are built (weapon-data-fields.md, 2026-10-21).
 - Scripts' view: GetWeaponHasMod-style functions are NVSE/JIP (not vanilla) and not

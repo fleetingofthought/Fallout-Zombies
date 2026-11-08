@@ -59,3 +59,4 @@ opt-level = 3
 [patch.crates-io]
 gpu-allocator = { path = "vendor/gpu-allocator" }
 bevy_pbr = { path = "vendor/bevy_pbr" }
+bevy_render = { path = "vendor/bevy_render" }

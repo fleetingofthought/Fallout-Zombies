@@ -1,0 +1,345 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o29_burn",
+ "title": "Issue #973 step 2: an NPC caster. An NCR trooper given the Incinerator fires it (FireWeapon) at a second, restrained, unarmed trooper about 250 units north on the runway; every actor's Health every game loop, the target's Health and Fire Resistance in the header",
+ "save": "nvfairport",
+ "defaults": {
+  "fields": "fight",
+  "events": "fight",
+  "every": 1,
+  "depth": 0,
+  "settle_frames": 200,
+  "hours": 0.15,
+  "max_actors": 4,
+  "console_first": [
+   "CloseAllMenus",
+   "tgm",
+   "DisablePlayerControls 0 0 0 1 0 0 0"
+  ],
+  "do_first": [
+   [
+    "player.MoveTo {0} 851 228 40",
+    "0x0013DA13"
+   ],
+   {
+    "frames": 120
+   },
+   "player.setangle z 0",
+   {
+    "frames": 30
+   }
+  ],
+  "extra_header": [
+   [
+    "t_health",
+    "num",
+    "player.GetAV Variable01"
+   ],
+   [
+    "t_fire_resist",
+    "num",
+    "player.GetAV Variable02"
+   ]
+  ]
+ },
+ "sessions": [
+  {
+   "name": "npc1",
+   "place": [
+    {
+     "base": "LvlNCRTrooper",
+     "count": 1,
+     "distance": 300,
+     "direction": 0,
+     "arm": "none",
+     "offset": [
+      0,
+      350,
+      0
+     ]
+    },
+    {
+     "base": "LvlNCRTrooper",
+     "count": 1,
+     "distance": 100,
+     "direction": 0
+    }
+   ],
+   "timed": [
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 200",
+       "      rA.RemoveAllItems",
+       "      rA.AddItem 0x000906DA 1",
+       "      rA.AddItem 0x00029371 200",
+       "      rA.EquipItem 0x000906DA",
+       "    else",
+       "      rA.SetRestrained 1",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 40,
+     "script": {
+      "decls": [
+       "ref rA",
+       "ref rS",
+       "ref rT",
+       "float fA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 200",
+       "      let rS := rA",
+       "    else",
+       "      let rT := rA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "if rS != 0",
+       "  if rT != 0",
+       "    let fA := rS.GetHeadingAngle rT",
+       "    let fA := fA + rS.GetAngle Z",
+       "    rS.SetAngle Z fA",
+       "  endif",
+       "endif"
+      ]
+     }
+    },
+    {
+     "after": 60,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 200",
+       "      rA.FireWeapon 0x000906DA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rA",
+       "float fA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player >= 200",
+       "      let fA := rA.GetAV Health",
+       "      player.SetAV Variable01 fA",
+       "      let fA := rA.GetAV FireResist",
+       "      player.SetAV Variable02 fA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    }
+   ],
+   "note": "one glob"
+  },
+  {
+   "name": "npc2",
+   "place": [
+    {
+     "base": "LvlNCRTrooper",
+     "count": 1,
+     "distance": 300,
+     "direction": 0,
+     "arm": "none",
+     "offset": [
+      0,
+      350,
+      0
+     ]
+    },
+    {
+     "base": "LvlNCRTrooper",
+     "count": 1,
+     "distance": 100,
+     "direction": 0
+    }
+   ],
+   "timed": [
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 200",
+       "      rA.RemoveAllItems",
+       "      rA.AddItem 0x000906DA 1",
+       "      rA.AddItem 0x00029371 200",
+       "      rA.EquipItem 0x000906DA",
+       "    else",
+       "      rA.SetRestrained 1",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 40,
+     "script": {
+      "decls": [
+       "ref rA",
+       "ref rS",
+       "ref rT",
+       "float fA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 200",
+       "      let rS := rA",
+       "    else",
+       "      let rT := rA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "if rS != 0",
+       "  if rT != 0",
+       "    let fA := rS.GetHeadingAngle rT",
+       "    let fA := fA + rS.GetAngle Z",
+       "    rS.SetAngle Z fA",
+       "  endif",
+       "endif"
+      ]
+     }
+    },
+    {
+     "after": 60,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 200",
+       "      rA.FireWeapon 0x000906DA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 85,
+     "script": {
+      "decls": [
+       "ref rA",
+       "ref rS",
+       "ref rT",
+       "float fA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 200",
+       "      let rS := rA",
+       "    else",
+       "      let rT := rA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop",
+       "if rS != 0",
+       "  if rT != 0",
+       "    let fA := rS.GetHeadingAngle rT",
+       "    let fA := fA + rS.GetAngle Z",
+       "    rS.SetAngle Z fA",
+       "  endif",
+       "endif"
+      ]
+     }
+    },
+    {
+     "after": 90,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 200",
+       "      rA.FireWeapon 0x000906DA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rA",
+       "float fA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player >= 200",
+       "      let fA := rA.GetAV Health",
+       "      player.SetAV Variable01 fA",
+       "      let fA := rA.GetAV FireResist",
+       "      player.SetAV Variable02 fA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    }
+   ],
+   "note": "two globs 30 samples apart"
+  }
+ ]
+}

@@ -4,34 +4,75 @@
 //! `stress sample: t <s> s, frames <n>, frame mean <m> ms, frame worst <w> ms, entities <n>,
 //! refs drawn <n>, meshes <n>, images <n>, materials <n>, models cached <n>, textures
 //! cached <n>, audio <n>, cells <n>,
-//! bodies <fixed>/<kinematic>/<dynamic>, actors <n>, nan actors <n>, ragdolls <n>,
-//! projectiles <n>[, gpu allocated <MB>, gpu reserved <MB>, gpu blocks <n>], at <place>`
-//! with what the engine holds now and where the camera is (the crash report's place text),
+//! bodies <fixed>/<kinematic>/<dynamic>, bodies awake <n>, contact pairs <n>, manifolds <n>,
+//! solver contacts <n>, joints <n>, solver ms <a>/<r>/<d>/<i>/<c>/<s>, actors <n>,
+//! nan actors <n>, ragdolls <n>,
+//! projectiles <n>[, gpu allocated <MB>, gpu reserved <MB>, gpu blocks <n>], startup frames
+//! <n>, hidden frames <n>, phase changes <n>, window <ms> ms, at <place>`
+//! with what the engine holds now and where the camera is (the crash report's place text);
+//! `bodies awake` to `joints` are the physics solver's load now, and `solver ms` rapier's
+//! stage timers summed since the start (`fnv_phys::Stats::solver_us`: set-up, solve,
+//! collision detection, islands, CCD, the whole step; 0 outside the profile build) (#1798),
 //! and `stress gpu labels: <label> <MB> in <n>; …` (the GPU allocator's report, where the
 //! backend gives one: [`gpu_memory`]). At the exit, `stress frames: <n> frames, mean <m> ms,
 //! 1% low <l> ms (<fps> fps), worst <w> ms` over the run after its start-up ([`frame_stats`]),
 //! and `stress actors: <n> drawn in <f> frames (<ms> ms, most in a frame <m> ms); those
 //! frames mean <m> ms, worst <w> ms, <k> over 100 ms`.
 //!
-//! Start-up (the frames until the start's cells are all in, `Streamer::settled`; the first
-//! takes the app's build and the Startup systems, 2.5 s in the stress runs of 2026-10-18)
-//! is left out of the samples' and the run's frame times and logged once on its own:
-//! `stress start-up: <n> frames, <ms> ms, slowest <w> ms`. After it, a frame slower than
-//! [`HITCH_MS`] logs `stress hitch: <ms> ms at t <s> s, <k> cells loaded in it (<ms> ms),
-//! <a> actors drawn in it (<ms> ms), at <place>`, so a stall can be told from a cell load
-//! or from actors coming into view (`readahead::clocked`; actors a cell draws count in
-//! both). A frame behind a loading screen (`Loading::unseen_frames`) is not seen: it is
-//! left out of the frame times and its stall logged apart, `stress hitch (behind a
-//! loading screen): …`, with the count of such frames at the exit's `stress frames:`
-//! line [observed 2026-10-27: every `world::stream` stall after a door or teleport on a
-//! soak run was behind the screen, and counted as hitches]. The process's memory is the
-//! runner's to read (it has the process).
+//! The frame measured (issue #1415): a frame is the time between two consecutive runs of
+//! the sampler in `First`, each run a frame boundary. Each boundary takes its own instant
+//! (`Instant::now()`), the phase it sees (start-up, behind a loading screen, seen), the
+//! streamer's and `readahead::clock`'s counters and the place. A frame's time is the
+//! difference between its two boundaries' instants, its cell and actor counts the counters'
+//! differences, its phase the one both boundaries saw: time, phase, counts and place all
+//! come from the same two boundaries ([`Samples::step`], [`frame`]). The time is the main
+//! thread's whole loop from one `First` to the next: the frame's schedules, the wait for
+//! the render thread's previous frame at extraction, extraction itself and the window
+//! events [design: bevy_render 0.20.1 `pipelined_rendering.rs:115-136`].
+//!
+//! It is not `Time<Real>`'s delta, which the sampler used before issue #1415. That clock
+//! takes the instant the render world sends after its render schedule [design: bevy_render
+//! 0.20.1 `lib.rs:464,522-524`], received in `First` or `Instant::now()` when none is queued
+//! [design: bevy_time 0.20.1 `lib.rs:163,180`]. With pipelined rendering (in bevy's default
+//! plugins, which `main.rs` keeps [design: bevy_internal 0.20.1 `default_plugins.rs:56-57`])
+//! the delta that arrives at a boundary can be the frame before's, so a long frame a loading
+//! screen came down in could arrive one boundary late, when both boundaries saw the screen
+//! down, and be counted as a seen hitch at the destination [design: code reading, not
+//! reproduced live]. The first boundary has none before it: it only sets the baseline (in
+//! start-up), no frame is counted for it.
+//!
+//! A frame whose two boundaries saw different phases (a loading screen went up or came down
+//! in it, `loading::finish` in `Last` included) crossed a phase change: it is in no frame
+//! time, and when slow it is logged as `stress hitch (across a phase change, <from> to
+//! <to>): …, from <place> to <place>` with its raw duration, without saying whether the
+//! loading or the game took it. Each sample window counts its start-up, hidden and crossing
+//! frames and its real length (`startup frames`, `hidden frames`, `phase changes`, `window
+//! <ms> ms`, before the place), so a window that held a transition can be told from a clean
+//! one, and the window starts again when start-up ends. A line's `t` is its boundary's
+//! instant on `Time<Real>`'s clock (seconds from that clock's first update).
+//!
+//! Start-up (the frames until the start's cells are all in, `Streamer::settled`; the Startup
+//! schedules run before the first boundary and are in no frame [design: bevy_app 0.20.1
+//! `main_schedule.rs:290-304`]; the first frame measured took 2.5 s in the stress runs of
+//! 2026-10-18, by `Time<Real>`'s delta then) is left out of the samples' and the run's
+//! frame times and logged once on its own: `stress start-up: <n> frames, <ms> ms, slowest
+//! <w> ms`. After it, a frame slower than [`HITCH_MS`] logs `stress hitch: <ms> ms at t <s>
+//! s, <k> cells loaded in it (<ms> ms), <a> actors drawn in it (<ms> ms), at <place>`, so a
+//! stall can be told from a cell load or from actors coming into view (`readahead::clocked`;
+//! actors a cell draws count in both). A frame behind a loading screen
+//! (`Loading::unseen_frames`) is not seen: it is left out of the frame times and its stall
+//! logged apart, `stress hitch (behind a loading screen): …`, with the count of such frames
+//! (and of the frames that crossed a phase change) at the exit's `stress frames:` line
+//! [observed 2026-10-27: every `world::stream` stall after a door or teleport on a soak run
+//! was behind the screen, and counted as hitches]. The process's memory is the runner's to
+//! read (it has the process).
 
 use crate::limbs::ActorRig;
 use bevy::audio::AudioSink;
 use bevy::prelude::*;
 use nvf_play::phys::PhysState;
 use std::collections::HashMap;
+use std::time::Instant;
 use nvf_play::RefVisual;
 
 pub struct StressSamplePlugin;
@@ -47,7 +88,13 @@ impl Plugin for StressSamplePlugin {
     fn build(&self, app: &mut App) {
         let Some(every) = Self::interval() else { return };
         info!("test aid NVF_PLAY_TEST_SAMPLE: a stress sample every {every} s");
-        app.insert_resource(Samples { every, ..default() }).add_systems(Last, ((sample, report).chain(), census, cache_census));
+        // One frame boundary per frame, in `First`: the frame's time (the sampler's own
+        // instants), the state it is judged by and its counts all come from the same two
+        // boundaries (issue #1415). After the clock's update only so that a line's `t`
+        // has `Time<Real>`'s origin from the first boundary on.
+        app.insert_resource(Samples { every, ..default() })
+            .add_systems(First, sample.after(bevy::time::TimeSystems))
+            .add_systems(Last, (report, census, cache_census));
         if let Some(render) = app.get_sub_app_mut(bevy::render::RenderApp) {
             render.add_systems(bevy::render::Render, render_census.in_set(bevy::render::RenderSystems::Cleanup));
         }
@@ -205,27 +252,231 @@ fn census(world: &World, mut last: Local<f32>) {
 /// A frame slower than this (milliseconds) after start-up is logged as a hitch.
 pub const HITCH_MS: f32 = 250.0;
 
+/// What a frame boundary sees: still in start-up, a frame the player does not see (a loading
+/// screen up, or nothing shown yet: `Loading::unseen_frames`), or a frame seen.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Phase {
+    Startup,
+    Hidden,
+    Seen,
+}
+
+impl Phase {
+    fn text(self) -> &'static str {
+        match self {
+            Phase::Startup => "start-up",
+            Phase::Hidden => "hidden",
+            Phase::Seen => "seen",
+        }
+    }
+}
+
+/// A frame (the time between two boundaries) by the phases its two boundaries saw.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Interval {
+    /// Begun in start-up: start-up's, whatever its end saw.
+    Startup,
+    Hidden,
+    Seen,
+    /// The phase changed within it (from, to): neither phase's alone.
+    Crossing(Phase, Phase),
+}
+
+fn classify(start: Phase, end: Phase) -> Interval {
+    match (start, end) {
+        (Phase::Startup, _) => Interval::Startup,
+        (Phase::Hidden, Phase::Hidden) => Interval::Hidden,
+        (Phase::Seen, Phase::Seen) => Interval::Seen,
+        (a, b) => Interval::Crossing(a, b),
+    }
+}
+
+/// What one frame boundary reads, as plain data, so the sampler's judging runs without
+/// Bevy (the tests drive it): the boundary's own instant, its `t` on `Time<Real>`'s clock,
+/// whether the start's cells are in (`Streamer::settled`, or no streamer) and whether a
+/// loading screen is up (`Loading::unseen_frames`), the streamer's cells loaded and their
+/// load time so far, actors drawn and their time so far (`readahead::clock`), and the place.
+#[derive(Clone, Debug)]
+struct Reading {
+    at: Instant,
+    t: f32,
+    settled: bool,
+    unseen: bool,
+    cells_loaded: usize,
+    load_ms: f64,
+    actors_drawn: usize,
+    actors_ms: f64,
+    place: String,
+}
+
+/// A frame boundary: what it read and the phase it saw.
+#[derive(Clone, Debug)]
+struct Boundary {
+    phase: Phase,
+    read: Reading,
+}
+
+/// Milliseconds between two boundaries' instants.
+fn elapsed_ms(from: Instant, to: Instant) -> f32 {
+    (to.saturating_duration_since(from).as_nanos() as f64 / 1e6) as f32
+}
+
+/// One frame, from one boundary to the next: its kind, its time and the cells loaded and
+/// actors drawn in it (milliseconds spent on each), every one from those two boundaries.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Frame {
+    interval: Interval,
+    ms: f32,
+    new_cells: usize,
+    new_ms: f64,
+    new_actors: usize,
+    new_actors_ms: f64,
+}
+
+/// The frame between two boundaries: its time is the time between their instants, its kind
+/// the phases they saw, its counts the counters' differences. Nothing else goes in.
+fn frame(prev: &Boundary, cur: &Boundary) -> Frame {
+    let (a, b) = (&prev.read, &cur.read);
+    Frame {
+        interval: classify(prev.phase, cur.phase),
+        ms: elapsed_ms(a.at, b.at),
+        new_cells: b.cells_loaded.saturating_sub(a.cells_loaded),
+        new_ms: b.load_ms - a.load_ms,
+        new_actors: b.actors_drawn.saturating_sub(a.actors_drawn),
+        new_actors_ms: b.actors_ms - a.actors_ms,
+    }
+}
+
+/// One sample window: the seen frames' times, the frames of the other kinds, and its real
+/// length in seconds (every frame's).
+#[derive(Default, Debug)]
+struct Window {
+    frames: Vec<f32>,
+    startup: usize,
+    hidden: usize,
+    crossed: usize,
+    secs: f32,
+}
+
+impl Window {
+    fn add(&mut self, interval: Interval, ms: f32) {
+        self.secs += ms / 1000.0;
+        match interval {
+            Interval::Startup => self.startup += 1,
+            Interval::Hidden => self.hidden += 1,
+            Interval::Seen => self.frames.push(ms),
+            Interval::Crossing(..) => self.crossed += 1,
+        }
+    }
+
+    /// The window's own fields on the sample line, before its place.
+    fn fields(&self) -> String {
+        format!(
+            ", startup frames {}, hidden frames {}, phase changes {}, window {:.0} ms",
+            self.startup,
+            self.hidden,
+            self.crossed,
+            self.secs * 1000.0
+        )
+    }
+}
+
 #[derive(Resource, Default)]
 struct Samples {
     every: f32,
-    since: f32,
     /// The start's cells are in: frame times count from the next frame on.
     started: bool,
     /// Start-up's frame times (milliseconds).
     startup: Vec<f32>,
-    /// The streamer's cells loaded and their load time so far, at the last frame.
-    cells_loaded: usize,
-    load_ms: f64,
-    /// Actors drawn and their time so far, at the last frame (`readahead::clock`).
-    actors_drawn: usize,
-    actors_ms: f64,
+    /// The last frame boundary (none before the first, which is a baseline only).
+    last: Option<Boundary>,
     /// After start-up, the frames that drew actors: (frame ms, actors, ms drawing them).
     actor_frames: Vec<(f32, usize, f64)>,
-    /// This window's frame times, and every frame's (milliseconds).
-    window: Vec<f32>,
+    /// This window, and every seen frame's time (milliseconds).
+    window: Window,
     all: Vec<f32>,
-    /// After start-up, frames behind a loading screen (left out of the frame times).
+    /// After start-up, frames behind a loading screen and frames across a phase change
+    /// (both left out of the frame times).
     hidden: usize,
+    crossed: usize,
+}
+
+impl Samples {
+    /// One frame boundary: judges the frame that ended at it against the last boundary and
+    /// returns the lines to log (start-up's end, a hitch). The first boundary has none
+    /// before it: it only sets the baseline (as the runner's first CPU read, issue #1412),
+    /// in start-up, and no frame is counted.
+    fn step(&mut self, read: Reading) -> Vec<String> {
+        let mut lines = Vec::new();
+        let Some(prev) = self.last.take() else {
+            self.last = Some(Boundary { phase: Phase::Startup, read });
+            return lines;
+        };
+        let mut startup_ended = false;
+        if prev.phase == Phase::Startup {
+            self.startup.push(elapsed_ms(prev.read.at, read.at));
+            // A start that never settles still ends start-up after a minute.
+            if read.settled || self.startup.iter().sum::<f32>() > 60_000.0 {
+                self.started = true;
+                startup_ended = true;
+                let total: f32 = self.startup.iter().sum();
+                let slowest = self.startup.iter().copied().fold(0.0, f32::max);
+                lines.push(format!("stress start-up: {} frames, {total:.0} ms, slowest {slowest:.2} ms", self.startup.len()));
+            }
+        }
+        let phase = if !self.started {
+            Phase::Startup
+        } else if read.unseen {
+            Phase::Hidden
+        } else {
+            Phase::Seen
+        };
+        let cur = Boundary { phase, read };
+        let f = frame(&prev, &cur);
+        let Frame { ms, new_cells, new_ms, new_actors, new_actors_ms, .. } = f;
+        let (t, place) = (cur.read.t, cur.read.place.as_str());
+        match f.interval {
+            Interval::Startup => {}
+            Interval::Hidden => {
+                // Behind a loading screen the player sees no frame: not a hitch, not a frame time.
+                self.hidden += 1;
+                if ms > HITCH_MS {
+                    lines.push(format!("stress hitch (behind a loading screen): {ms:.0} ms at t {t:.1} s, {new_cells} cells loaded in it ({new_ms:.0} ms), at {place}"));
+                }
+            }
+            Interval::Seen => {
+                self.all.push(ms);
+                if new_actors > 0 {
+                    self.actor_frames.push((ms, new_actors, new_actors_ms));
+                }
+                if ms > HITCH_MS {
+                    lines.push(format!(
+                        "stress hitch: {ms:.0} ms at t {t:.1} s, {new_cells} cells loaded in it ({new_ms:.0} ms), {new_actors} actors drawn in it ({new_actors_ms:.0} ms), at {place}"
+                    ));
+                }
+            }
+            Interval::Crossing(from, to) => {
+                // A loading screen went up or came down within the frame: its time is the
+                // frame's, but which phase took it is not known. Kept apart, raw.
+                self.crossed += 1;
+                if ms > HITCH_MS {
+                    lines.push(format!(
+                        "stress hitch (across a phase change, {} to {}): {ms:.0} ms at t {t:.1} s, {new_cells} cells loaded in it ({new_ms:.0} ms), {new_actors} actors drawn in it ({new_actors_ms:.0} ms), from {} to {place}",
+                        from.text(),
+                        to.text(),
+                        prev.read.place
+                    ));
+                }
+            }
+        }
+        self.window.add(f.interval, ms);
+        if startup_ended {
+            // The first window after start-up holds only frames after it.
+            self.window = Window::default();
+        }
+        self.last = Some(cur);
+        lines
+    }
 }
 
 /// (mean, 1 % low, worst) of frame times in milliseconds: the 1 % low is the mean of the
@@ -263,60 +514,42 @@ fn sample(
     streamer: Option<Res<crate::world::Streamer>>,
     loading: Option<Res<nvf_play::loading::Loading>>,
 ) {
-    let dt = real.delta_secs();
-    let ms = dt * 1000.0;
-    s.since += dt;
+    // This frame boundary: its own instant first, then what it sees.
+    let at = Instant::now();
+    let t = real.first_update().map_or(0.0, |o| at.saturating_duration_since(o).as_secs_f32());
     let (cells_loaded, load_ms) = streamer.as_deref().map_or((0, 0.0), |st| (st.stats.cells_loaded, st.stats.load_ms));
-    let (new_cells, new_ms) = (cells_loaded.saturating_sub(s.cells_loaded), load_ms - s.load_ms);
-    (s.cells_loaded, s.load_ms) = (cells_loaded, load_ms);
     let (actors_drawn, actors_ms) = crate::readahead::clock();
-    let (new_actors, new_actors_ms) = (actors_drawn - s.actors_drawn, actors_ms - s.actors_ms);
-    (s.actors_drawn, s.actors_ms) = (actors_drawn, actors_ms);
-    if !s.started {
-        s.startup.push(ms);
-        // A start that never settles still ends start-up after a minute.
-        if streamer.as_deref().is_none_or(|st| st.settled) || s.startup.iter().sum::<f32>() > 60_000.0 {
-            s.started = true;
-            let total: f32 = s.startup.iter().sum();
-            let slowest = s.startup.iter().copied().fold(0.0, f32::max);
-            info!("stress start-up: {} frames, {total:.0} ms, slowest {slowest:.2} ms", s.startup.len());
-        }
-    } else if loading.as_deref().is_some_and(nvf_play::loading::Loading::unseen_frames) {
-        // Behind a loading screen the player sees no frame: not a hitch, not a frame time.
-        s.hidden += 1;
-        if ms > HITCH_MS {
-            info!("stress hitch (behind a loading screen): {ms:.0} ms at t {:.1} s, {new_cells} cells loaded in it ({new_ms:.0} ms), at {}", real.elapsed_secs(), crate::crash::place_text());
-        }
-    } else {
-        s.window.push(ms);
-        s.all.push(ms);
-        if new_actors > 0 {
-            s.actor_frames.push((ms, new_actors, new_actors_ms));
-        }
-        if ms > HITCH_MS {
-            info!(
-                "stress hitch: {ms:.0} ms at t {:.1} s, {new_cells} cells loaded in it ({new_ms:.0} ms), {new_actors} actors drawn in it ({new_actors_ms:.0} ms), at {}",
-                real.elapsed_secs(),
-                crate::crash::place_text()
-            );
-        }
+    let read = Reading {
+        at,
+        t,
+        settled: streamer.as_deref().is_none_or(|st| st.settled),
+        unseen: loading.as_deref().is_some_and(nvf_play::loading::Loading::unseen_frames),
+        cells_loaded,
+        load_ms,
+        actors_drawn,
+        actors_ms,
+        place: crate::crash::place_text(),
+    };
+    for line in s.step(read) {
+        info!("{line}");
     }
-    if s.since < s.every {
+    if s.window.secs < s.every {
         return;
     }
-    s.since = 0.0;
-    let (mean, _, worst) = frame_stats(&s.window);
-    let frames = s.window.len();
-    s.window.clear();
+    let window = std::mem::take(&mut s.window);
+    let (mean, _, worst) = frame_stats(&window.frames);
+    let frames = window.frames.len();
+    let window = window.fields();
     let nan = actors.iter().filter(|r| r.nodes.first().and_then(|&e| globals.get(e).ok()).is_some_and(|g| !g.translation().is_finite())).count();
     let (cells, bodies, ragdolls) = phys.as_deref().map_or((0, "0/0/0".to_string(), 0), |p| {
         let st = p.world.stats();
-        (p.cells.len(), format!("{}/{}/{}", st.bodies_fixed, st.bodies_kinematic, st.bodies_dynamic), p.world.ragdolls().count())
+        let solver = format!(", bodies awake {}, contact pairs {}, manifolds {}, solver contacts {}, joints {}, solver ms {:.0}/{:.0}/{:.0}/{:.0}/{:.0}/{:.0}", st.bodies_awake, st.contact_pairs, st.manifolds, st.solver_contacts, st.joints, st.solver_us[0] as f64 / 1000.0, st.solver_us[1] as f64 / 1000.0, st.solver_us[2] as f64 / 1000.0, st.solver_us[3] as f64 / 1000.0, st.solver_us[4] as f64 / 1000.0, st.solver_us[5] as f64 / 1000.0);
+        (p.cells.len(), format!("{}/{}/{}{solver}", st.bodies_fixed, st.bodies_kinematic, st.bodies_dynamic), p.world.ragdolls().count())
     });
     let gpu = cached.2.as_deref().map_or(String::new(), gpu_memory);
     info!(
-        "stress sample: t {:.1} s, frames {frames}, frame mean {mean:.2} ms, frame worst {worst:.2} ms, entities {}, refs drawn {}, meshes {}, images {}, materials {}, models cached {}, textures cached {}, audio {}, cells {cells}, bodies {bodies}, actors {}, nan actors {nan}, ragdolls {ragdolls}, projectiles {}{gpu}, at {}",
-        real.elapsed_secs(),
+        "stress sample: t {:.1} s, frames {frames}, frame mean {mean:.2} ms, frame worst {worst:.2} ms, entities {}, refs drawn {}, meshes {}, images {}, materials {}, models cached {}, textures cached {}, audio {}, cells {cells}, bodies {bodies}, actors {}, nan actors {nan}, ragdolls {ragdolls}, projectiles {}{gpu}{window}, at {}",
+        t,
         entities.iter().count(),
         refs.iter().count(),
         meshes.len(),
@@ -327,7 +560,7 @@ fn sample(
         audio.iter().count(),
         actors.iter().count(),
         combat.as_deref().map_or(0, |c| c.in_flight()),
-        crate::crash::place_text(),
+        s.last.as_ref().map_or("", |b| b.read.place.as_str()),
     );
 }
 
@@ -363,7 +596,12 @@ fn report(mut exit: MessageReader<AppExit>, s: Res<Samples>) {
     }
     let (mean, low, worst) = frame_stats(&s.all);
     let fps = if low > 0.0 { 1000.0 / low } else { 0.0 };
-    info!("stress frames: {} frames, mean {mean:.2} ms, 1% low {low:.2} ms ({fps:.1} fps), worst {worst:.2} ms; {} behind loading screens left out", s.all.len(), s.hidden);
+    info!(
+        "stress frames: {} frames, mean {mean:.2} ms, 1% low {low:.2} ms ({fps:.1} fps), worst {worst:.2} ms; {} behind loading screens left out, {} across a phase change left out",
+        s.all.len(),
+        s.hidden,
+        s.crossed
+    );
     let f = &s.actor_frames;
     let (drawn, ms) = f.iter().fold((0, 0.0), |(n, t), &(_, k, m)| (n + k, t + m));
     let most = f.iter().map(|x| x.2).fold(0.0, f64::max);
@@ -391,5 +629,146 @@ mod tests {
         assert_eq!((low, worst), (50.0, 50.0));
         // Fewer than 100 frames: the worst one.
         assert_eq!(frame_stats(&[5.0, 20.0, 8.0]).1, 20.0);
+    }
+
+    #[test]
+    fn a_frame_is_judged_by_both_its_boundaries() {
+        assert_eq!(classify(Phase::Startup, Phase::Startup), Interval::Startup);
+        // The frame start-up ended in is start-up's, whatever its end saw.
+        assert_eq!(classify(Phase::Startup, Phase::Seen), Interval::Startup);
+        assert_eq!(classify(Phase::Startup, Phase::Hidden), Interval::Startup);
+        assert_eq!(classify(Phase::Hidden, Phase::Hidden), Interval::Hidden);
+        assert_eq!(classify(Phase::Seen, Phase::Seen), Interval::Seen);
+        // A loading screen came down (issue #1415: a 674 ms frame then logged as a seen
+        // hitch at the destination) or went up within the frame.
+        assert_eq!(classify(Phase::Hidden, Phase::Seen), Interval::Crossing(Phase::Hidden, Phase::Seen));
+        assert_eq!(classify(Phase::Seen, Phase::Hidden), Interval::Crossing(Phase::Seen, Phase::Hidden));
+    }
+
+    #[test]
+    fn a_window_whose_phase_changes_is_flagged_and_keeps_only_seen_frames() {
+        // Hidden frames behind the screen, the long frame the screen came down in, then
+        // seen frames: the long frame is in no frame time, the window says it crossed.
+        let mut w = Window::default();
+        let frames = [(Phase::Hidden, Phase::Hidden, 335.0), (Phase::Hidden, Phase::Seen, 674.0), (Phase::Seen, Phase::Seen, 16.0), (Phase::Seen, Phase::Seen, 18.0)];
+        for (a, b, ms) in frames {
+            w.add(classify(a, b), ms);
+        }
+        assert_eq!(w.frames, vec![16.0, 18.0]);
+        assert_eq!((w.startup, w.hidden, w.crossed), (0, 1, 1));
+        assert_eq!(frame_stats(&w.frames).2, 18.0);
+        assert_eq!(w.fields(), ", startup frames 0, hidden frames 1, phase changes 1, window 1043 ms");
+        // A steady window keeps every frame and says it crossed nothing.
+        let mut steady = Window::default();
+        for ms in [16.0, 300.0, 17.0] {
+            steady.add(classify(Phase::Seen, Phase::Seen), ms);
+        }
+        assert_eq!(steady.frames, vec![16.0, 300.0, 17.0]);
+        assert_eq!(steady.fields(), ", startup frames 0, hidden frames 0, phase changes 0, window 333 ms");
+    }
+
+    /// A boundary `ms` milliseconds after `t0`: the start's cells in, nothing loaded or drawn.
+    fn read(t0: Instant, ms: u64, unseen: bool, place: &str) -> Reading {
+        Reading {
+            at: t0 + std::time::Duration::from_millis(ms),
+            t: ms as f32 / 1000.0,
+            settled: true,
+            unseen,
+            cells_loaded: 0,
+            load_ms: 0.0,
+            actors_drawn: 0,
+            actors_ms: 0.0,
+            place: place.to_string(),
+        }
+    }
+
+    #[test]
+    fn a_long_frame_a_loading_screen_changed_in_is_the_crossing_never_a_seen_hitch() {
+        // Issue #1415, the review of its first fix: a long main-thread frame lowers the
+        // loading screen in `Last`. Under pipelined rendering `Time<Real>`'s delta at the
+        // next boundary can be an older, short render interval, and the long one arrive a
+        // boundary later, when both boundaries see the screen down: a seen hitch at the
+        // destination. With the sampler's own instants the long interval is the frame
+        // between the boundary before the screen came down and the one after.
+        let t0 = Instant::now();
+        let mut s = Samples::default();
+        let mut lines = Vec::new();
+        // The baseline, then start-up ends with the start's screen still up.
+        lines.extend(s.step(read(t0, 0, true, "start")));
+        assert_eq!(s.step(read(t0, 20, true, "start")), vec!["stress start-up: 1 frames, 20 ms, slowest 20.00 ms".to_string()]);
+        // A hidden frame, then the long frame the screen came down in, three cells loaded in it.
+        lines.extend(s.step(read(t0, 36, true, "start")));
+        let mut down = read(t0, 710, false, "destination");
+        (down.cells_loaded, down.load_ms) = (3, 250.0);
+        let crossing = s.step(down);
+        assert_eq!(
+            crossing,
+            vec![
+                "stress hitch (across a phase change, hidden to seen): 674 ms at t 0.7 s, 3 cells loaded in it (250 ms), 0 actors drawn in it (0 ms), from start to destination"
+                    .to_string()
+            ]
+        );
+        // The next boundaries, where the old pairing could have put the 674 ms: 16 ms each.
+        for ms in [726, 742] {
+            let mut r = read(t0, ms, false, "destination");
+            (r.cells_loaded, r.load_ms) = (3, 250.0);
+            lines.extend(s.step(r));
+        }
+        // And the other way: the screen goes up in a long frame (a door in `Update`).
+        let mut up = read(t0, 1142, true, "destination");
+        (up.cells_loaded, up.load_ms) = (3, 250.0);
+        let rising = s.step(up);
+        assert_eq!(rising.len(), 1);
+        assert!(rising[0].starts_with("stress hitch (across a phase change, seen to hidden): 400 ms at t 1.1 s, 0 cells loaded in it (0 ms)"), "{}", rising[0]);
+        let mut behind = read(t0, 1158, true, "destination");
+        (behind.cells_loaded, behind.load_ms) = (3, 250.0);
+        lines.extend(s.step(behind));
+        // Nothing else logged: no ordinary hitch, no hitch behind the screen.
+        assert!(lines.is_empty(), "{lines:?}");
+        // The seen frames are the two short ones; the long ones are counted apart.
+        assert_eq!(s.all, vec![16.0, 16.0]);
+        assert_eq!((s.hidden, s.crossed), (2, 2));
+        assert_eq!(frame_stats(&s.all).2, 16.0);
+        assert_eq!(s.window.frames, vec![16.0, 16.0]);
+        assert_eq!(s.window.fields(), ", startup frames 0, hidden frames 2, phase changes 2, window 1138 ms");
+        // For contrast, the old pairing: the same boundaries' kinds with the render-fed
+        // deltas (16 ms at the screen's boundary, 674 ms one later) puts the long frame in
+        // the seen frames.
+        let mut old = Window::default();
+        old.add(classify(Phase::Hidden, Phase::Seen), 16.0);
+        old.add(classify(Phase::Seen, Phase::Seen), 674.0);
+        assert_eq!(old.frames, vec![674.0]);
+    }
+
+    #[test]
+    fn the_first_boundary_is_a_baseline_and_ordinary_hitches_stay() {
+        let t0 = Instant::now();
+        let mut s = Samples::default();
+        let unsettled = |ms| Reading { settled: false, ..read(t0, ms, false, "start") };
+        // The first boundary: no frame before it, nothing counted.
+        assert!(s.step(unsettled(0)).is_empty());
+        assert!(s.startup.is_empty());
+        assert_eq!(s.last.as_ref().map(|b| b.phase), Some(Phase::Startup));
+        assert!(s.step(unsettled(2500)).is_empty());
+        assert_eq!(s.startup, vec![2500.0]);
+        // Start-up ends at the boundary that sees the start settled; the window starts again.
+        assert_eq!(s.step(read(t0, 2530, false, "start")), vec!["stress start-up: 2 frames, 2530 ms, slowest 2500.00 ms".to_string()]);
+        assert!(s.all.is_empty());
+        assert_eq!(s.window.secs, 0.0);
+        assert_eq!(s.last.as_ref().map(|b| b.phase), Some(Phase::Seen));
+        // A seen frame, and a slow seen frame a cell loaded in: still an ordinary hitch.
+        assert!(s.step(read(t0, 2546, false, "start")).is_empty());
+        let mut slow = read(t0, 2846, false, "Goodsprings");
+        (slow.cells_loaded, slow.load_ms) = (1, 120.0);
+        assert_eq!(
+            s.step(slow),
+            vec!["stress hitch: 300 ms at t 2.8 s, 1 cells loaded in it (120 ms), 0 actors drawn in it (0 ms), at Goodsprings".to_string()]
+        );
+        assert_eq!(s.all, vec![16.0, 300.0]);
+        assert_eq!(s.window.fields(), ", startup frames 0, hidden frames 0, phase changes 0, window 316 ms");
+        // A start that never settles still ends start-up after a minute.
+        let mut never = Samples::default();
+        never.step(unsettled(0));
+        assert_eq!(never.step(unsettled(61_000)), vec!["stress start-up: 1 frames, 61000 ms, slowest 61000.00 ms".to_string()]);
     }
 }

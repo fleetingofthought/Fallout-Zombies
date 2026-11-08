@@ -63,7 +63,7 @@ Start cannot be bound.
   | Pip-Boy (every page) | LT / RT the previous / next page (STATS, ITEMS, DATA, round again); D-pad left / right the tabs [design: owner 2026-11-02] |
   | Pip-Boy ITEMS | X Drop (`pipboy::items`, not while "How many?" is up), Y Repair, LB Mod |
   | Pip-Boy STATS | status tab: A Stimpak, Y Doctor's Bag, X Rad-X; General tab: X switch lists |
-  | Pip-Boy DATA | Y Challenges (Notes tab) |
+  | Pip-Boy DATA | Y Challenges (Notes tab); A Fast Travel on the World Map's marker (`pipboy::data`) |
   | Crafting | X Accept |
   | Repair services | X Repair All |
   | Level up, traits | Y Reset, X Continue, B Back |
@@ -97,7 +97,9 @@ Start cannot be bound.
 - On the Pip-Boy DATA page's maps the right stick moves the cursor (the highlight box),
   pushed past an edge it pans the map, and the left stick's up and down zooms in and out
   smoothly while held [observed: the original; the speeds are design], built in
-  `pipboy/data.rs` (`stick_cursor`, `scroll_map`, `stick_zoom`).
+  `pipboy/data.rs` (`stick_cursor`, `scroll_map`, `stick_zoom`). On the World Map, A (the
+  confirm button) on a highlighted marker asks to fast travel there, as a click does
+  [observed: the original], also in `pipboy/data.rs`.
 - The prompt under the crosshair names the Activate control's own key ("E)") or, with a
   controller, its button ("A)") (`Bindings::prompt`). The original shows the button's
   picture there (`&xbuttona;`, `general_button_a.dds`); letters are the first step.
@@ -143,11 +145,11 @@ NVForever's own [design, #1452]:
 - **The INI keeps the Xbox names** (`[Controller] Jump=Y`) whatever the style, so every
   existing NVForever.ini keeps loading and an INI does not change when the pad does;
   the rebinding log names them so too.
-- **Glyphs**: NVForever draws its own Cross, Circle, Square and Triangle: outlines
-  computed at start into small pictures (`pad::Glyph`, nothing from the game's or Sony's
-  art). The crosshair prompt shows the glyph and ")" in place of "Cross)"; the menu hints,
-  drawn with the game's fonts, which have no such symbols, write the names. L1 … R3,
-  Select and Start are text everywhere.
+- **Glyphs**: NVForever draws its own Cross, Circle, Square and Triangle — a solid cross
+  and three ring outlines — computed at start into small pictures (`pad::Glyph`, nothing
+  from the game's or Sony's art). The crosshair prompt shows the glyph and ")" in place of
+  "Cross)"; the menu hints, drawn with the game's fonts, which have no such symbols, write
+  the names. L1 … R3, Select and Start are text everywhere.
 
 ## 4. Rumble
 
@@ -219,7 +221,5 @@ those settings so a mod that changes them changes this too.
   following the device (§3).
 - A pointer moved by a stick for the mouse-only parts of menus still left: the dialogue
   list (the Pip-Boy map's stick cursor and zoom are built, §3).
-- Fast travel from the World Map on a controller: the original's A on a marker; the map
-  asks to travel only on a mouse click (`pipboy/data.rs`).
 - Several controllers told apart for the controls (any pad's buttons work them); only the
   button names follow the pad in use (§3a).

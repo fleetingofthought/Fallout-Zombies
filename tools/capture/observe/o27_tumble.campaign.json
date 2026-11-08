@@ -1,0 +1,95 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o27_tumble",
+ "title": "Issue #1401: where the TumbleweedNV references around Goodsprings go over 0.25 game hours (30 s) in NVWastelandClear (WTHR wind 50), HVDustStorm (127) and WastelandNorth (25), tracked by FormID; 0x00178A76 is far off (2760, -86718), out of the loaded area",
+ "save": "nvfairport",
+ "defaults": {
+  "fields": "fight",
+  "every": 10,
+  "depth": 0,
+  "settle_frames": 300
+ },
+ "sessions": [
+  {
+   "name": "nvwastelandclear",
+   "go": {
+    "coc": "Goodsprings"
+   },
+   "hour": 12,
+   "hours": 0.25,
+   "console_first": [
+    "CloseAllMenus",
+    "tgm",
+    "ForceWeather NVWastelandClear 1"
+   ],
+   "track": [
+    "0x00178A61",
+    "0x00178A62",
+    "0x00178A64",
+    "0x00178A67",
+    "0x00178A7C",
+    "0x00178A7D",
+    "0x00178A7E",
+    "0x00178A7F",
+    "0x00178A80",
+    "0x00178A81",
+    "0x00178A76"
+   ],
+   "note": "wind 50"
+  },
+  {
+   "name": "hvduststorm",
+   "go": {
+    "coc": "Goodsprings"
+   },
+   "hour": 12,
+   "hours": 0.25,
+   "console_first": [
+    "CloseAllMenus",
+    "tgm",
+    "ForceWeather HVDustStorm 1"
+   ],
+   "track": [
+    "0x00178A61",
+    "0x00178A62",
+    "0x00178A64",
+    "0x00178A67",
+    "0x00178A7C",
+    "0x00178A7D",
+    "0x00178A7E",
+    "0x00178A7F",
+    "0x00178A80",
+    "0x00178A81",
+    "0x00178A76"
+   ],
+   "note": "wind 127"
+  },
+  {
+   "name": "wastelandnorth",
+   "go": {
+    "coc": "Goodsprings"
+   },
+   "hour": 12,
+   "hours": 0.25,
+   "console_first": [
+    "CloseAllMenus",
+    "tgm",
+    "ForceWeather WastelandNorth 1"
+   ],
+   "track": [
+    "0x00178A61",
+    "0x00178A62",
+    "0x00178A64",
+    "0x00178A67",
+    "0x00178A7C",
+    "0x00178A7D",
+    "0x00178A7E",
+    "0x00178A7F",
+    "0x00178A80",
+    "0x00178A81",
+    "0x00178A76"
+   ],
+   "note": "wind 25"
+  }
+ ]
+}

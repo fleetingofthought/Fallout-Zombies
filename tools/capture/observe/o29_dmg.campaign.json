@@ -1,0 +1,247 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o29_dmg",
+ "title": "Check 89: DamageAV Health 9999 on a lone unarmed NCR trooper with nobody shooting, on the same trooper made essential, and on the player without god mode; Health, GetDead, Fatigue and the knocked state every game loop, karma in the header",
+ "save": "nvfairport",
+ "defaults": {
+  "fields": "fight",
+  "more": true,
+  "events": "fight",
+  "every": 1,
+  "depth": 0,
+  "settle_frames": 200,
+  "hours": 0.1,
+  "max_actors": 4,
+  "console_first": [
+   "CloseAllMenus",
+   "tgm",
+   "DisablePlayerControls 0 0 0 1 0 0 0"
+  ],
+  "do_first": [
+   [
+    "player.MoveTo {0} 851 228 40",
+    "0x0013DA13"
+   ],
+   {
+    "frames": 120
+   }
+  ],
+  "extra_header": [
+   [
+    "t_health",
+    "num",
+    "player.GetAV Variable01"
+   ],
+   [
+    "t_dead",
+    "num",
+    "player.GetAV Variable02"
+   ],
+   [
+    "t_fatigue",
+    "num",
+    "player.GetAV Variable03"
+   ],
+   [
+    "t_knocked",
+    "num",
+    "player.GetAV Variable04"
+   ],
+   [
+    "p_health",
+    "num",
+    "player.GetAV Health"
+   ],
+   [
+    "p_dead",
+    "num",
+    "player.GetDead"
+   ]
+  ]
+ },
+ "sessions": [
+  {
+   "name": "lone",
+   "place": [
+    {
+     "base": "LvlNCRTrooper",
+     "count": 1,
+     "distance": 300,
+     "direction": 0,
+     "arm": "none",
+     "offset": [
+      0,
+      350,
+      0
+     ]
+    }
+   ],
+   "do": [
+    "player.setangle z 0",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 60,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.DamageAV Health 9999",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rA",
+       "float fA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 800",
+       "      let fA := rA.GetAV Health",
+       "      player.SetAV Variable01 fA",
+       "      let fA := rA.GetDead",
+       "      player.SetAV Variable02 fA",
+       "      let fA := rA.GetAV Fatigue",
+       "      player.SetAV Variable03 fA",
+       "      let fA := rA.GetKnockedState",
+       "      player.SetAV Variable04 fA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    }
+   ],
+   "note": "one DamageAV 9999 at sample 60; nobody else near"
+  },
+  {
+   "name": "essential",
+   "place": [
+    {
+     "base": "LvlNCRTrooper",
+     "count": 1,
+     "distance": 300,
+     "direction": 0,
+     "arm": "none",
+     "offset": [
+      0,
+      350,
+      0
+     ]
+    }
+   ],
+   "do": [
+    "player.setangle z 0",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA",
+       "ref rB"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    let rB := rA.GetBaseObject",
+       "    SetEssential rB 1",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 60,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.DamageAV Health 9999",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rA",
+       "float fA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    if rA.GetDistance player < 800",
+       "      let fA := rA.GetAV Health",
+       "      player.SetAV Variable01 fA",
+       "      let fA := rA.GetDead",
+       "      player.SetAV Variable02 fA",
+       "      let fA := rA.GetAV Fatigue",
+       "      player.SetAV Variable03 fA",
+       "      let fA := rA.GetKnockedState",
+       "      player.SetAV Variable04 fA",
+       "    endif",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    }
+   ],
+   "note": "SetEssential on the spawned trooper's base first; the knocked state says whether it took"
+  },
+  {
+   "name": "player",
+   "console_first": [
+    "CloseAllMenus",
+    "DisablePlayerControls 0 0 0 1 0 0 0"
+   ],
+   "do": [
+    "player.setangle z 0",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 60,
+     "do": [
+      "player.DamageAV Health 9999"
+     ]
+    }
+   ],
+   "note": "no god mode; last, since the player may die"
+  }
+ ]
+}

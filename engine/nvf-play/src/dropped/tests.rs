@@ -132,6 +132,7 @@ fn object(motion: Motion, half: f32, body_transform: Iso) -> CollisionObject {
         shape: Shape::Box { half_extents: [half; 3] }.into(),
         shell: 0.0,
         material: None,
+        wind: false,
     }
 }
 
@@ -284,6 +285,7 @@ fn a_dropped_modded_weapon_draws_its_mods_model() {
         held_world_model: None,
         grip: None,
         hide_backpack: false,
+        addons: Vec::new(),
     };
     w.mod_models[1] = Some(r"Weapons\2HandRifle\VarmintRifleScp.NIF".into());
     assert_eq!(modded_model(Some(&w), 2).as_deref(), Some(r"meshes\weapons\2handrifle\varmintriflescp.nif"));

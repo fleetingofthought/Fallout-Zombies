@@ -166,12 +166,14 @@ pub fn set_ownership(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String>
     let r = ctx.subject()?;
     let owner = a.opt_form(0).unwrap_or(FormId::PLAYER_BASE);
     g.world.get(r).map_err(|e| e.to_string())?.extra.owner = Some(owner);
+    g.showoff.temp_owners.remove(&r);
     none()
 }
 
 pub fn clear_ownership(g: &mut Game, ctx: &Ctx, _a: &Args) -> Result<Value, String> {
     let r = ctx.subject()?;
     g.world.get(r).map_err(|e| e.to_string())?.extra.owner = None;
+    g.showoff.temp_owners.remove(&r);
     none()
 }
 
@@ -195,6 +197,7 @@ pub fn set_cell_ownership(g: &mut Game, _ctx: &Ctx, a: &Args) -> Result<Value, S
     let cell = a.form(0)?;
     let owner = a.opt_form(1).unwrap_or(FormId::PLAYER_BASE);
     g.forms.cell_owners.insert(cell, owner);
+    g.showoff.temp_owners.remove(&cell);
     none()
 }
 

@@ -33,7 +33,7 @@ use crate::anim_play::{BlendPlayer, BoundClip, Clip};
 use crate::data::GameData;
 use crate::model::ModelCtx;
 use crate::nif_material::NifMaterial;
-use crate::nif_spawn::{affine, build_mesh, is_editor_marker, shape_material, shape_props, shape_skin, to_bevy, Props};
+use crate::nif_spawn::{affine, build_mesh, is_editor_marker, shape_material, shape_material_reusing_tangents, shape_props, shape_skin, to_bevy, Props};
 use bevy::asset::RenderAssetUsages;
 use bevy::camera::visibility::DynamicSkinnedMeshBounds;
 use bevy::math::Affine3A;
@@ -43,7 +43,7 @@ use bevy::prelude::*;
 use fnv_nif::scene::{scene_objects, Decoded, SceneObject};
 use fnv_nif::{NifFile, Value};
 use crate::texture::TextureCache;
-use bevy::tasks::{futures::check_ready, AsyncComputeTaskPool, Task, TaskPool};
+use bevy::tasks::{futures::check_ready, Task};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -155,6 +155,17 @@ pub struct PreparedPart {
     pub prn: Option<String>,
     /// The root node's own transform (NIF space).
     pub root: Affine3A,
+    /// The part's `ProjectileNode…` nodes (where a creature's body weapon fires from)
+    /// with their transforms in the part's space, root transform included: read here so
+    /// that drawing a creature does not prepare the file again as a model to find them
+    /// (#1429: 23.8 ms in one frame for one creature [observed 2026-11-07, Sierra Madre
+    /// lobby]).
+    pub projectile_nodes: Vec<(String, Affine3A)>,
+}
+
+/// Whether a node is named as a projectile node (`ProjectileNode…`, WEAP NNAM).
+pub fn is_projectile_node(name: &str) -> bool {
+    name.get(..14).is_some_and(|p| p.eq_ignore_ascii_case("ProjectileNode"))
 }
 
 impl PreparedPart {
@@ -183,6 +194,12 @@ pub struct ActorParts {
     fetching: HashMap<String, Task<Fetched>>,
     /// KF clips being read on a worker thread ([`ActorCtx::clip_ready`]).
     clip_reads: HashMap<String, Task<Result<Clip, String>>>,
+    /// Textures an actor's materials name beyond its parts' own (a part's or the race's
+    /// skin texture and the normal map beside it) being read on a worker thread
+    /// ([`ActorCtx::textures_ready`]), by resolved path; and those whose read gave
+    /// nothing (so an actor does not wait for them).
+    texture_reads: HashMap<String, Task<TextureFiles>>,
+    textures_unread: std::collections::HashSet<String>,
     pub failures: Vec<String>,
 }
 
@@ -246,6 +263,9 @@ type Nif = Result<(NifFile, Vec<u8>, Decoded), String>;
 
 /// A part read off the main thread, with the bytes of the textures its texture sets name
 /// (for [`TextureCache::offer`]).
+/// Texture files read on a worker thread: (resolved path, bytes).
+type TextureFiles = Vec<(String, Vec<u8>)>;
+
 struct Fetched {
     nif: Nif,
     textures: Vec<(String, Vec<u8>)>,
@@ -295,6 +315,22 @@ impl ActorParts {
             self.fetched.insert(path, (f.nif, now));
         }
         self.fetched.retain(|_, (_, at)| now - *at < FETCHED_KEEP_SECS);
+        let mut read = Vec::new();
+        self.texture_reads.retain(|path, task| match check_ready(task) {
+            Some(files) => {
+                read.push((path.clone(), files));
+                false
+            }
+            None => true,
+        });
+        for (path, files) in read {
+            if !files.iter().any(|(p, _)| *p == path) {
+                self.textures_unread.insert(path);
+            }
+            for (t, bytes) in files {
+                textures.offer(t, bytes, now);
+            }
+        }
         n
     }
 
@@ -572,8 +608,34 @@ impl ActorCtx<'_, '_> {
                 continue;
             }
             let (data, job) = ((*self.models.data).clone(), key.clone());
-            let task = AsyncComputeTaskPool::get_or_init(TaskPool::default).spawn(async move { fetch(&data, &job) });
+            let task = crate::read_pool::read_pool().spawn(async move { fetch(&data, &job) });
             self.cache.fetching.insert(key, task);
+        }
+        ready
+    }
+
+    /// Whether the textures at the NIF texture paths `paths` are loaded or read ahead, so
+    /// that a material made with one ([`Self::material_with_texture`]) reads no file on this
+    /// thread. The rest are read, with the normal map beside each, on a worker thread
+    /// (once), taken in by [`ActorParts::take_fetched`]. Missing files count as ready.
+    /// Reading a race's skin texture there cost an NPC 5-6 ms in the frame it was drawn
+    /// [observed 2026-11-07, #1429, Sierra Madre lobby].
+    pub fn textures_ready<'p>(&mut self, paths: impl IntoIterator<Item = &'p str>) -> bool {
+        let mut ready = true;
+        for raw in paths {
+            let vfs = &self.models.data.vfs;
+            let path = crate::texture::resolved_path(raw, |p| vfs.exists(p));
+            if !vfs.exists(&path) || self.cache.textures_unread.contains(&path) || self.models.textures.has_or_ahead(&path) {
+                continue;
+            }
+            ready = false;
+            if self.cache.texture_reads.contains_key(&path) {
+                continue;
+            }
+            let normal = fnv_vfs::normal_map_beside(&path).filter(|n| vfs.exists(n) && !self.models.textures.has_or_ahead(n));
+            let (data, job) = ((*self.models.data).clone(), path.clone());
+            let task = crate::read_pool::read_pool().spawn(async move { [Some(job), normal].into_iter().flatten().filter_map(|p| data.read(&p).map(|b| (p, b))).collect() });
+            self.cache.texture_reads.insert(path, task);
         }
         ready
     }
@@ -654,7 +716,7 @@ impl ActorCtx<'_, '_> {
             return true;
         }
         let (data, job) = ((*self.models.data).clone(), key.clone());
-        let task = AsyncComputeTaskPool::get_or_init(TaskPool::default).spawn(async move { read_clip(&data, &job) });
+        let task = crate::read_pool::read_pool().spawn(async move { read_clip(&data, &job) });
         self.cache.clip_reads.insert(key, task);
         false
     }
@@ -692,6 +754,7 @@ impl ActorCtx<'_, '_> {
         if let Some(m) = self.cache.materials.get(&key) {
             return m.clone();
         }
+        let _span = bevy::log::info_span!("actor::material_with_texture").entered();
         let s = &part.shapes[i];
         let mut props = s.props.clone();
         if props.textures.is_empty() {
@@ -705,9 +768,11 @@ impl ActorCtx<'_, '_> {
             }
             props.textures[1] = normal;
         }
+        let mesh_span = bevy::log::info_span!("actor::material_mesh_copy").entered();
         let mut mesh = (*s.cpu).clone();
+        drop(mesh_span);
         let m = &mut *self.models;
-        let (material, missing) = shape_material(&props, &mut mesh, &mut m.textures, &m.data, &mut m.images, m.formats.as_deref());
+        let (material, missing) = shape_material_reusing_tangents(&props, &mut mesh, &mut m.textures, &m.data, &mut m.images, m.formats.as_deref());
         let handle = match missing {
             // Keep the model's own texture when the replacement cannot be loaded.
             Some(t) => {
@@ -728,12 +793,13 @@ impl ActorCtx<'_, '_> {
         if let Some(m) = self.cache.materials.get(&key) {
             return m.clone();
         }
+        let _span = bevy::log::info_span!("actor::material_with_texture_set").entered();
         let s = &part.shapes[i];
         let mut props = s.props.clone();
         props.use_texture_set(set);
         let mut mesh = (*s.cpu).clone();
         let m = &mut *self.models;
-        let (material, missing) = shape_material(&props, &mut mesh, &mut m.textures, &m.data, &mut m.images, m.formats.as_deref());
+        let (material, missing) = shape_material_reusing_tangents(&props, &mut mesh, &mut m.textures, &m.data, &mut m.images, m.formats.as_deref());
         let handle = match missing {
             Some(t) => {
                 self.cache.failures.push(format!("{}: texture {t} not loaded", key.0));
@@ -772,6 +838,20 @@ impl ActorCtx<'_, '_> {
                 if let Some(x) = dec.get(e).filter(|x| x.text("name").is_some_and(|n| n.eq_ignore_ascii_case("Prn"))) {
                     out.prn = x.text("string_data").map(str::to_string);
                 }
+            }
+        }
+        if objects.iter().any(|o| o.is_node && o.name.as_deref().is_some_and(is_projectile_node)) {
+            let (nodes, _) = crate::model::model_nodes(&objects);
+            for (i, n) in nodes.iter().enumerate() {
+                let Some(name) = n.name.as_deref().filter(|n| is_projectile_node(n)) else { continue };
+                let mut path = Vec::new();
+                let mut at = Some(i);
+                while let Some(j) = at {
+                    path.push(j);
+                    at = nodes[j].parent;
+                }
+                let local = path.iter().rev().fold(out.root, |m, &j| m * nodes[j].local);
+                out.projectile_nodes.push((name.to_string(), local));
             }
         }
         let order = fnv_nif::scene::geometry_order(&objects);

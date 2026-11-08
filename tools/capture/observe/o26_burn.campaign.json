@@ -1,0 +1,375 @@
+{
+ "format": "fnv.observe.campaign/1",
+ "name": "o26_burn",
+ "title": "Issue #973 step 1: the player's Incinerator fired (attack held) at an unarmed, restrained NCR trooper spawned in front on the runway; every actor's Health and Fire Resistance every game loop, and the newest projectile's position (GetFirstRef 51)",
+ "save": "nvfairport",
+ "defaults": {
+  "fields": "fight",
+  "every": 1,
+  "depth": 0,
+  "settle_frames": 200,
+  "hours": 0.15,
+  "max_actors": 4,
+  "console_first": [
+   "CloseAllMenus",
+   "tgm",
+   "DisablePlayerControls 0 0 0 1 0 0 0"
+  ],
+  "do_first": [
+   [
+    "player.MoveTo {0} 851 228 40",
+    "0x0013DA13"
+   ],
+   {
+    "frames": 120
+   }
+  ],
+  "extra_header": [
+   [
+    "weapon_out",
+    "num",
+    "player.IsWeaponOut"
+   ],
+   [
+    "px",
+    "num",
+    "player.GetAV Variable01"
+   ],
+   [
+    "py",
+    "num",
+    "player.GetAV Variable02"
+   ],
+   [
+    "pz",
+    "num",
+    "player.GetAV Variable03"
+   ],
+   [
+    "pn",
+    "num",
+    "player.GetAV Variable05"
+   ],
+   [
+    "pdist",
+    "num",
+    "player.GetAV Variable06"
+   ],
+   [
+    "pweapon",
+    "ref",
+    "player.GetEquippedObject 5"
+   ],
+   [
+    "fuel",
+    "num",
+    "player.GetItemCount 00029371"
+   ]
+  ]
+ },
+ "sessions": [
+  {
+   "name": "fire",
+   "place": [
+    {
+     "base": "LvlNCRTrooper",
+     "count": 1,
+     "distance": 300,
+     "direction": 0,
+     "arm": "none",
+     "offset": [
+      0,
+      350,
+      0
+     ]
+    }
+   ],
+   "do": [
+    "player.additem 000906DA 1",
+    "player.additem 00029371 200",
+    "player.equipitem 000906DA",
+    {
+     "frames": 60
+    },
+    [
+     "player.SetWeaponOut 1"
+    ],
+    {
+     "frames": 120
+    },
+    "player.setangle z 0",
+    "player.setangle x 3",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.SetRestrained 1",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 60,
+     "do": [
+      "player.FireWeapon {0}",
+      "0x000906DA"
+     ]
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rP",
+       "ref rQ",
+       "float fA",
+       "float fN"
+      ],
+      "lines": [
+       "let fN := 0",
+       "let rP := GetFirstRef 51 1",
+       "while rP != 0",
+       "  let fN := fN + 1",
+       "  let rQ := rP",
+       "  let rP := GetNextRef",
+       "loop",
+       "player.SetAV Variable05 fN",
+       "if fN > 0",
+       "  let fA := rQ.GetPos X",
+       "  player.SetAV Variable01 fA",
+       "  let fA := rQ.GetPos Y",
+       "  player.SetAV Variable02 fA",
+       "  let fA := rQ.GetPos Z",
+       "  player.SetAV Variable03 fA",
+       "  let fA := rQ.GetProjectileRefLifeTime",
+       "  player.SetAV Variable04 fA",
+       "  let fA := rQ.GetProjectileRefDistanceTraveled",
+       "  player.SetAV Variable06 fA",
+       "endif"
+      ]
+     }
+    }
+   ],
+   "note": "one glob by player.FireWeapon (no weapon enchantment by the wiki; the burn is the explosion's EITM)"
+  },
+  {
+   "name": "fire2",
+   "place": [
+    {
+     "base": "LvlNCRTrooper",
+     "count": 1,
+     "distance": 300,
+     "direction": 0,
+     "arm": "none",
+     "offset": [
+      0,
+      350,
+      0
+     ]
+    }
+   ],
+   "do": [
+    "player.additem 000906DA 1",
+    "player.additem 00029371 200",
+    "player.equipitem 000906DA",
+    {
+     "frames": 60
+    },
+    [
+     "player.SetWeaponOut 1"
+    ],
+    {
+     "frames": 120
+    },
+    "player.setangle z 0",
+    "player.setangle x 3",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.SetRestrained 1",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 60,
+     "do": [
+      "player.FireWeapon {0}",
+      "0x000906DA"
+     ]
+    },
+    {
+     "after": 90,
+     "do": [
+      "player.FireWeapon {0}",
+      "0x000906DA"
+     ]
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rP",
+       "ref rQ",
+       "float fA",
+       "float fN"
+      ],
+      "lines": [
+       "let fN := 0",
+       "let rP := GetFirstRef 51 1",
+       "while rP != 0",
+       "  let fN := fN + 1",
+       "  let rQ := rP",
+       "  let rP := GetNextRef",
+       "loop",
+       "player.SetAV Variable05 fN",
+       "if fN > 0",
+       "  let fA := rQ.GetPos X",
+       "  player.SetAV Variable01 fA",
+       "  let fA := rQ.GetPos Y",
+       "  player.SetAV Variable02 fA",
+       "  let fA := rQ.GetPos Z",
+       "  player.SetAV Variable03 fA",
+       "  let fA := rQ.GetProjectileRefLifeTime",
+       "  player.SetAV Variable04 fA",
+       "  let fA := rQ.GetProjectileRefDistanceTraveled",
+       "  player.SetAV Variable06 fA",
+       "endif"
+      ]
+     }
+    }
+   ],
+   "note": "two globs by FireWeapon 30 samples apart"
+  },
+  {
+   "name": "hold60",
+   "place": [
+    {
+     "base": "LvlNCRTrooper",
+     "count": 1,
+     "distance": 300,
+     "direction": 0,
+     "arm": "none",
+     "offset": [
+      0,
+      350,
+      0
+     ]
+    }
+   ],
+   "do": [
+    "player.additem 000906DA 1",
+    "player.additem 00029371 200",
+    "player.equipitem 000906DA",
+    {
+     "frames": 60
+    },
+    [
+     "player.SetWeaponOut 1"
+    ],
+    {
+     "frames": 120
+    },
+    "player.setangle z 0",
+    "player.setangle x 3",
+    {
+     "frames": 30
+    }
+   ],
+   "timed": [
+    {
+     "after": 3,
+     "script": {
+      "decls": [
+       "ref rA"
+      ],
+      "lines": [
+       "let rA := GetFirstRef 200 1",
+       "while rA != 0",
+       "  if rA.GetSourceModIndex == 255",
+       "    rA.SetRestrained 1",
+       "  endif",
+       "  let rA := GetNextRef",
+       "loop"
+      ]
+     }
+    },
+    {
+     "after": 60,
+     "do": [
+      "HoldControl 4"
+     ]
+    },
+    {
+     "after": 120,
+     "do": [
+      "ReleaseControl 4"
+     ]
+    },
+    {
+     "after": 1,
+     "repeat": true,
+     "script": {
+      "decls": [
+       "ref rP",
+       "ref rQ",
+       "float fA",
+       "float fN"
+      ],
+      "lines": [
+       "let fN := 0",
+       "let rP := GetFirstRef 51 1",
+       "while rP != 0",
+       "  let fN := fN + 1",
+       "  let rQ := rP",
+       "  let rP := GetNextRef",
+       "loop",
+       "player.SetAV Variable05 fN",
+       "if fN > 0",
+       "  let fA := rQ.GetPos X",
+       "  player.SetAV Variable01 fA",
+       "  let fA := rQ.GetPos Y",
+       "  player.SetAV Variable02 fA",
+       "  let fA := rQ.GetPos Z",
+       "  player.SetAV Variable03 fA",
+       "  let fA := rQ.GetProjectileRefLifeTime",
+       "  player.SetAV Variable04 fA",
+       "  let fA := rQ.GetProjectileRefDistanceTraveled",
+       "  player.SetAV Variable06 fA",
+       "endif"
+      ]
+     }
+    }
+   ],
+   "note": "attack held 60 loops; the newest projectile tracked"
+  }
+ ]
+}

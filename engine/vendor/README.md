@@ -43,6 +43,33 @@ by a comment starting `NVForever FSR integration`:
 Without the override both do what upstream does. This is a new patch for Bevy 0.20.1, not
 the dropped 0.19.1 one below.
 
+Third change (#1803), in `src/material.rs`: `MaterialQueueProbe`, an optional resource
+that records watched main-pass entries and their pipeline IDs as `queue_material_meshes`
+queues them, for `nvforever/src/pipboy_ready.rs`; Bevy installs none, so without it the
+pass does what upstream does. Drop it when an upstream observation API replaces its
+caller or that readiness check is retired. Retries for meshes not yet uploaded and a
+per-view visibility filter of pending entries were tried with it and dropped: the
+`pipboy-first-open` scenarios passed with a clean first opening without them
+(2026-11-07).
+
+## bevy_render 0.20.1 (MIT OR Apache-2.0, Bevy contributors)
+
+Early finishing of command encoders (#1427, docs/design/frame-rate-audit.md §5). One
+change, in `src/renderer/render_context.rs`, each part marked by a comment starting
+`NVForever early finish`: when a render system is done (`RenderContextState`'s
+`SystemBuffer::queue`), each encoder it recorded is handed to the compute threads to be
+finished (`CommandEncoder::finish`) while the render thread records the systems after it.
+Upstream finishes them all at once inside `submit_pending_command_buffers`, with the render
+thread waiting. At submission an encoder no thread has started is finished there, and one
+being finished is waited for; the command buffers are submitted in the same order as
+upstream, so what the GPU does is unchanged. wasm keeps upstream's path (its encoders are
+not `Send`).
+
+[observed 2026-11-07, `campaign.py --only goodsprings-noon novac-noon battle-50`, the
+`profile` build] Alone it took 0.2-0.5 ms a frame off finishing the encoders' wall time
+(Goodsprings 0.88 → 0.58 ms, battle-50 2.3 → 1.8 ms). The blended pass is recorded last
+among the big ones and finishes in 0.8-1.8 ms, so it is what is still waited for.
+
 ## wgpu-ffx 0.1.0 (MIT, the wgpu-ffx developers and Advanced Micro Devices)
 
 The FSR 3.1.4 upscaler (docs/design/fsr-upscaling.md): a Rust/wgpu port of AMD FidelityFX

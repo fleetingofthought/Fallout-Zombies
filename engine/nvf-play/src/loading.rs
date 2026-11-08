@@ -161,6 +161,8 @@ pub struct Loading {
     /// Pipelines the view still needs are compiling. Set by the renderer every frame
     /// (nvforever `loading_gate`, `pipeline_gate`); stays false without one.
     pub pipelines_busy: bool,
+    /// Hidden Pip-Boy draws or their teardown still need the cover [design: nvforever/pipboy_arm.rs].
+    pub pipboy_warming: bool,
     /// Since when only pipelines have been waited for (real time), and whether
     /// [`PIPELINE_CAP_SECS`] has passed this screen.
     pipelines_since: Option<f64>,
@@ -190,9 +192,10 @@ impl Loading {
         self.trip.is_some()
     }
 
-    /// Whether the world holds off loading until the start's screen has been drawn: its
-    /// model reads share the pool that compiles the screen's pipelines, and the frame that
-    /// first asks for them blocks on one (docs/design/loading-screen.md §1a).
+    /// Whether the world holds off loading until the start's screen has been drawn. The hold
+    /// began when model reads shared the pool that compiles the screen's pipelines
+    /// (docs/design/loading-screen.md §1a). They have their own pool now; whether the hold
+    /// still helps a start has not been measured (#1732).
     pub fn world_held(&self) -> bool {
         self.picture_hold.is_some()
     }
@@ -513,6 +516,9 @@ fn missing(loading: &Loading, phys: Option<&PhysState>, scripts: Option<&crate::
     if loading.pipelines_busy {
         out.push(PIPELINES);
     }
+    if loading.pipboy_warming {
+        out.push("the Pip-Boy warm-up");
+    }
     out
 }
 
@@ -614,6 +620,14 @@ fn finish(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn start_waits_for_pipboy_teardown_even_when_pipelines_are_quiet() {
+        let mut loading = Loading { pipboy_warming: true, ..default() };
+        assert!(missing(&loading, None, None, true).contains(&"the Pip-Boy warm-up"));
+        loading.pipboy_warming = false;
+        assert!(missing(&loading, None, None, true).is_empty());
+    }
 
     #[test]
     fn the_picture_covers_the_window() {

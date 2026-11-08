@@ -480,7 +480,7 @@ pub struct ParticlesPlugin;
 
 impl Plugin for ParticlesPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Particles>().add_systems(Update, (script_drawn, script_drawn_rig, staged_addons, emit, simulate, draw).chain().after(crate::shot_fx::ShotFxSet)).add_systems(Last, report);
+        app.init_resource::<Particles>().add_systems(Update, (script_drawn, script_drawn_rig, staged_addons, emit.after(crate::effect_shaders::sync_player_effects), simulate, draw).chain().after(crate::shot_fx::ShotFxSet)).add_systems(Last, report);
     }
 }
 
@@ -617,6 +617,7 @@ type ModelEmitterItem = (
     Option<&'static InheritedVisibility>,
     Option<&'static crate::object_anims::GroupRig>,
     Option<&'static Playing>,
+    Option<&'static crate::effect_shaders::PlayerEffectEmitter>,
 );
 
 /// An emitter to serve this frame: its entity, systems, time, placed reference and drive.
@@ -635,11 +636,12 @@ fn emit(
     mut models: ModelCtx,
     root: Query<(Entity, &Transform), With<WorldRoot>>,
     camera: Query<&Transform, (With<Camera3d>, Without<crate::reflection::ReflectionCamera>)>,
-    mut emitters: Query<(Entity, &mut AddonEmitter, Option<&InheritedVisibility>)>,
+    mut emitters: Query<(Entity, &mut AddonEmitter, Option<&InheritedVisibility>, Option<&crate::effect_shaders::PlayerEffectEmitter>)>,
     mut model_emitters: Query<ModelEmitterItem>,
     rigs: Query<&crate::object_anims::GroupRig>,
     transforms: Query<&Transform>,
     parents: Query<&ChildOf>,
+    body: Option<Res<crate::player_body::PlayerBody>>,
 ) {
     let Ok((root, root_t)) = root.single() else { return };
     // The camera in game space: emitters nearest it are served first.
@@ -658,16 +660,19 @@ fn emit(
     // but makes nothing. Not in its first frame, before its visibility was worked out:
     // a muzzle flash lives one frame [design].
     let hidden = |age: f32, v: Option<&InheritedVisibility>| age > 0.0 && v.is_some_and(|v| !v.get());
-    for (e, mut em, v) in &mut emitters {
+    // [design: effect_shaders::player_addon] A player's hidden part suppresses births
+    // immediately, including an emitter's first frame before visibility propagates.
+    let part_seen = |part: Option<&crate::effect_shaders::PlayerEffectEmitter>| part.is_none_or(|part| body.as_deref().is_some_and(|b| b.sees_effect(part.0)));
+    for (e, mut em, v, part) in &mut emitters {
         if let Some(r) = em.placed {
             p.placed_seen.insert(r);
         }
-        if !hidden(em.age, v) {
+        if part_seen(part) && !hidden(em.age, v) {
             sources.push((e, Key { source: Source::Addon(em.index), instance: None }, em.age, em.placed, None, None));
         }
         em.age += dt;
     }
-    for (e, mut em, v, rig, playing) in &mut model_emitters {
+    for (e, mut em, v, rig, playing, part) in &mut model_emitters {
         // A placed model's systems are its own (particles.md §7.1).
         let instance = em.placed.map(|_| e);
         if let Some(r) = em.placed {
@@ -700,7 +705,7 @@ fn emit(
         }
         // A held model whose clips switch nothing on costs nothing.
         let idle = em.driven.as_ref().is_some_and(HashMap::is_empty);
-        if !hidden(em.age, v) && !idle {
+        if part_seen(part) && !hidden(em.age, v) && !idle {
             sources.push((e, Key { source: Source::Model(em.path.clone()), instance }, em.age, em.placed, drive, em.driven.clone()));
         }
         em.age += dt;

@@ -1,0 +1,20 @@
+; Authored startup probe: output variables begin with different sentinels.
+float w = -11
+float h = -22
+float lines = -33
+float singleWidth
+float singleHeight
+string_var multiline
+GetStringUIDimensions "WIDE" 7 0 w h lines
+PrintC "nvf dimensions single %g %g %g", w, h, lines
+let singleWidth := w
+let singleHeight := h
+let multiline := sv_Construct "WIDE%rWIDE"
+GetStringUIDimensions multiline 7 0 w h lines
+PrintC "nvf dimensions newline %g %g %g", w, h, lines
+PrintC "nvf dimensions newline checks %g %g %g", (w == singleWidth), (h > singleHeight), (lines == 2)
+GetStringUIDimensions "WIDE WIDE" 7 singleWidth w h lines
+PrintC "nvf dimensions wrap %g %g %g", w, h, lines
+PrintC "nvf dimensions wrap checks %g %g %g", (w == singleWidth), (h > singleHeight), (lines == 2)
+GetStringUIDimensions "WIDE" 8 0 w h lines
+PrintC "nvf dimensions alternate %g %g %g", w, h, lines

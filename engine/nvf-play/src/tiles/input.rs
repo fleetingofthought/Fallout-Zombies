@@ -215,12 +215,14 @@ pub(crate) struct MenuInputs<'w, 's> {
     tutorial_hand_built: Query<'w, 's, (), With<crate::tutorial_menu::TmButton>>,
     /// T15c: the container menu's state, the writer's and this input's.
     container: ResMut<'w, super::container_menu::ContainerTiles>,
+    barter: Option<ResMut<'w, super::barter_menu::BarterTiles>>,
     /// The pointer's place last frame, to know a list moved under it from it moving.
     last_at: Local<'s, Option<(f64, f64)>>,
     hold: Option<Res<'w, crate::menu::WheelHold>>,
     wheel_title: ResMut<'w, super::container_menu::TileWheelTitle>,
     /// The trait menu's state, the writer's and this input's.
     traits: Option<ResMut<'w, super::trait_menu::TraitTiles>>,
+    tags: Option<ResMut<'w, super::tag_menu::TagTiles>>,
     /// The hand-built trait menu's rows, while they stand.
     trait_hand_built: Query<'w, 's, (), With<crate::chargen::lists::ListRow>>,
     /// The dialogue menu's one decision, what it asks of the conversation, and its scroll.
@@ -248,10 +250,12 @@ impl MenuInputs<'_, '_> {
             return out;
         }
         out.extend(super::container_menu::takes_input(self.container.menu, self.quantity().is_some()));
+        out.extend(super::container_menu::takes_input(self.barter.as_ref().and_then(|b| b.menu()), self.quantity().is_some()));
         if self.trait_hand_built.is_empty() {
             out.extend(self.traits.as_ref().and_then(|t| t.takes()));
+            out.extend(self.tags.as_ref().and_then(|t| t.takes()));
         }
-        if quantity_tiled(menus.quantity, game, self.quantity().is_some(), self.container.menu.is_some()) {
+        if quantity_tiled(menus.quantity, game, self.quantity().is_some(), self.container.menu.is_some() || self.barter.as_ref().is_some_and(|b| b.menu().is_some())) {
             out.extend(game.ui_tree.menu(QUANTITY_MENU));
         }
         if message_tiled(menus.message, game) {
@@ -324,17 +328,19 @@ impl MenuInputs<'_, '_> {
         }
     }
 
-    /// T15c: act on a click on the container menu's tiles (see the module doc). `None` when
+    /// [design] Act on a click on the container or barter menu's tiles (see the module doc). `None` when
     /// the click is not for it, so the other menus' rules see it. `row_acted` is set by the
     /// row click that acts: the commands are applied later in the frame, so a second row
     /// click would be on rows the first may change.
-    fn follow_container(&mut self, ui: &fnv_ui::Ui, c: &fnv_ui::input::Click, at: Option<(f64, f64)>, inputs: Pressed<'_>, row_acted: &mut bool) -> Option<()> {
-        use super::container_menu::{row_commands, ContainerTile, ContainerTiles, CONTAINER_MENU};
+    fn follow_item_menu(&mut self, ui: &fnv_ui::Ui, c: &fnv_ui::input::Click, at: Option<(f64, f64)>, inputs: Pressed<'_>, row_acted: &mut bool) -> Option<()> {
+        use super::container_menu::{row_commands, ContainerTile};
         use crate::menu::{model::Command, MenuInput};
         use fnv_ui::input::By;
-        let what = self.container.clicked(ui, c.tile)?;
+        let st = if self.container.menu.is_some() { &mut *self.container } else { &mut self.barter.as_mut()?.view };
+        let menu_name = st.name();
+        let what = st.clicked(ui, c.tile)?;
         if let By::Key(k) = &c.by {
-            if !super::menus::key_click_acts(CONTAINER_MENU, k, inputs.physical) {
+            if !super::menus::key_click_acts(menu_name, k, inputs.physical) {
                 return Some(());
             }
         }
@@ -345,42 +351,43 @@ impl MenuInputs<'_, '_> {
         let mut guard = None;
         let commands = match what {
             ContainerTile::Row(side, index) => {
-                let at = if *row_acted { None } else { self.container.row_at(m, side, index) };
+                let at = if *row_acted { None } else { st.row_at(m, side, index) };
                 let Some(index) = at else {
-                    info!("tiles: {CONTAINER_MENU} a click on a row no longer there is ignored");
+                    info!("tiles: {menu_name} a click on a row no longer there is ignored");
                     return Some(());
                 };
                 *row_acted = true;
                 let on_it = m.focus == side && m.selected[side as usize] == index;
                 let commands = row_commands(side, index, on_it, inputs.shift);
-                guard = self.container.guard(m.mode, side, index, on_it, commands.len() as u8);
+                guard = st.guard(m.mode, side, index, on_it, commands.len() as u8);
                 commands
             }
             ContainerTile::Arrow(side, by) => vec![Command::Category(side, by)],
             ContainerTile::Title(side) => vec![Command::Category(side, 1)],
             ContainerTile::TakeAll => vec![Command::TakeAll],
+            ContainerTile::Accept => vec![Command::Accept],
             ContainerTile::Exit => vec![Command::Close],
             ContainerTile::Bar(side, list::BarPiece::Marker) => {
-                let menu = self.container.menu;
-                let list_tile = ContainerTiles::list_tile(ui, side);
-                self.container.drag = at.filter(|_| inputs.held && matches!(c.by, By::Pointer)).zip(menu).zip(list_tile).and_then(|(((_, y), menu), l)| list::marker_grab(ui, menu, l, y));
+                let menu = st.menu;
+                let list_tile = st.list_tile(ui, side);
+                st.drag = at.filter(|_| inputs.held && matches!(c.by, By::Pointer)).zip(menu).zip(list_tile).and_then(|(((_, y), menu), l)| list::marker_grab(ui, menu, l, y));
                 return Some(());
             }
             ContainerTile::Bar(side, piece) => {
-                let value = self.container.value(side);
-                if let Some(v) = ContainerTiles::list_tile(ui, side).and_then(|l| list::after_piece(ui, l, piece, value)) {
-                    info!("tiles: {CONTAINER_MENU} {piece:?} on its tiles");
-                    self.container.scroll_to(side, v);
+                let value = st.value(side);
+                if let Some(v) = st.list_tile(ui, side).and_then(|l| list::after_piece(ui, l, piece, value)) {
+                    info!("tiles: {menu_name} {piece:?} on its tiles");
+                    st.scroll_to(side, v);
                 }
                 return Some(());
             }
-            ContainerTile::Other => return Some(()),
+            ContainerTile::Focus(_) | ContainerTile::Other => return Some(()),
         };
         if let Some(guard) = guard {
             self.commands.write(MenuInput(Command::Expect(guard)));
         }
         for cmd in commands {
-            info!("tiles: {CONTAINER_MENU} {cmd:?} on its tiles");
+            info!("tiles: {menu_name} {cmd:?} on its tiles");
             self.commands.write(MenuInput(cmd));
         }
         Some(())
@@ -388,27 +395,31 @@ impl MenuInputs<'_, '_> {
 
     /// T15c: the pointer's part besides clicks: a drag on a scroll marker, the row it came
     /// onto, the heading under it for the hand-built wheel.
-    fn follow_container_pointer(&mut self, ui: &fnv_ui::Ui, report: &fnv_ui::input::Report, over: Option<fnv_ui::TileId>, at: Option<(f64, f64)>, moved: bool, row_acted: bool) {
-        use super::container_menu::{hover_selects, ContainerTile, ContainerTiles};
+    fn follow_item_menu_pointer(&mut self, ui: &fnv_ui::Ui, report: &fnv_ui::input::Report, over: Option<fnv_ui::TileId>, at: Option<(f64, f64)>, moved: bool, row_acted: bool) {
+        use super::container_menu::{hover_selects, ContainerTile};
         use crate::menu::{model::Command, MenuInput};
-        if let (Some(drag), Some((_, y))) = (self.container.drag, at) {
-            let side = [Side::Container, Side::Player].into_iter().find(|&s| ContainerTiles::list_tile(ui, s) == Some(drag.list));
+        let st = if self.container.menu.is_some() { &mut *self.container } else {
+            let Some(b) = self.barter.as_mut() else { return };
+            &mut b.view
+        };
+        if let (Some(drag), Some((_, y))) = (st.drag, at) {
+            let side = [Side::Container, Side::Player].into_iter().find(|&s| st.list_tile(ui, s) == Some(drag.list));
             if let (Some(side), Some(v)) = (side, list::value_under(ui, drag, y)) {
-                self.container.scroll_to(side, v);
+                st.scroll_to(side, v);
             }
         }
-        self.wheel_title.0 = over.and_then(|t| self.container.clicked(ui, t)).and_then(|w| match w {
+        self.wheel_title.0 = over.and_then(|t| st.clicked(ui, t)).and_then(|w| match w {
             ContainerTile::Title(side) | ContainerTile::Arrow(side, _) => Some(side),
             _ => None,
         });
         let Some((_, Some(to))) = report.over else { return };
-        let Some(ContainerTile::Row(side, index)) = self.container.clicked(ui, to) else { return };
+        let Some(ContainerTile::Row(side, index)) = st.clicked(ui, to) else { return };
         let Some(m) = self.active.as_ref().and_then(|a| a.0.as_ref()).filter(|m| m.quantity.is_none()) else { return };
         let already = m.focus == side && m.selected[side as usize] == index;
         let holds = self.hold.as_ref().is_some_and(|h| h.held());
-        if !row_acted && hover_selects(moved, holds, already) && self.container.row_at(m, side, index).is_some() {
-            info!("tiles: {} Hover({side:?}, {index}) on its tiles", super::container_menu::CONTAINER_MENU);
-            if let Some(guard) = self.container.guard(m.mode, side, index, false, 1) {
+        if !row_acted && hover_selects(moved, holds, already) && st.row_at(m, side, index).is_some() {
+            info!("tiles: {} Hover({side:?}, {index}) on its tiles", st.name());
+            if let Some(guard) = st.guard(m.mode, side, index, false, 1) {
                 self.commands.write(MenuInput(Command::Expect(guard)));
             }
             self.commands.write(MenuInput(Command::Hover(side, index)));
@@ -452,7 +463,10 @@ impl MenuInputs<'_, '_> {
             if self.traits.as_mut().filter(|t| t.menu.is_some()).is_some_and(|t| super::trait_menu::follow_click(t, ui, c, at, held, physical).is_some()) {
                 continue;
             }
-            if self.follow_container(ui, c, at, Pressed { held, shift, physical }, &mut row_acted).is_some() {
+            if self.tags.as_mut().filter(|t| t.menu.is_some()).is_some_and(|t| super::selection_menu::follow_click(t, ui, c, at, held, physical).is_some()) {
+                continue;
+            }
+            if self.follow_item_menu(ui, c, at, Pressed { held, shift, physical }, &mut row_acted).is_some() {
                 continue;
             }
             if let Some(hours) = self.follow_wait(ui, c, at, held, physical) {
@@ -505,11 +519,14 @@ impl MenuInputs<'_, '_> {
                 slider = Some(h);
             }
         }
-        if self.container.menu.is_some() {
-            self.follow_container_pointer(ui, report, over, at, moved, row_acted);
+        if self.container.menu.is_some() || self.barter.as_ref().is_some_and(|b| b.menu().is_some()) {
+            self.follow_item_menu_pointer(ui, report, over, at, moved, row_acted);
         }
         if let Some(t) = self.traits.as_mut().filter(|t| t.takes().is_some()) {
             super::trait_menu::follow_pointer(t, ui, report, at, moved);
+        }
+        if let Some(t) = self.tags.as_mut().filter(|t| t.takes().is_some()) {
+            super::selection_menu::follow_pointer(t, ui, report, at, moved);
         }
         slider
     }
@@ -686,12 +703,17 @@ pub(crate) fn feed(
     // whether or not any menu takes input this frame; so does the heading the wheel reads.
     let container_now = super::container_menu::takes_input(inputs.container.menu, inputs.quantity().is_some());
     inputs.container.drag = inputs.container.drag.filter(|d| list::drag_holds(d, container_now, held));
-    if container_now.is_none() {
+    let barter_now = super::container_menu::takes_input(inputs.barter.as_ref().and_then(|b| b.menu()), inputs.quantity().is_some());
+    if let Some(b) = inputs.barter.as_mut() {
+        b.view.drag = b.view.drag.filter(|d| list::drag_holds(d, barter_now, held));
+    }
+    if container_now.is_none() && barter_now.is_none() {
         inputs.wheel_title.0 = None;
     }
     if let Some(t) = inputs.traits.as_mut().filter(|t| t.menu.is_some()) {
         t.hold_drag(held);
     }
+    if let Some(t) = inputs.tags.as_mut().filter(|t| t.menu.is_some()) { t.hold_drag(held); }
     // The pointer on the menus as drawn at the UI scale (#1631): the dialogue menu keeps to
     // the view's bottom when it takes input alone, the others to its middle (`super::draw`).
     // The test aid's place is in the tree's units already and is read as given, through no
@@ -724,9 +746,13 @@ pub(crate) fn feed(
         if inputs.container.menu.is_some() {
             inputs.container.rewrite(&mut rt.game.ui_tree);
         }
+        if let Some(b) = inputs.barter.as_ref().filter(|b| b.menu().is_some()) {
+            b.view.rewrite(&mut rt.game.ui_tree);
+        }
         if let Some(t) = inputs.traits.as_ref().filter(|t| t.menu.is_some()) {
             t.rewrite(&mut rt.game.ui_tree);
         }
+        if let Some(t) = inputs.tags.as_ref().filter(|t| t.menu.is_some()) { t.rewrite(&mut rt.game.ui_tree); }
         // Where the pointer rests when a menu takes input again is no move onto a row.
         *inputs.last_at = cursor();
         return;
@@ -741,12 +767,17 @@ pub(crate) fn feed(
     };
     // The tutorial menu's triggers stand for its own keys (`crate::pad::menu_buttons`), which
     // a press of them would otherwise turn a page with twice: here and through the file.
-    // The container menu's X stands for its R (the same table).
-    let pad_menu = crate::pad::MenuAt { code: tutorial.map(|_| fnv_game::game::menus::TUTORIAL).or(inputs.container.menu.map(|_| crate::script::MENU_CONTAINER)).or(inputs.traits.as_ref().and_then(|t| t.takes()).map(|_| fnv_game::game::menus::TRAITS)), tab: 0 };
+    // [design] X stands for R in the container and A in barter (the same table).
+    let pad_menu = crate::pad::MenuAt { code: tutorial.map(|_| fnv_game::game::menus::TUTORIAL).or(inputs.container.menu.map(|_| crate::script::MENU_CONTAINER)).or(inputs.barter.as_ref().and_then(|b| b.menu()).map(|_| crate::script::MENU_BARTER)).or(inputs.traits.as_ref().and_then(|t| t.takes()).map(|_| fnv_game::game::menus::TRAITS)).or(inputs.tags.as_ref().and_then(|t| t.takes()).map(|_| fnv_game::game::menus::TAG_SKILLS)), tab: 0 };
     let physical = frame_keys(&mut input, &devices, &mut rt.game, pad_menu);
     // The dialogue menu's pointer decides on what was drawn (`super::dialog_menu`).
     if let (Some(_), [_], Some(d)) = (dialog_menu, taking.as_slice(), inputs.dialog.as_ref()) {
         input.resolved = Some(d.hits().to_vec());
+    }
+    if let (Some(st), Some(at)) = (inputs.barter.as_ref(), at) {
+        if let Some(candidates) = super::barter_menu::pointer_candidates(&mut rt.game.ui_tree, st, &taking, at) {
+            input.resolved = Some(candidates);
+        }
     }
     // A frame's own clicks are for the screen up now; a script's kept theirs when queued.
     rt.game.ui_pointer.stamp = crate::dialogue::stamp_now(&rt.game);
@@ -778,9 +809,13 @@ pub(crate) fn feed(
     if inputs.container.menu.is_some() {
         inputs.container.rewrite(&mut rt.game.ui_tree);
     }
+    if let Some(b) = inputs.barter.as_ref().filter(|b| b.menu().is_some()) {
+        b.view.rewrite(&mut rt.game.ui_tree);
+    }
     if let Some(t) = inputs.traits.as_ref().filter(|t| t.menu.is_some()) {
         t.rewrite(&mut rt.game.ui_tree);
     }
+    if let Some(t) = inputs.tags.as_ref().filter(|t| t.menu.is_some()) { t.rewrite(&mut rt.game.ui_tree); }
 }
 
 /// Read the test aid at start.
@@ -825,6 +860,18 @@ mod tests {
         assert!(!stood_in(GamepadButton::West, at, &|_| false));
         // Elsewhere X stands for nothing.
         assert!(!stood_in(GamepadButton::West, crate::pad::MenuAt { code: None, tab: 0 }, &r_down));
+    }
+
+    #[test]
+    fn controller_barter_accept_acts_once() {
+        use super::super::barter_menu::BARTER_MENU;
+        use super::super::menus::key_click_acts;
+        let at = crate::pad::MenuAt { code: Some(crate::script::MENU_BARTER), tab: 0 };
+        assert!(stood_in(GamepadButton::West, at, &|key| key == KeyCode::KeyA));
+        assert!(!key_click_acts(BARTER_MENU, "xbuttonx", &["A", "xbuttonx"]));
+        assert!(!key_click_acts(BARTER_MENU, "A", &["A", "xbuttonx"]));
+        assert!(key_click_acts(BARTER_MENU, "xbuttonx", &[]));
+        assert!(key_click_acts(BARTER_MENU, "A", &[]));
     }
 
     #[test]
@@ -1026,6 +1073,14 @@ mod tests {
         // 960 units to the height: at 1280 x 720, a pixel is 4/3 of a unit.
         assert_eq!(to_units(Vec2::new(640.0, 360.0), 720.0), (853.3333333333334, 480.0));
         assert_eq!(to_units(Vec2::new(0.0, 960.0), 960.0), (0.0, 960.0));
+    }
+    #[test]
+    fn the_tag_menus_physical_keys_act_once_and_script_keys_still_act() {
+        let menu = super::super::tag_menu::TAG_MENU;
+        for key in super::super::trait_menu::HAND_BUILT_KEYS {
+            assert!(!super::super::menus::key_click_acts(menu, key, &[key]));
+            assert!(super::super::menus::key_click_acts(menu, key, &[]));
+        }
     }
 
     /// #1631: a tile menu drawn at the UI scale (its root `crate::interface::framed_root`,

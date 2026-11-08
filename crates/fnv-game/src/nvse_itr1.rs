@@ -109,8 +109,6 @@ pub struct ItrState {
     pub key_masks: BTreeMap<u16, BTreeSet<i64>>,
     /// SetEyeMesh's meshes by eyes form: left, right.
     pub eye_meshes: HashMap<FormId, (String, String)>,
-    /// SetDialogueInfoFlags' flags by topic info.
-    pub info_flags: HashMap<FormId, u16>,
     /// The injected radio queue (paths under Data\Sound\), at most 8, and its loop switch.
     pub radio_queue: VecDeque<String>,
     pub radio_loop: bool,
@@ -202,9 +200,10 @@ impl Game<'_> {
         self.other.itr.alerts.contains_key(&actor)
     }
 
-    /// A topic info's DATA flags: SetDialogueInfoFlags' change first.
+    /// A topic info's DATA flags as the dialogue reads them: a script's change first
+    /// (`crate::dialogue_edits`).
     pub fn info_flags(&self, info: FormId) -> Option<u16> {
-        self.other.itr.info_flags.get(&info).copied().or_else(|| self.data.infos.get(&info).map(|d| d.flags))
+        self.dialogue_view().info(&info).map(|d| d.flags)
     }
 
     /// The engine tells what the radio plays (a song's sound or a line's info and its
@@ -661,12 +660,12 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // ---- dialogue info flags ----
         // `info`: DATA's two flag bytes, the second from bit 8; 0 for anything else
         // [documented: GetDialogueInfoFlags]. SetDialogueInfoFlags `info flags` writes
-        // all 16 bits [documented]: read back here (the dialogue's own rules read the
-        // record, ext-itr.md §2 follow-up).
+        // all 16 bits [documented] for the session (`crate::dialogue_edits`): the dialogue's
+        // Say Once, Goodbye and Random rules read them too (ext-sup2.md §1).
         "getdialogueinfoflags" => XVal::Num(form(args, 0).and_then(|i| g.info_flags(i)).map_or(0.0, f64::from)),
         "setdialogueinfoflags" => {
             let Some(i) = form(args, 0).filter(|i| g.data.infos.contains_key(i)) else { return Some(Ok(zero)) };
-            g.other.itr.info_flags.insert(i, (num(args, 1, 0.0) as i64 as u32 & 0xFFFF) as u16);
+            g.set_info_flags(i, (num(args, 1, 0.0) as i64 as u32 & 0xFFFF) as u16);
             one
         }
         // ---- the radio ----

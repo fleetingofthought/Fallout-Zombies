@@ -876,6 +876,123 @@ fourth row, and a click on a row equips what it selects.
 
 ## 8. Open
 
+[observed 2026-11-07, commit `4fbe5750d`, 8 alternating fresh launches, one machine] 4/4 clean first openings enabled and 4/4 blue or partial with `NVF_PLAY_TEST_NO_PIPBOY_WARM=1`. Screen-down medians 7.68 s enabled (7.38-7.98) and 6.81 s disabled (6.41-6.96): about +0.9 s in these launches. They support the combined fix.
+
+[observed: 2026-11-07, commit `8fa3f8a04`, superseded by the set above] An earlier set of
+eight alternating launches gave the same 4/4 and 4/4, with noisier screen-down medians
+(8.84 s enabled, 8.27 s disabled).
+
+[observed: earlier supplied `target/smoke/pipboy-first-open.log` and shots, 2026-11-07]
+The failed first attempt reached its three-second startup cap and asked zero new
+pipelines during the raise, yet its first three shots were blue or partial. Its
+single enabled/disabled pair took 12.98/10.79 seconds on a busy machine; that pair
+was not a repeatable startup-cost estimate.
+
+[design: Bevy 0.20.1 registry `bevy_render/src/camera.rs:910-1028`,
+`bevy_pbr/src/material.rs`, `prepass/mod.rs:1086,1376`] Pipeline compilation and
+per-entity phase submission are different: a cached PSO can be ready while an entity
+has no colour entry yet. Upstream's main pass skips an entity whose uploaded mesh or
+allocator slabs are not there yet without keeping it for a retry. An earlier revision
+of this fix patched both branches to retry and dropped pending entries no longer
+visible; hidden and raising rig meshes also mark themselves changed so retained bins
+are refreshed after visibility/material changes.
+
+[observed: 2026-11-07, `pipboy-first-open`, `-no-warm`, `pipboy-screen-menu`,
+`-unworn`, one machine, `bevy_pbr` rebuilt clean] With those retries and the visibility
+filter reverted (the probe kept), all four scenarios pass, the first raise held 61 ms
+for 0 pipelines and the first-open shots show the textured device with no blue or
+world-filled hole, so the retry patch was dropped. The warm-up and the first raise's
+own readiness wait are what the fix rests on.
+
+[hypothesis] Depth without colour came from the rig's main entries being missing or
+stale on the first raise. Shader depth rejection, incorrect GPU instance data, or a
+draw-command skip remain possible if a report shows complete submission/bindings
+while a shot is blue.
+
+[design: `engine/nvforever/src/pipboy_arm.rs`, `pipboy_ready.rs`] The fix normally
+waits for the observable submission conditions, with a bounded failure release;
+those conditions are not proof of correct pixels.
+
+[design: `engine/nvforever/src/player_body.rs:1441,2189`,
+`engine/nvforever/src/pipboy_arm.rs::copy_of`, `::wear_materials`;
+`engine/nvf-assets/src/nif_spawn.rs:720,779`, `texture.rs:312`, `model.rs:1260`]
+Hiding the arms only changes visibility. Model construction requests its textures even
+when hidden; worker textures are inserted independently of visibility. The first-person
+material copies are made with the rig. Menu/glare copies are added on first substitution,
+then `Swapped.menus`/`glass` retain strong source, image and copied-material handles
+across teardown. An unchanged source and target image reuse the same asset IDs at the
+real raise. A recreated screen image or rebuilt rig does make new copies. No extra
+keep-alive cache is needed. Pip-Boy page pictures are a separate on-demand path
+(`nvf-play/src/pipboy/frame.rs`, `device_screen.rs::draw`); drawing STATS warms that
+path without opening an inventory.
+
+[design: Bevy 0.20.1 registry `bevy_render/src/material_bind_groups.rs:2762-2840`,
+`erased_render_asset.rs:372-451`; `engine/vendor/bevy_pbr/src/material.rs:598,1658`;
+`engine/nvforever/src/world.rs:651-694`] Material preparation retries when an image is
+not yet a GPU asset. NifSurface uses bindless allocation when supported; both passes use
+the same prepared material and allocation, and the colour command additionally needs a
+live bind group. Allocator creation itself has no multi-second timer. The upload budget
+is 24 MiB/frame in play and unlimited behind the loading cover; materials have no byte
+size budget, but their images and meshes do. Thus image preparation can delay a material,
+without explaining this run's depth/colour asymmetry on its own. Readiness now checks
+prepared material, actual allocation and main queue, rather than assuming a ready PSO
+proves them.
+
+[design: `engine/nvforever/src/pipboy_arm.rs`, `pipboy_ready.rs`, `player_body.rs`]
+The start borrows the real rig and image camera for four render reports, with a 250 ms
+wall-clock budget plus teardown. It does not wait for the global queue to go quiet.
+The existing loading gate waits for the pipelines already requested. If the rig could
+not be submitted in that budget it remains cold. The first real device raise verifies
+submission again, behind the camera with CPU culling disabled, even following a start
+warm-up. It releases only after its own main/prepass pipelines and material bindings
+are ready, or releases at a three-second wall-clock cap with a warning that readiness
+is incomplete. The cap allows cold preparation while bounding failure from a shader,
+upload or lost rig; scheduling and pose restoration can add a frame. A released raise
+does not hold again during that opening. Tab/Escape dispatch Close through the normal
+key handler during the hold; cancellation skips the lowering clip. Later opens reuse
+the prepared rig; a new rig/material resets readiness.
+A missing rig keeps the existing flat-image fallback.
+A screen-menu warm-up draws only its page/image camera; it neither borrows the arm nor
+creates device treatment. Only the startup warm-up stays script-silent: a held real
+opening reports its remembered
+STATS/ITEMS/DATA page immediately. The device access sound waits until the borrowed
+pose has been restored and the visible raise begins; ordinary openings, screen menus
+and the disabled-warm path keep their opening-frame sound. A cancelled hidden opening
+has no access sound.
+The treatment's visible log is independent of when its layers were prepared.
+
+[design: `tools/smoke/scenarios.toml`, `engine/nvforever/src/pipboy_ready.rs`]
+Run `pipboy-first-open` and `pipboy-first-open-no-warm`, then the unchanged
+`pipboy-screen-menu` and `pipboy-screen-menu-unworn`. `NVF_PLAY_TEST_PIPBOY_DRAW=1`
+installs the logging system only for the aid. Its first visible render report is
+marked only after pose restoration and gives
+`shapes`, actual colour `queued`/`opaque`, `prepared`, `bound`, `ready`, `missing`, `gpu_meshes`, `slabs` and `specialized`.
+`missing=0` with a nonzero shape count means every watched shape has a main entry,
+an uploaded mesh and allocator slabs, a GPU material bind group and compiled
+main/prepass PSOs. `queued < shapes` isolates
+submission; `prepared < shapes` isolates material/image preparation; `bound < prepared`
+is material allocation/binding. `gpu_meshes < shapes` or `slabs < shapes`
+identifies mesh upload/allocation; `specialized < shapes` identifies a missing main
+specialisation. With those prerequisites complete, `ready < bound` indicates compilation.
+`missing=0` with a wrong shot rules out those prerequisites, and requires draw/GPU/depth
+investigation. The log cannot certify pixels. The own-rig pipeline IDs come from its
+actual queued main entries and prepass cache, excluding the world's. IDs are local to
+each run. Both scenarios enable shader definitions and the submission report.
+
+[design: `engine/nvforever/src/pipboy_ready.rs`, `engine/nvf-play/src/pipboy.rs`,
+`ui_sounds.rs`, `tools/smoke/scenarios.toml`]
+`pipboy-first-open` asserts that the first report after pose restoration has every
+shape prepared, bound and uploaded (shapes still out of view aren't queued yet), that a
+later report has at least 15 queued and all of those ready, and forbids the first-raise
+cap warning. If the cap ever releases, a partial rig can show; that's the chosen
+trade-off over a locked player.
+Its shots should show a textured arm/device without blue, a world-filled hole or blur
+on the arm; during a hold the world stays unobstructed. The disabled twin remains a
+negative control. Unit checks cover Tab/Escape dispatch during a hold, bounded failure
+release, remembered page reporting, pose cleanup, and access-sound deferral/cancellation.
+Cold New Game, save load, screen menu, no device, interruption combinations and 16:9/4:3
+still need runtime checks after this review revision.
+
 - Whether the original holds the clip at `Hit` (the measurements say the screen faces
   the eye there).
 - The keys of the PC game for the pages and tabs.

@@ -1115,6 +1115,49 @@ fn lobbers_timer_proximity_detonation() {
     assert!(matches!(c.detonate(), Some(ProjEvent::Explode { .. })));
 }
 
+/// A thrown grenade (a lobber with a fuse) rolls on after it lands, slowing, and goes off
+/// on its fuse; a launcher's round (a missile) goes off where it first lands; both record
+/// where and when they first touched (combat-rules.md §5, issues #1471, #1785).
+#[test]
+fn thrown_grenades_roll_launcher_rounds_do_not() {
+    let t = CombatTuning::default();
+    let floor = Toy { actors: vec![], fence: false, wall: None };
+    let frag = ProjectileStats { alt_trigger_timer: 2.5, ..proj("Lobber", &["Explosion", "Alt. Trigger"], 900.0, 1.0) };
+    let mut g = Projectile::spawn(&frag, Some(BOOM), [0.0, 0.0, 120.0], [1.0, 0.0, 0.0], Some(1), G, &t);
+    assert!(g.rolls);
+    let mut ev = fly(&mut g, &floor, 1.0);
+    let (point, at) = g.first_contact.expect("it landed");
+    // From 120 units up it lands after √(2 × 120 / g) s, at 900 units/s.
+    let fall = (2.0 * 120.0 / G).sqrt();
+    assert!((at - fall).abs() < 0.02 && (point[0] - 900.0 * fall).abs() < 15.0, "{point:?} {at}");
+    assert!(g.rolling && g.alive && g.pos[2] < 2.0, "rolls on the ground: {:?}", g.pos);
+    let rolled = g.pos[0];
+    assert!(rolled > point[0] + 200.0, "{rolled} {point:?}");
+    ev.extend(fly(&mut g, &floor, 2.0));
+    match &ev[..] {
+        [ProjEvent::Explode { point: at_end, .. }] => {
+            // Slowing as it rolls: short of where it would be at the speed it rolled off with.
+            let roll = at_end[0] - point[0];
+            let undamped = t.grenade_roll_keep * 900.0 * (2.5 - fall);
+            assert!(at_end[0] > rolled && roll > 0.5 * undamped && roll < 0.9 * undamped, "{at_end:?} {rolled} {point:?} {undamped}");
+            assert!(at_end[2] < 2.0, "{at_end:?}");
+        }
+        e => panic!("{e:?}"),
+    }
+    // The launcher's round: no roll, it goes off where it lands.
+    let round = proj("Missile", &["Explosion"], 1750.0, 1.5);
+    let mut r = Projectile::spawn(&round, Some(BOOM), [0.0, 0.0, 110.0], [1.0, 0.0, 0.0], Some(1), G, &t);
+    assert!(!r.rolls);
+    let ev = fly(&mut r, &floor, 2.0);
+    let (point, at) = r.first_contact.expect("it landed");
+    let fall = (2.0 * 110.0 / (1.5 * G)).sqrt();
+    assert!((at - fall).abs() < 0.02 && (point[0] - 1750.0 * fall).abs() < 20.0, "{point:?} {at}");
+    assert!(matches!(&ev[..], [ProjEvent::Hit { .. }, ProjEvent::Explode { point: p, .. }] if (p[0] - point[0]).abs() < 1e-3), "{ev:?}");
+    // A frag mine is no thrown grenade: it settles where it lands.
+    let mine = ProjectileStats { alt_trigger_timer: 1.0, alt_trigger_proximity: 100.0, ..proj("Lobber", &["Explosion", "Alt. Trigger"], 0.0, 1.0) };
+    assert!(!Projectile::spawn(&mine, Some(BOOM), [0.0; 3], [1.0, 0.0, 0.0], Some(1), G, &t).rolls);
+}
+
 /// A pond on the toy floor: water 50 deep (its surface at z = 50) from x = 300 on.
 struct Pond(Toy);
 

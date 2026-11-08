@@ -36,7 +36,7 @@ struct WaterParams {
     reflection: vec4<f32>,
     sky_upper: vec4<f32>,
     sky_horizon: vec4<f32>,
-    // near, far, amount, unused
+    // near, far, amount, 1 when the amount caps the opacity (placed water)
     above_fog: vec4<f32>,
     under_fog: vec4<f32>,
     // reflectivity, fresnel amount, shininess, wave height (world units)
@@ -256,15 +256,26 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
         up = -up;
     }
 
-    // Fog distance: the length of the view ray inside the water. From above, from the
-    // surface to the opaque surface behind it (depth prepass), so 0 at the waterline;
-    // from below, from the camera to the surface.
+    // The length of the view ray inside the water: from above, from the surface to the
+    // opaque surface behind it (depth prepass), so 0 at the waterline; from below, from
+    // the camera to the surface. It sets the body's opacity, the refraction and the shore
+    // fade.
+    //
+    // The fog depth: from above, how far below the surface that opaque surface lies
+    // (the above fog's near and far planes are "the distance in game units below the
+    // surface of the water" of the shallow and the deep colour plane [documented: GECK
+    // wiki WaterType]); it sets the body's colour, so a shallow pool keeps its shallow
+    // colour at a grazing look;
+    // from below, the distance from the camera (the under fog's planes are distances
+    // "from the player" [documented: same page]). Nothing behind: the far end of both.
     let size = view.main_pass_viewport.zw;
     let uv0 = frag_coord_to_uv(in.position.xy);
     let behind0 = scene_point(in.position.xy);
     var fog_distance = 1.0e7;
+    var fog_depth = 1.0e7;
     if behind0.w > 0.5 {
         fog_distance = distance(behind0.xyz, pos);
+        fog_depth = max(pos.y - behind0.y, 0.0);
     }
     // Refraction: shift the sample by the wave normal's tilt in view space, more through
     // deeper water; keep the unshifted sample where the shifted one lands on something in
@@ -278,17 +289,28 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
             uv = uv0;
         } else if behind.w > 0.5 {
             fog_distance = distance(behind.xyz, pos);
+            fog_depth = max(pos.y - behind.y, 0.0);
         }
     }
     if !above {
         fog_distance = dist;
+        fog_depth = dist;
     }
     let refracted = textureSampleLevel(view_transmission_texture, view_transmission_sampler, transmission_uv(uv), 0.0).rgb;
     let fog = select(water.under_fog, water.above_fog, above);
-    let depth01 = clamp((fog_distance - fog.x) / max(fog.y - fog.x, 1.0), 0.0, 1.0);
-    // Opaque beyond the far distance; the fog "amount" is not used (its role is unknown:
-    // as a cap it left the lake bed showing through far out).
-    let body_alpha = depth01;
+    // The colour: shallow to deep by the fog depth (#1787). The opacity: by the length of
+    // the view ray in the water over the same near to far ramp, at most the above fog's
+    // amount for placed water ("controls the transparency of the Deep Color water plane",
+    // 1.0 opaque [documented: GECK wiki WaterType]; above_fog.w = 1). Cell and distant
+    // water, and any water seen from below, are opaque beyond the far distance: capped,
+    // Lake Mead's bed showed through far out [design, until a far-out Lake Mead
+    // comparison is made, world.md §6].
+    // [hypothesis, checked against the original at the Ultra-Luxe fountain, the
+    // Goodsprings Source trough and Boulder Beach, world.md §6]: by the depth alone a
+    // 14-unit pool under a 36-unit fog showed its floor where the original is opaque.
+    let depth01 = clamp((fog_depth - fog.x) / max(fog.y - fog.x, 1.0), 0.0, 1.0);
+    let ray01 = clamp((fog_distance - fog.x) / max(fog.y - fog.x, 1.0), 0.0, 1.0);
+    let body_alpha = select(ray01, ray01 * clamp(water.above_fog.z, 0.0, 1.0), above && water.above_fog.w > 0.5);
     let body_colour = mix(water.shallow.rgb, water.deep.rgb, depth01);
 
     // The water body is lit like a diffuse surface facing up (from either side).

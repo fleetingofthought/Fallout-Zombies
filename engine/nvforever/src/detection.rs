@@ -44,12 +44,19 @@
 //!   `NVF_PLAY_TEST_UNSEEN` leave it measuring; 0 for Ringo out of view and at 6,682
 //!   units, capture detection-1; hypothesis: the same formula]. It feeds
 //!   GetDetected / GetLineOfSight only: no detection state.
-//! - **Light at the target** (0–100) [hypothesis, no source gives the game's measure]:
-//!   100 × the luminance of the ambient light, plus the sunlight's times daylight outdoors
-//!   or the cell's directional light indoors, plus each point light that reaches the
-//!   target with the game's falloff 1 − (d/r)²; capped at 100. Outdoors the sunlight
-//!   counts only when a ray from the target's chest towards the sun meets nothing within
-//!   [`SUN_REACH`] (where the target is in the loaded collision; elsewhere it counts)
+//! - **Light at the target** (0–100), fitted to the original's GetActorLightAmount
+//!   (docs/design/detection.md §3) [observed: o11_light 2026-11-01, o27_light
+//!   2026-11-06]: outdoors 100 × the brightest channel of the weather's sunlight colour
+//!   ÷ 255 (its times of day blended on the stored bytes), day or night, nothing for the
+//!   ambient (Goodsprings 100 at noon and 82.35 = 210/255 at midnight, the night
+//!   sunlight (166, 191, 210); NVWastelandHazy 99.2 and 64.3; HVDustStorm, black
+//!   sunlight, 0); indoors the brightest channel of the cell's ambient colour (the
+//!   Goodsprings cave 36.08 = 92/255, ambient (73, 92, 83)); plus each point light that
+//!   reaches the target, its brightest channel with the game's falloff 1 − (d/r)²
+//!   [hypothesis: the rooms with lamps read 99–100]; capped at 100. Outdoors the
+//!   sunlight counts only when a ray from the target's chest towards the sun meets
+//!   nothing within [`SUN_REACH`] (where the target is in the loaded collision;
+//!   elsewhere it counts); a shaded target gets the weather's ambient instead, as indoors
 //!   [hypothesis, docs/design/detection.md §8]. While the player's flashlight (the Pip-Boy
 //!   light, flashlight.rs) is on, the game's Pip-Boy light counts as a point light at the
 //!   player's chest: the LIGH [`PIPBOY_LIGHT`] with its own radius and colour
@@ -190,6 +197,8 @@ struct Stats {
     /// Measurements with the Pip-Boy light on, and the most light at the player then.
     pip_light_on: usize,
     pip_light_most: f64,
+    /// The least and most light measured at the player.
+    player_light: Option<(f64, f64)>,
     /// What the lines of sight cost.
     sight: SightCounts,
 }
@@ -221,7 +230,7 @@ pub struct DetectionState {
     land: LandCache,
     /// The pairs' lines of sight at the last measurement, for still pairs.
     kept: KeptSights,
-    /// The Pip-Boy light's radius and luminance, read from its LIGH once (`None` inside:
+    /// The Pip-Boy light's radius and strength, read from its LIGH once (`None` inside:
     /// not in the load order).
     pip_light: Option<Option<(f32, f32)>>,
     stats: Stats,
@@ -280,22 +289,21 @@ fn distance(a: [f32; 3], b: [f32; 3]) -> f32 {
     ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)).sqrt()
 }
 
-fn luminance(c: [f32; 3]) -> f32 {
-    0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+/// A light's strength for the light level: its brightest channel, 0–1 (the original's
+/// light level at an actor follows it: detection.md §3).
+fn strength(c: [f32; 3]) -> f32 {
+    c[0].max(c[1]).max(c[2])
 }
 
 /// The light level at a point, 0–100 (see the module notes).
 fn light_at(sky: Option<&SkyState>, lights: &[([f32; 3], f32, f32)], at: [f32; 3], sunlit: bool) -> f64 {
+    use fnv_world::sky::ColorType;
+    let bytes = |c: [f32; 3]| strength(c) / 255.0;
     let mut l = match sky {
         Some(s) => match &s.interior {
-            Some(c) => {
-                let u = |c: [u8; 3]| c.map(|v| v as f32 / 255.0);
-                luminance(u(c.ambient)) + luminance(u(c.directional))
-            }
-            None => {
-                let sun = if sunlit { luminance(s.color(fnv_world::sky::ColorType::Sunlight)) * s.daylight() } else { 0.0 };
-                luminance(s.color(fnv_world::sky::ColorType::Ambient)) + sun
-            }
+            Some(c) => bytes(c.ambient.map(f32::from)),
+            None if sunlit => bytes(s.color_bytes(ColorType::Sunlight)),
+            None => bytes(s.color_bytes(ColorType::Ambient)),
         },
         None => 0.5,
     };
@@ -463,6 +471,12 @@ fn sight_check() -> bool {
 /// [`RAY_CHUNK`] [engineering choice: fewer are cheaper on this thread].
 const PARALLEL_RAYS: usize = 32;
 const RAY_CHUNK: usize = 16;
+/// Pairs whose hostility is worked out on the compute pool before a measurement's pairs
+/// (`Game::round_hostility`): from this many, in chunks of [`HOSTILITY_CHUNK`]
+/// [engineering choice: the first hostility check of ~11,000 pairs was 10-14 ms of a
+/// 50-a-side battle's measurement on one thread, #1799].
+const PARALLEL_HOSTILITY: usize = 256;
+const HOSTILITY_CHUNK: usize = 256;
 
 /// [`clear_sight`] for every (from, to) of `rays`, in order; the rays are cast on the
 /// compute pool at once (the queries are read-only). A 50-a-side battle asked some
@@ -842,16 +856,16 @@ fn measure(
     state.last.retain(|_, (_, t)| now - *t < 5.0);
     state.headings.retain(|_, (_, t)| now - *t < 5.0);
 
-    // The light sources that are on: game-space centre, radius, luminance.
+    // The light sources that are on: game-space centre, radius, strength.
     let mut lights = Vec::new();
     for (l, g, v) in &point_lights {
         if v.get() {
-            lights.push((bevy_to_game(g.translation()).to_array(), l.range, luminance(l.color.to_srgba().to_f32_array_no_alpha())));
+            lights.push((bevy_to_game(g.translation()).to_array(), l.range, strength(l.color.to_srgba().to_f32_array_no_alpha())));
         }
     }
     for (l, g, v) in &spot_lights {
         if v.get() {
-            lights.push((bevy_to_game(g.translation()).to_array(), l.range, luminance(l.color.to_srgba().to_f32_array_no_alpha())));
+            lights.push((bevy_to_game(g.translation()).to_array(), l.range, strength(l.color.to_srgba().to_f32_array_no_alpha())));
         }
     }
     // The Pip-Boy light, on the player while it is on (the module notes).
@@ -860,7 +874,7 @@ fn measure(
         let pip = *state.pip_light.get_or_insert_with(|| {
             let w = world.as_deref()?;
             let l = fnv_world::lighting::light_data(w.lo, w.schema, PIPBOY_LIGHT)?;
-            Some((l.radius, luminance(l.color.map(|b| b as f32 / 255.0))))
+            Some((l.radius, strength(l.color.map(|b| b as f32 / 255.0))))
         });
         if let (Some((radius, lum)), Some(p)) = (pip, people.first()) {
             lights.push((p.chest(), radius, lum));
@@ -888,6 +902,10 @@ fn measure(
     let light: Vec<f64> = people.iter().zip(&sunlit).map(|(p, &lit)| light_at(sky.as_deref(), &lights, p.chest(), lit)).collect();
     if let Some(g) = gauges.as_deref_mut() {
         g.light = light.first().copied().unwrap_or(0.0) as f32;
+    }
+    if let Some(&l) = light.first() {
+        let (lo, hi) = state.stats.player_light.unwrap_or((l, l));
+        state.stats.player_light = Some((lo.min(l), hi.max(l)));
     }
     if pip_on {
         state.stats.pip_light_on += 1;
@@ -959,6 +977,21 @@ fn measure(
         let player_unseen = unseen() || g.toggles.detection_off;
         let ai_off: Vec<bool> = people.iter().enumerate().map(|(i, p)| i != 0 && g.ai_off(FormId(p.id))).collect();
         let ordered: Vec<(usize, usize)> = ordered.filter(|&(i, j)| !(j == 0 && player_unseen) && !ai_off[i]).collect();
+        // Who would attack whom, for every pair an NPC measures, worked out at once on the
+        // compute pool and kept for the round (`Game::round_hostility`): nothing the pairs
+        // do below changes what it reads, so each pair gets the answer it would have
+        // worked out when asked (`Game::observe_threat`).
+        {
+            let _span = info_span!("detection::hostility").entered();
+            let ids: Vec<FormId> = people.iter().map(|p| FormId(p.id)).collect();
+            g.prepare_round_hostility(&ids);
+            let asks: Vec<(FormId, FormId)> = ordered.iter().filter(|&&(i, _)| i != 0).map(|&(i, j)| (FormId(people[i].id), FormId(people[j].id))).collect();
+            let shared: &fnv_game::game::Game = g;
+            let answer = |chunk: &[(FormId, FormId)]| chunk.iter().filter_map(|&(a, b)| shared.round_hostility(a, b).map(|h| ((a, b), h))).collect::<Vec<_>>();
+            let answers: Vec<((FormId, FormId), bool)> =
+                if asks.len() < PARALLEL_HOSTILITY { answer(&asks) } else { asks.par_chunk_map(ComputeTaskPool::get(), HOSTILITY_CHUNK, |_, chunk| answer(chunk)).into_iter().flatten().collect() };
+            g.keep_round_hostility(answers);
+        }
         // The lines of sight, cast at once (`sights`): the detector's eyes to the target's
         // chest, else its eyes; for the player also the camera's, where the target is in
         // the camera's view.
@@ -1292,7 +1325,7 @@ fn report(mut exit: MessageReader<AppExit>, state: Res<DetectionState>) {
     let bands = |c: [usize; 3]| format!("{} to hidden, {} to noticed, {} to detected", c[0], c[1], c[2]);
     info!(
         "detection summary: {} measurements, {} pairs ({} at most at once), {} actors measured the player, {} had it noticed, {} detected; \
-         the player's changes: {}; between actors: {}; the player was hidden {:.1} s, CAUTION {:.1} s, DANGER {:.1} s; {} shots heard; values {}; {} of {} measured under the sun in shade; the Pip-Boy light on at {} measurements, the player lit up to {:.0}",
+         the player's changes: {}; between actors: {}; the player was hidden {:.1} s, CAUTION {:.1} s, DANGER {:.1} s; {} shots heard; values {}; {} of {} measured under the sun in shade; the Pip-Boy light on at {} measurements, the player lit up to {:.0}; light at the player {}",
         s.measurements,
         s.pairs,
         s.most_pairs,
@@ -1310,6 +1343,7 @@ fn report(mut exit: MessageReader<AppExit>, state: Res<DetectionState>) {
         s.sun_measured,
         s.pip_light_on,
         s.pip_light_most,
+        s.player_light.map_or("none".into(), |(lo, hi)| format!("{lo:.1} to {hi:.1}")),
     );
     info!(
         "detection summary, out of the player's reach: {} pairs, {} measured detected; the player as a detector: {}; {} actors detected by the player",
@@ -1362,7 +1396,7 @@ mod tests {
     fn light_adds_point_lights_with_the_game_falloff_and_caps_at_100() {
         let lamp = ([0.0, 0.0, 0.0], 200.0, 1.0);
         assert!((light_at(None, &[], [0.0; 3], true) - 50.0).abs() < 1e-6);
-        // Half the radius away: 1 − 0.25 of the lamp's luminance.
+        // Half the radius away: 1 − 0.25 of the lamp's strength.
         assert!((light_at(None, &[lamp], [100.0, 0.0, 0.0], true) - 100.0).abs() < 1e-6);
         let dim = ([0.0, 0.0, 0.0], 200.0, 0.2);
         assert!((light_at(None, &[dim], [100.0, 0.0, 0.0], true) - 65.0).abs() < 1e-4);

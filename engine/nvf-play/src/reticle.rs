@@ -257,7 +257,7 @@ pub fn layout(p: &Prompt, font: &Font) -> Layout {
 /// and the room between it and its ")" [design, #1452].
 const GLYPH_SHARE: f32 = 0.7;
 const GLYPH_RISE: f32 = 0.92;
-const GLYPH_GAP: f32 = 3.0;
+const GLYPH_GAP: f32 = 0.5;
 /// The glyph pictures' side in pixels (drawn smaller) [design].
 const GLYPH_PIXELS: u32 = 64;
 

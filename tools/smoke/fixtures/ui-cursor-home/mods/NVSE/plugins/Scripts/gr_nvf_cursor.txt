@@ -1,0 +1,3 @@
+; The frame callback queries while the pointer aid keeps the HUD active.
+PrintC "nvf cursor injected %g", (InjectUIComponent "HUDMainMenu" "<image name=%qNVFCursorProbe%q><x>120</x><y>300</y><width>260</width><height>120</height><visible>1</visible><alpha>255</alpha><red>20</red><green>60</green><blue>120</blue><target>1</target><id>977</id><filename>solid.dds</filename><_probe>1</_probe><image name=%qExplicit%q><x>10</x><y>10</y><width>40</width><height>40</height><target>0</target><filename>solid.dds</filename><alpha>255</alpha></image></image>")
+SetTileScript "HUDMainMenu/NVFCursorProbe/_probe" (CompileScript "nvf_cursor_probe.txt")

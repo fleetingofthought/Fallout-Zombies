@@ -1,0 +1,39 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "o27_holotape",
+ "title": "#986: VMQ01BeagleJournalNote given; the Pip-Boy radio and the tape are then driven from the Pip-Boy by hand, with the game's sound recorded",
+ "start": "Load a save.",
+ "steps": [
+  {
+   "console": "tgm"
+  },
+  {
+   "console": "CloseAllMenus"
+  },
+  {
+   "console": "player.AddNote VMQ01BeagleJournalNote"
+  },
+  {
+   "console": "set GameHour to 12"
+  },
+  {
+   "frames": 120
+  },
+  {
+   "console": "CloseAllMenus"
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GetActiveMenuMode\nSetFunctionValue fV\nEnd\n",
+   "label": "ho",
+   "field": "menu"
+  },
+  {
+   "frames": 36000
+  },
+  {
+   "query": "float fV\nBegin Function { }\nlet fV := GetActiveMenuMode\nSetFunctionValue fV\nEnd\n",
+   "label": "ho",
+   "field": "menu_end"
+  }
+ ]
+}

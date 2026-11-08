@@ -92,6 +92,15 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, on: Option<FormId>, a
     Some(Ok(XVal::Num(0.0)))
 }
 
+/// Call the function `func` with `args` next frame, in a menu too (SUP's dialog boxes
+/// answer their handler this way, `crate::nvse_sup5`).
+pub(crate) fn call_next_frame(g: &mut Game, func: XVal, on: Option<FormId>, args: Vec<XVal>) {
+    for a in &args {
+        g.ext.retain(a);
+    }
+    g.delayed.push(Delayed { when: When::AfterFrames(g.frame + 1), func, on, args, mode: 1, condition_flags: false });
+}
+
 impl Game<'_> {
     /// The queued calls due this frame.
     pub(crate) fn run_delayed(&mut self) {

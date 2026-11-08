@@ -34,9 +34,11 @@ like any other (owner 2026-10-19).
 
 - **DOOR "Sliding"** (14 doors, 37 placed) and **"Minimal Use"** (3): a door opens by
   its model's own animation; what the flags add is not documented.
-- **PWAT reflection and refraction flags** (3 of 29 refract without reflecting): the
-  water material reflects by its type's settings; how each flag maps to the passes is not
-  documented.
+- **PWAT reflection and refraction flags** (3 of 29 refract without reflecting): bit 0
+  "Reflects" is read since 2026-11-06 (#1780): without it a placed water draws no
+  reflection at all (world.md §6 "Placed water"). The other "Reflects - …" bits and the
+  refraction bits are not used: the water reflects by its type's settings, and how each
+  flag maps to the passes is not documented.
 - **Header bits Visible When Distant, On Local Map, Navmesh**: LOD is built from the
   shipped LOD files and the local map from collision.
 - **Header bit 25 Obstacle** (307 STAT, 24 MSTT, 20 ACTI, 7 SCOL [observed: esm-full-audit

@@ -296,6 +296,10 @@ pub struct NifSurface {
     /// Seconds for the normal map of a refracting shape to scroll once up its texture,
     /// negative for down (module notes, "Fire refraction"); 0: it does not move.
     pub fire_period: f32,
+    /// Unlit emissive rules: x 1 skips the image-space scale; y holds each light channel
+    /// to that value on the soft path (0: no hold); z, w unused. Zero keeps the default
+    /// [hypothesis, nif.md §6 "Unlit shapes that are pictures, and cut-out signs"].
+    pub emissive_rule: Vec4,
     /// The shape refracts (module notes, "Refraction").
     pub refract: bool,
     /// The shape lies on another surface (a decal shader flag is set): drawn with
@@ -353,8 +357,8 @@ pub struct NifSurface {
     pub facegen_offset: Option<Handle<Image>>,
 }
 
-/// The values of a [`NifSurface`] the shaders read (nif_material.wesl and
-/// nif_prepass.wesl `NifSurface`, the same fields in the same order).
+/// The values of a [`NifSurface`] the shaders read (`nif_surface_bindings.wesl`, shared
+/// by nif_material.wesl and nif_prepass.wesl: the same fields in the same order).
 #[derive(Clone, Default, ShaderType)]
 pub struct NifSurfaceUniform {
     pub falloff: Vec4,
@@ -362,6 +366,8 @@ pub struct NifSurfaceUniform {
     pub add_whole: f32,
     pub refraction: f32,
     pub fire_period: f32,
+    /// The image-space bypass and plain path of [`NifSurface::emissive_rule`].
+    pub emissive_rule: Vec4,
     pub holes: Vec4,
     pub holes_edge: Vec4,
     pub soft: Vec4,
@@ -376,7 +382,7 @@ pub const REFRACTION_SCREEN: f32 = 0.1;
 
 impl From<&NifSurface> for NifSurfaceUniform {
     fn from(s: &NifSurface) -> Self {
-        NifSurfaceUniform { falloff: s.falloff, alpha_cut: s.alpha_cut, add_whole: s.add_whole, refraction: s.refraction * REFRACTION_SCREEN, fire_period: s.fire_period, holes: s.holes, holes_edge: s.holes_edge, soft: s.soft }
+        NifSurfaceUniform { falloff: s.falloff, alpha_cut: s.alpha_cut, add_whole: s.add_whole, refraction: s.refraction * REFRACTION_SCREEN, fire_period: s.fire_period, emissive_rule: s.emissive_rule, holes: s.holes, holes_edge: s.holes_edge, soft: s.soft }
     }
 }
 
@@ -428,6 +434,7 @@ impl Default for NifSurface {
             add_whole: 0.0,
             refraction: 0.0,
             fire_period: 0.0,
+            emissive_rule: Vec4::ZERO,
             refract: false,
             decal: false,
             hard_edges: false,
@@ -1048,8 +1055,12 @@ mod tests {
         let mut surface = NifSurface::default();
         assert_eq!(NifSurfaceKey::from(&surface), NifSurfaceKey { decal: false, refract: false, hard_edges: false, shade_light: false, facegen: false, depth_write: false, first_person: false, add_linear: false, pipboy_screen: false });
         assert_eq!(surface.alpha_cut, 0.0);
+        assert_eq!(surface.emissive_rule, Vec4::ZERO);
+        assert_eq!(NifSurfaceUniform::from(&surface).emissive_rule, Vec4::ZERO);
         surface.falloff = Vec4::new(0.9, 0.2, 1.0, 0.0);
         surface.alpha_cut = 0.5;
+        surface.emissive_rule = Vec4::new(1.0, 1.5, 0.0, 0.0);
+        assert_eq!(NifSurfaceUniform::from(&surface).emissive_rule, surface.emissive_rule);
         assert_eq!(NifSurfaceKey::from(&surface), NifSurfaceKey::from(&NifSurface::default()));
         surface.decal = true;
         assert_eq!(NifSurfaceKey::from(&surface), NifSurfaceKey { decal: true, refract: false, hard_edges: false, shade_light: false, facegen: false, depth_write: false, first_person: false, add_linear: false, pipboy_screen: false });

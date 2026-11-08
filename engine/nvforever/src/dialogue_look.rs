@@ -19,7 +19,10 @@
 //!   (its IK start node, `Bip01 Head`) and the largest angle (its Tracking Max Angle, 60
 //!   for `DefaultBodyPartData`) [documented: GECK wiki "Body Part", owner export;
 //!   observed: FalloutNV.esm BPTD 0x1D]. That angle limits the turn to either side
-//!   [hypothesis: degrees, and that it bounds the yaw]; up and down the head goes at most
+//!   [hypothesis: degrees, and that it bounds the yaw], measured from where the bone
+//!   above the neck faces (the chest), not the actor's root: a pose that twists the upper
+//!   body away (a fleeing actor's cower idle) would otherwise let the head end up facing
+//!   backwards [observed: owner report 2026-11-07, #1814]; up and down the head goes at most
 //!   [`HEAD_PITCH_LIMIT`] [design]. The neck bones above the head are turned by up to
 //!   [`NECK_SHARE`] of the turn ([`shares`]), so the neck does not twist at one joint
 //!   [design; whether the original turns anything but the IK start node is not known].
@@ -147,6 +150,26 @@ pub fn sided(yaw: f32, before: Option<f32>) -> f32 {
     }
 }
 
+/// Where the bone above the neck faces, as a yaw in the actor's space: `frame` is how
+/// that bone is turned from its bind pose (in which it faces the actor's +y). Root
+/// forward (0) when the bone points nearly straight up or down and has no heading
+/// [design].
+pub fn torso_yaw(frame: Quat) -> f32 {
+    let f = frame * Vec3::Y;
+    if f.x.hypot(f.y) < 0.25 {
+        0.0
+    } else {
+        yaw_pitch(f).0
+    }
+}
+
+/// [`limited`] with the yaw measured from `torso` (the actor's space, [`torso_yaw`]):
+/// `want`'s yaw is given against the torso and the result is back in the actor's space.
+pub fn limited_from(want: (f32, f32), torso: f32, yaw_limit: f32) -> (f32, f32) {
+    let (yaw, pitch) = limited(want, yaw_limit);
+    (wrap(torso + yaw), pitch)
+}
+
 /// The yaw and pitch the head may take towards a target at `want`: within `yaw_limit` to
 /// either side and [`HEAD_PITCH_LIMIT`] up and down.
 pub fn limited(want: (f32, f32), yaw_limit: f32) -> (f32, f32) {
@@ -247,6 +270,9 @@ struct HeadRig {
     /// The head's forward and up axes in its own space.
     forward: Vec3,
     up: Vec3,
+    /// The bind rotation (actor space) of the bone above the chain, the one the yaw limit
+    /// is measured from.
+    frame_bind: Quat,
     yaw_limit: f32,
     /// For the log: the bones' names, and whether the limit is the body part data's.
     bones: String,
@@ -270,7 +296,7 @@ struct Look {
     active: bool,
     /// 0 (the animation's own pose) to 1 (on the player), before [`smooth`].
     weight: f32,
-    /// The yaw wanted last frame, before the limit ([`sided`]).
+    /// The yaw wanted last frame against the torso, before the limit ([`sided`]).
     wanted_yaw: Option<f32>,
     /// The yaw and pitch the head had last frame (the actor's space).
     shown: (f32, f32),
@@ -384,12 +410,15 @@ fn head_rig(rig: &ActorRig, combat: Option<&Combat>) -> Result<HeadRig, String> 
     let chain: Vec<(usize, f32)> = necks.iter().copied().chain([head]).zip(shares(necks.len())).collect();
     // In the bind pose the actor faces +y with z up: the head's own axes for those.
     let bind = rotation(rig.skel.bind_world.get(head).ok_or("no bind pose")?).inverse();
+    let top = rig.skel.parents.get(chain[0].0).copied().flatten().unwrap_or(0);
+    let frame_bind = if top == 0 { Quat::IDENTITY } else { rotation(rig.skel.bind_world.get(top).ok_or("no bind pose")?) };
     let asked = part.map(|p| p.tracking_max_angle.to_radians()).filter(|a| a.is_finite() && *a > 1e-3);
     let bones = chain.iter().map(|c| rig.skel.names[c.0].as_deref().unwrap_or("?")).collect::<Vec<_>>().join(", ");
     Ok(HeadRig {
         chain,
         forward: bind * Vec3::Y,
         up: bind * Vec3::Z,
+        frame_bind,
         yaw_limit: asked.unwrap_or(HEAD_YAW_LIMIT).min(HEAD_YAW_LIMIT_MAX),
         bones,
         limit_from_data: asked.is_some(),
@@ -633,9 +662,12 @@ pub(crate) fn turn_speaker(
         let cur = yaw_pitch(head_rot * head.forward);
         let eye = root.inverse().transform_point3(space::to_bevy(player.eye()));
         let want = yaw_pitch(eye - Vec3::from(head_m.translation));
-        let yaw = sided(want.0, look.wanted_yaw);
+        // The limit is the neck's: measured from where the chest faces, whatever the
+        // animation does with the body below it.
+        let torso = torso_yaw(rotation(&above_m) * head.frame_bind.inverse());
+        let yaw = sided(wrap(want.0 - torso), look.wanted_yaw);
         look.wanted_yaw = Some(yaw);
-        let target = limited((yaw, want.1), head.yaw_limit);
+        let target = limited_from((yaw, want.1), torso, head.yaw_limit);
         // The animation's own nods and glances stay under the turn (a frozen picture has
         // none to keep).
         let rest = if instant { cur } else { follow_rest(look.rest, cur, dt) };
@@ -726,6 +758,25 @@ mod tests {
         // But a player who is merely to the other side is followed there.
         assert!(near(sided(-1.0, Some(1.0)), -1.0));
         assert!(near(sided(4.0, None), wrap(4.0)));
+    }
+
+    #[test]
+    fn the_limit_is_measured_from_the_chest_not_the_root() {
+        let limit = 60f32.to_radians();
+        // Upright, untwisted: the root's limit.
+        assert!(torso_yaw(Quat::IDENTITY).abs() < 1e-6);
+        // A cowering pose twists the chest 120° to the right of the root; the player
+        // stands straight ahead of the root, 120° to the chest's left. The head stops 60°
+        // to the chest's left (60° right of the root), not 60° to the root's side
+        // (which is 180° from the chest: facing backwards).
+        let chest = Quat::from_rotation_z(-120f32.to_radians());
+        let torso = torso_yaw(chest);
+        assert!((torso - 120f32.to_radians()).abs() < 1e-5, "{torso}");
+        let (yaw, _) = limited_from((wrap(0.0 - torso), 0.0), torso, limit);
+        assert!((yaw - 60f32.to_radians()).abs() < 1e-5, "{}", yaw.to_degrees());
+        assert!(wrap(yaw - torso).abs() <= limit + 1e-5);
+        // A chest bent straight down has no heading: the root's.
+        assert_eq!(torso_yaw(Quat::from_rotation_x(FRAC_PI_2)), 0.0);
     }
 
     #[test]

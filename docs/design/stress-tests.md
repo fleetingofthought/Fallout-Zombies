@@ -19,6 +19,10 @@ python tools/stress run soak   ... [--towns ...] [--event-every S] [--aid NVF_PL
 
 `NVF_EXE`, `NVF_DATA` and `NVF_FNVTOOL` stand in for the three paths, as for smoke.
 `--no-locks` skips the locks on a machine of your own. `--name` names the run's folder.
+`tour`, `battle` and `soak` also take `--repetitions N` (a positive integer) and an
+optional caller-supplied `--build-label TEXT`. Repetitions run serially in `run-001`,
+`run-002`, … below the named run folder; existing names are never reused. Do not use
+`--no-locks` for a shared machine.
 
 ## 1. How a run is made (tools/stress/stress/lib.py)
 
@@ -43,7 +47,24 @@ python tools/stress run soak   ... [--towns ...] [--event-every S] [--aid NVF_PL
   out). Each group lists the cells or runs that hit it.
 
 Every run writes `target/stress/<test>/<run>/results.json` (everything) and `report.md`
-(the summary to read first). The launch logs and command lines sit beside them.
+(the summary to read first). The launch logs and command lines sit beside them. Tour,
+battle and soak results have a provenance manifest: the runner checkout identity,
+executable and fnvtool file hashes, requested INI hash, requested arguments/aids, masters,
+and platform facts. It records unavailable information explicitly; an executable's hash is
+not treated as its source revision and its build features are unknown unless the caller
+labels the build. Effective saved settings, adapter/backend/driver, and cache state are
+likewise unknown until the engine reports them.
+
+With `--repetitions`, the top-level folder has `comparison.json` and `comparison.md`; each
+child keeps the ordinary `results.json` and `report.md`. The comparison retains every row,
+but aggregates only successful rows with background-CPU samples below the runner's busy
+threshold. Rows are `busy`, `unknown`, or `below_busy_threshold`; the latter means only
+that the runner's warning did not trigger, not that the machine was quiet. An aggregate
+with no eligible rows is unavailable, never zero. It summarizes only the existing mean,
+slowest-1%-mean, and worst frame metrics; the slowest-1% mean is not p99.
+After each completed child the top-level comparison index is written as `incomplete`, so a
+stopped sequence still names its completed repetitions; it becomes `complete` only after
+the requested sequence finishes.
 
 ## 2. The engine's aids (engine/nvf-play/src/stress.rs, engine/nvforever/src/stress_sample.rs)
 
@@ -82,7 +103,46 @@ Every run writes `target/stress/<test>/<run>/results.json` (everything) and `rep
   - actors, actors with a non-finite position, ragdolls, projectiles in flight;
   - where the backend reports it (Vulkan, DX12), the GPU allocator's allocated and
     reserved megabytes and its memory blocks. The tour watches allocated and reserved
-    for leaks.
+    for leaks;
+  - the window's own counts, before the place: `startup frames`, `hidden frames`
+    (behind a loading screen), `phase changes` (frames a loading screen went up or came
+    down in) and `window <ms> ms`, its real length. The frame mean and worst cover only
+    the seen frames; a window with `phase changes` over 0 held a transition, and its
+    place is where it ended (the tour report counts such windows). The window starts
+    again when start-up ends.
+
+  Each frame is judged at one pair of boundaries (issue #1415). The sampler runs once a
+  frame in `First` and takes its own instant there; a frame is the time from one run to
+  the next, and its phase (start-up, behind a loading screen, seen), its cell and actor
+  counts and the place come from the same two runs [design:
+  `engine/nvforever/src/stress_sample.rs`, `Samples::step`, `frame`]. A frame whose two
+  boundaries saw different phases is in no frame time; when slow it is logged as
+  `stress hitch (across a phase change, hidden to seen): …, from <place> to <place>`,
+  its raw time without a claim on whether the loading or the game took it (the tour
+  report lists those apart). The first run only sets the baseline: no frame is counted
+  for it [observed #1415: a 674 ms seen hitch logged just after the start's screen came
+  down, and the first window carried the travel destination's place].
+
+  **What the frame time measures.** The `stress sample:` frame mean and worst, the
+  `stress frames:` figures, the `stress actors:` frame figures, `stress start-up:` and
+  every `stress hitch` line measure the main thread's loop from one `First` to the next:
+  the frame's own schedules, the wait at extraction for the render thread to finish the
+  frame before, extraction and the window events [design: bevy_render 0.20.1
+  `pipelined_rendering.rs:115-136`]. Before issue #1415 they used `Time<Real>`'s delta,
+  the time between the instants the render world sends after each render schedule
+  [design: bevy_render 0.20.1 `lib.rs:464,522-524`], which `First` receives, or
+  `Instant::now()` when none is queued [design: bevy_time 0.20.1 `lib.rs:163,180`]. Under
+  pipelined rendering (bevy's default plugins keep it, and so does nvforever [design:
+  bevy_internal 0.20.1 `default_plugins.rs:56-57`]) that delta can be the frame before's,
+  so it cannot be paired with what one boundary saw: a long frame a loading screen came
+  down in could arrive one boundary late and count as a seen hitch [design: code reading,
+  not reproduced live]. Both clocks tick once a frame and a run of frames' total telescopes
+  to the time between its end instants, so means over a run of seen frames should agree up
+  to the instants at its ends [hypothesis]; single frames, the worst and the 1 % low can differ by
+  which frame a stall lands in and by the two clocks' jitter, and the first frame (zero
+  under `Time<Real>`) is no longer counted. Figures from before and after the change are
+  not strictly comparable. Frame telemetry's `duration_ns` still uses `Time<Real>`'s
+  delta (docs/design/frame-telemetry.md §2).
 
   Beside each sample, `stress gpu labels:` lists the allocator's memory by label, largest
   first. Game textures are labelled by their folder (`textures\clutter`, `generated lod`).
@@ -97,7 +157,8 @@ Every run writes `target/stress/<test>/<run>/results.json` (everything) and `rep
   materials are counted only (one per GRAS, TREE, WATR form). Interface pictures are
   read from `stress gpu labels` (`textures\interface`) (#904).
 
-  At the exit, `stress frames:` gives the whole run's frame-time mean, 1 % low and worst.
+  At the exit, `stress frames:` gives the whole run's frame-time mean, 1 % low and worst,
+  and the frames left out: behind loading screens, and across a phase change.
 
 ## 3. cells
 
@@ -312,6 +373,14 @@ Primm tour 1 % low 31 ms, worst 173 ms; 10-a-side battle 1 % low 33–44 ms, wor
 was 1,344 ms. When one fails, run it again with a profile build and
 `--aid NVF_PLAY_TEST_PROFILE=5` for the spans of each slow frame. The battle places all its
 fighters at once (`ai::draw_and_place`, about 130 ms), which play does not.
+
+### 6.2 Comparing two builds
+
+[design] `compare tour`, `compare battle` and `compare soak` use four measured launches per side in ABBA order after one discarded warm-up each, with separate homes, metadata, early frame captures and retained coarse metrics (`tools/stress/stress/comparison.py:1`). The versioned `comparison.json` and `comparison.md` retain every launch and explain exclusions, spread and verdicts. See [reproducible stress comparisons](stress-comparisons.md) for the ten-second settle, thirty-second window, validation rules, accepted thresholds and the pending scene and continuous-movement coverage; captures cover only the first sixty seconds, so later laps retain coarse results.
+
+```powershell
+python tools/stress compare battle --exe-base '<base.exe>' --exe-candidate '<candidate.exe>' --base-label base --candidate-label candidate --data '<Data>' --ini '<NVForever.ini>' --name battle-abba --per-side 10 --seconds 90 --repetitions 4 --order ABBA --warmup 1 --settle-seconds 10 --measure-seconds 30 --telemetry-seconds 60
+```
 
 ## 7. Adding a test
 
