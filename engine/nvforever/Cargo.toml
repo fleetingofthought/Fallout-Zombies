@@ -55,7 +55,7 @@ rfd = { version = "0.15", default-features = false }
 # The generated-terrain bake threads' priority (lodgen.rs) and the span profile's processor time
 # (profile.rs), the machine's RAM (memory_budget.rs) and the frame rate counter's CPU/GPU use
 # (fps_counter.rs, performance counters); a version already in the build; MIT/Apache-2.0.
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_System_SystemInformation", "Win32_System_Performance"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Console", "Win32_System_Threading", "Win32_System_SystemInformation", "Win32_System_Performance"] }
 
 [build-dependencies]
 # The program icon in the Windows executable (build.rs); MIT.

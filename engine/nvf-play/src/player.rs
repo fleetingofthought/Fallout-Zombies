@@ -458,7 +458,7 @@ fn grab_cursor(
     // kept through a loading screen: the player is back in the world after it.
     // And while the console's free camera flies, also when it holds the world.
     let creating = creator.is_some_and(|c| c.is_open());
-    let playing = !creating && (matches!(*state.get(), PlayState::Playing | PlayState::Loading) || look.is_some_and(|l| l.0) || free_cam.is_some_and(|f| f.active));
+    let playing = !creating && (matches!(*state.get(), PlayState::Playing | PlayState::Loading) || look.is_some_and(|l| l.0) || free_cam.is_some_and(|f| f.active && !f.editor));
     let film = intro.as_ref().is_some_and(|i| i.is_playing());
     let scene = view.is_some_and(|v| v.0) && *state.get() != PlayState::Menu && !boxed && !creating;
     let wanted = creating || ((!playing || boxed) && !film && !scene);

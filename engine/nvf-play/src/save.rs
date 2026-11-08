@@ -483,6 +483,9 @@ fn player_dead(world: &World) -> bool {
 
 /// Why saving is not allowed now, if it is not.
 fn not_now(world: &World) -> Option<String> {
+    if world.get_resource::<crate::free_cam::FreeCam>().is_some_and(|f| f.editor) {
+        return Some("playing inside the editor".into());
+    }
     let st = world.get_resource::<ScriptState>()?;
     let Some(rt) = st.rt.as_ref() else { return Some("the scripts are not running yet".into()) };
     if world.resource::<crate::loading::Loading>().active() {

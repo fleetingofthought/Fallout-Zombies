@@ -15,6 +15,10 @@
 //! switches what `settings.rs` and `nvf_play::settings` list while the game runs) and
 //! closes the open menu. `--play --menu` opens on the main menu (`nvf_play::main_menu`).
 
+// No terminal window on Windows: double-clicked, the game opens by itself. Output that is
+// redirected still goes where it was sent; from a terminal, `attach_parent_console`.
+#![cfg_attr(all(windows, not(test)), windows_subsystem = "windows")]
+
 /// The console lines written before the log is up, with the player's home folder hidden
 /// like every logged line (crash.rs, Privacy). Shadows `std::eprintln!` in this crate.
 macro_rules! eprintln {
@@ -464,6 +468,13 @@ struct Args {
     /// argument chooses a world; with no such argument the game opens on its main menu.
     #[arg(long, conflicts_with = "play")]
     explore: bool,
+<<<<<<< Updated upstream
+=======
+    /// The editor: the game with its world held, an object list, an inspector and an
+    /// asset drawer, and the player dropped in and taken out on request (editor.rs).
+    #[arg(long, conflicts_with = "explore")]
+    editor: bool,
+>>>>>>> Stashed changes
     /// Do not draw NPCs (workstream 5, docs/design/static-actors.md).
     #[arg(long)]
     no_actors: bool,
@@ -842,7 +853,22 @@ fn task_pools() -> TaskPoolPlugin {
     TaskPoolPlugin { task_pool_options }
 }
 
+/// Whether this run has somewhere to print: redirected, or started from a terminal, whose
+/// console it then joins. Started from a shortcut, it has not.
+#[cfg(windows)]
+fn attach_parent_console() -> bool {
+    use windows_sys::Win32::System::Console::{AttachConsole, GetStdHandle, ATTACH_PARENT_PROCESS, STD_ERROR_HANDLE};
+    // SAFETY: both take plain values; the handle is only compared with null.
+    unsafe { !GetStdHandle(STD_ERROR_HANDLE).is_null() || AttachConsole(ATTACH_PARENT_PROCESS) != 0 }
+}
+
+#[cfg(not(windows))]
+fn attach_parent_console() -> bool {
+    true
+}
+
 fn main() -> AppExit {
+    let can_print = attach_parent_console();
     let mut line = with_default_mode(std::env::args().collect());
     if let Some(dir) = std::env::current_exe().ok().and_then(|e| e.parent().map(std::path::Path::to_path_buf)) {
         line = with_schemas_beside(line, &dir);
@@ -853,6 +879,10 @@ fn main() -> AppExit {
         }
     }
     let mut args = Args::parse_from(&line);
+    args.play |= args.editor;
+    let editing = args.editor;
+    // Boxes that ask nothing (the add-on packs' start-up chain) do not stop a test of a level.
+    args.no_messages |= args.editor;
     let _ = COMMAND_LINE.set(line);
     if args.explore {
         eprintln!("explore: the free-camera explorer (--explore)");
@@ -912,9 +942,16 @@ fn main() -> AppExit {
     crash::install(args.data(), args.handoff.is_some());
     let fail = |e: String| {
         eprintln!("error: {e}");
+        if !can_print {
+            crash::tell_player_at_start(&e, false);
+        }
         crash::early_exit(&e);
         AppExit::error()
     };
+    // What the editor saved loads after every other plugin, in the game too.
+    if default_plugins && !developer_data && editor::edit_plugin_path().is_some_and(|p| p.is_file()) {
+        args.plugins.push(fnv_world::edit_plugin::EDIT_PLUGIN.to_string());
+    }
     // The plugins, opened: a broken mod's plugin (and any that need it) is left out with
     // a warning, and the rest of the start uses the list without it (world.rs).
     let opened = world::open_plugins(args.data(), &args.plugins);
@@ -1289,6 +1326,8 @@ fn main() -> AppExit {
             // The console's lines go to the run log too (crash.rs).
             .set(bevy::log::LogPlugin { custom_layer: crash::file_layer, fmt_layer: crash::console_layer, ..default() })
             .set(WindowPlugin {
+                // The editor asks about unsaved changes first (editor.rs).
+                close_when_requested: !args.editor,
                 // Scale factor 1 so screenshots are exactly --size pixels on any display.
                 primary_window: Some(Window {
                     title: "NVForever".into(),
@@ -1385,7 +1424,11 @@ fn main() -> AppExit {
     })
     .insert_resource(args.clone())
     .add_systems(Startup, (world::setup_root, setup, sky::setup_sky))
+<<<<<<< Updated upstream
     .add_systems(Update, (fly::fly.run_if(move || play.is_none()), sky::sky_keys, sky::weather_region, sky::update_sky, sky::interior_clip, sky::update_clouds, sky::update_night_sky, world::stream.run_if(world::world_not_held), imposters::update, fade::fade_cells, world::face_billboards, lod::update_lod, treelod::update_distant_trees, overlay, keys).chain())
+=======
+    .add_systems(Update, (fly::fly.run_if(move || play.is_none() || editing).run_if(editor::camera_may_move), sky::sky_keys, sky::weather_region, sky::update_sky, sky::interior_clip, sky::update_clouds, sky::update_night_sky, world::stream.run_if(world::world_not_held), imposters::update, fade::fade_cells, world::face_billboards, lod::update_lod, treelod::update_distant_trees, overlay, keys).chain())
+>>>>>>> Stashed changes
     .add_systems(Update, cell_buffer::remember.after(world::stream))
     .add_systems(Update, world::draw_waiting_actors.after(world::stream))
     // Actors of the next ring of cells read and prepared before they come into range.
@@ -1746,7 +1789,11 @@ fn main() -> AppExit {
     if play.is_some() {
         settings::register(&mut app);
         console_toggles::register(&mut app);
-        app.init_resource::<handoff::Handoff>().add_systems(Update, (handoff::leave, handoff::reveal.after(world::loading_gate), handoff::hold_restore.after(handoff::reveal)));
+        app.init_resource::<handoff::Handoff>().add_systems(Update, (handoff::reveal.after(world::loading_gate), handoff::hold_restore.after(handoff::reveal)));
+        // Inside the editor a load or the main menu goes back to the editor (editor.rs).
+        if !args.editor {
+            app.add_systems(Update, handoff::leave);
+        }
         handoff::add_end_now(&mut app);
         if let Some(why) = load_failed {
             app.insert_resource(handoff::LoadFailed(why)).add_systems(Update, handoff::tell_load_failed);
@@ -1763,6 +1810,13 @@ fn main() -> AppExit {
             }
         });
     }
+<<<<<<< Updated upstream
+=======
+    if args.editor {
+        nvf_assets::model::KEEP_MESHES_READABLE.store(true, std::sync::atomic::Ordering::Relaxed);
+        app.add_plugins(editor::EditorPlugin);
+    }
+>>>>>>> Stashed changes
     app.run()
 }
 

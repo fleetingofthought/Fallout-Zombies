@@ -5,7 +5,7 @@
 use crate::raw::{Record, Subrecord};
 use crate::schema::{Prim, Schema, TypeDef};
 use serde_json::{json, Map, Value};
-use fnv_util::{sha256::to_hex, Cursor};
+use fnv_util::{sha256::to_hex, tag_str, Cursor};
 use rayon::prelude::*;
 use std::collections::BTreeMap;
 
@@ -57,6 +57,11 @@ fn read_prim(p: Prim, c: &mut Cursor, ctx: &mut DecodeCtx) -> Result<Value, Stri
         Prim::F64 => Value::from(c.f64().map_err(e)?),
         Prim::FormId => {
             let v = c.u32().map_err(e)?;
+            FORMID_OFFSETS.with_borrow_mut(|o| {
+                if let Some(o) = o {
+                    o.push(c.pos - 4);
+                }
+            });
             if let Some(f) = ctx.on_formid.as_mut() {
                 f(v);
             }
@@ -234,6 +239,25 @@ pub fn decode_sub(rec_sig: &[u8; 4], s: &Subrecord, ctx: &mut DecodeCtx) -> Deco
         Err(e) => {
             DecodedSub { status: SubStatus::Error, opaque, name: Some(def.name.clone()), value: None, error: Some(e) }
         }
+    }
+}
+
+thread_local! {
+    /// While [`formid_offsets`] decodes: the byte offset of every FormID read. Not a field of
+    /// [`DecodeCtx`], whose literals stand in many files that follow upstream.
+    static FORMID_OFFSETS: std::cell::RefCell<Option<Vec<usize>>> = const { std::cell::RefCell::new(None) };
+}
+
+/// The byte offsets of the FormIDs in a subrecord, from the schema. An error when the
+/// schema cannot account for all of its bytes, so a caller that rewrites FormIDs does not
+/// miss one in a part it cannot see.
+pub fn formid_offsets(rec_sig: &[u8; 4], s: &Subrecord, schema: &Schema) -> Result<Vec<usize>, String> {
+    FORMID_OFFSETS.set(Some(Vec::new()));
+    let decoded = decode_sub(rec_sig, s, &mut DecodeCtx { schema, on_formid: None });
+    let offsets = FORMID_OFFSETS.take().unwrap_or_default();
+    match decoded.status {
+        SubStatus::Ok if !decoded.opaque => Ok(offsets),
+        status => Err(format!("{} {}: schema status {}", tag_str(rec_sig), s.sig_str(), status.as_str())),
     }
 }
 

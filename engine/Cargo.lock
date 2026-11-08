@@ -3126,6 +3126,7 @@ dependencies = [
 name = "fnv-world"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "fnv-esm",
  "serde_json",
  "tracing",

@@ -59,12 +59,37 @@ pub struct FreeCam {
     pov: Pov,
     /// `NVF_PLAY_TEST_FLY`.
     aid_speed: f32,
+    /// This run is the editor (`nvforever --editor`): while `on`, the editor owns the
+    /// camera and the pointer, and the world stands still; off, the player plays. The
+    /// console's `tfc` does nothing here.
+    pub editor: bool,
 }
 
 impl FreeCam {
     /// Mode 1: the world stands still while the camera is free.
     pub fn holds_world(&self) -> bool {
         self.on && self.mode == 1
+    }
+
+    /// The editor has the camera now (the player is not playing).
+    pub fn editor_holds(&self) -> bool {
+        self.editor && self.on
+    }
+
+    /// The editor takes the camera and holds the world, or lets the player play.
+    pub fn editor_hold(&mut self, hold: bool, control: &mut PlayerControl) {
+        self.editor = true;
+        if hold == self.on {
+            return;
+        }
+        (self.on, self.mode) = (hold, 1);
+        if hold {
+            self.pov = control.pov;
+            control.pov = Pov::Third;
+        } else {
+            self.active = false;
+            control.pov = self.pov;
+        }
     }
 }
 
@@ -120,6 +145,9 @@ fn take_requests(
     let feet = player.map_or([0.0; 3], |p| p.feet);
     let Ok((t, mut proj)) = cams.single_mut() else { return };
     for mode in toggles {
+        if free.editor {
+            continue;
+        }
         if !free.on {
             let (yaw, pitch, _) = t.rotation.to_euler(EulerRot::YXZ);
             let f = &mut *free;
@@ -173,6 +201,9 @@ fn fly(
         _ => false,
     };
     free.active = state_free && !console.open && !paused.0 && menu.0.is_none() && !loading.active();
+    if free.editor {
+        return;
+    }
     let Ok(mut t) = cams.single_mut() else { return };
     if free.active {
         let f = &mut *free;
@@ -214,12 +245,13 @@ fn hold_world(free: Res<FreeCam>, console: Res<Console>, paused: Res<crate::paus
 #[allow(clippy::type_complexity)]
 fn hide_menus(
     hidden: Res<MenusHidden>,
+    free: Res<FreeCam>,
     mut roots: Query<
         &mut Visibility,
         Or<(With<crate::hud::HudRoot>, With<crate::reticle::Root>, With<crate::corner_messages::AreaRoot>, With<crate::quest_messages::AreaRoot>)>,
     >,
 ) {
-    if hidden.0 {
+    if hidden.0 || free.editor_holds() {
         for mut v in &mut roots {
             v.set_if_neq(Visibility::Hidden);
         }

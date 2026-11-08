@@ -64,7 +64,8 @@ pub fn open_plugins(data_dir: &Path, names: &[String]) -> OpenedPlugins {
     for n in names {
         // The file whatever its case on disk (a case-sensitive copy may hold
         // `deadmoney.esm`; #995); the plugin keeps the name the load order gives it.
-        let path = fnv_install::child_ci(data_dir, n).unwrap_or_else(|| data_dir.join(n));
+        let saved_by_editor = crate::editor::edit_plugin_path().filter(|_| n == fnv_world::edit_plugin::EDIT_PLUGIN);
+        let path = saved_by_editor.or_else(|| fnv_install::child_ci(data_dir, n)).unwrap_or_else(|| data_dir.join(n));
         match EsmPlugin::open(path) {
             Ok(mut p) => {
                 p.name = n.clone();
@@ -826,21 +827,36 @@ pub fn travel(
     args: Res<crate::Args>,
 ) {
     let Some(t) = msgs.read().last().copied() else { return };
+    enter_space(&mut commands, &world, &mut streamer, &mut sky, &mut lod, &args, t.interior, t.feet);
+}
+
+/// Drop the loaded cells and switch to an interior, or to the worldspace around `feet`.
+#[allow(clippy::too_many_arguments)]
+pub fn enter_space(
+    commands: &mut Commands,
+    world: &WorldData,
+    streamer: &mut Streamer,
+    sky: &mut crate::sky::SkyState,
+    lod: &mut crate::lod::LodState,
+    args: &crate::Args,
+    interior: Option<u32>,
+    feet: [f32; 3],
+) {
     for (_, e) in streamer.loaded.drain() {
         commands.entity(e).despawn();
     }
     for (_, sp) in streamer.spawning.drain() {
         commands.entity(sp.entity).despawn();
     }
-    despawn_all_dying(&mut commands, &mut streamer.dying);
+    despawn_all_dying(commands, &mut streamer.dying);
     // The destination appears at once, as after a loading screen.
     streamer.fades.clear();
     streamer.settled = false;
-    streamer.interior = t.interior;
-    streamer.arrival = t.interior.is_none().then(|| cell_of(t.feet[0], t.feet[1]));
-    sky.set_interior(t.interior.and_then(|id| fnv_world::lighting::cell_lighting(world.lo, world.schema, id)));
-    sky.interior_grade = t.interior.and_then(|id| crate::sky::SkyState::cell_grade(world.lo, world.schema, id));
-    lod.set_enabled(&mut commands, t.interior.is_none() && !args.no_lod);
+    streamer.interior = interior;
+    streamer.arrival = interior.is_none().then(|| cell_of(feet[0], feet[1]));
+    sky.set_interior(interior.and_then(|id| fnv_world::lighting::cell_lighting(world.lo, world.schema, id)));
+    sky.interior_grade = interior.and_then(|id| crate::sky::SkyState::cell_grade(world.lo, world.schema, id));
+    lod.set_enabled(commands, interior.is_none() && !args.no_lod);
 }
 
 /// SetCellImageSpace (`fnv_game::game::FormChanges::cell_image_spaces`): an interior

@@ -1130,6 +1130,18 @@ impl PhysState {
         }
     }
 
+    /// Collision for an object the plugins do not hold yet (the editor's unsaved objects):
+    /// model `path` at this pose, in place of what `id` had. With no path, it has none.
+    /// Whether any body was built.
+    pub fn set_model_collision(&mut self, data: &GameData, id: u32, model: Option<(&str, [f32; 3], [f32; 3], f32)>) -> bool {
+        self.world.remove_ref(id);
+        let Some((path, position, rotation, scale)) = model else { return false };
+        let mut times = LoadTimes::default();
+        let Ok(objects) = self.models.objects(data, path, &mut times) else { return false };
+        let pose = RefPose { form_id: id, position, rotation: ref_rotation(rotation), scale };
+        nvf_assets::guard::guarded(|| Ok(self.world.add_ref(&pose, &objects))).is_ok_and(|rep| rep.bodies > 0)
+    }
+
     /// A script moved or turned reference `id` (SetPos, SetAngle, Rotate, SetScale, the
     /// console's too) at time `now` (seconds): its collision is built again at the
     /// simulation's pose when it is not there already.
@@ -1698,7 +1710,7 @@ impl Plugin for PhysPlugin {
             .add_systems(Startup, init_phys)
             .add_systems(Last, (frame_times, report).chain())
             .add_message::<crate::RefRepose>()
-            .add_systems(Update, (travel, ref_changed, destruction_models, stream, pose_doors, pose_groups).chain().in_set(PhysSystems).in_set(crate::PlaySet::Physics))
+            .add_systems(Update, (travel, drop_player, ref_changed, destruction_models, stream, pose_doors, pose_groups).chain().in_set(PhysSystems).in_set(crate::PlaySet::Physics))
             .add_systems(PostUpdate, trace::trace);
     }
 }
@@ -1763,6 +1775,37 @@ fn travel(
         feet[2],
         hit.map_or("not found".to_string(), |h| format!("z {:.2} (shell {:.2})", h.point[2], h.shell)),
         phys.terrain_z(feet[0], feet[1]).map_or("-".to_string(), |z| format!("z {z:.2}"))
+    );
+}
+
+/// The editor's drop ([`crate::DropPlayer`]): load what the spot needs, then stand the
+/// player there.
+fn drop_player(
+    mut msgs: MessageReader<crate::DropPlayer>,
+    d: Res<PlayWorld>,
+    sim: Res<SimState>,
+    data: Option<Res<GameData>>,
+    mut phys: ResMut<PhysState>,
+    mut player: ResMut<Player>,
+) {
+    let Some(t) = msgs.read().last().copied() else { return };
+    let ctx = LoadCtx { d: &d, sim: &sim, data: data.as_deref() };
+    let around: Vec<PhysCell> = match phys.cell_at(t.feet) {
+        PhysCell::Exterior(cx, cy) => cells::wanted((cx, cy)).into_iter().map(|(x, y)| PhysCell::Exterior(x, y)).collect(),
+        c => vec![c],
+    };
+    for cell in around {
+        phys.load(&ctx, cell);
+    }
+    let hit = phys.place_player(t.feet, t.up, t.down);
+    let feet = phys.player.as_ref().map_or(t.feet, |c| c.feet);
+    (player.feet, player.placed, player.heading, player.pitch) = (feet, Some(feet), t.heading, t.pitch);
+    info!(
+        "player dropped: feet ({:.0}, {:.0}, {:.1}), {}",
+        feet[0],
+        feet[1],
+        feet[2],
+        hit.map_or("nothing below the spot".to_string(), |h| format!("on z {:.1}", h.point[2]))
     );
 }
 

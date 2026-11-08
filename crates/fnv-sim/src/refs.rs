@@ -401,6 +401,11 @@ impl RefTable {
         self.refs.get(&id)
     }
 
+    /// Every placed reference's FormID, in no order.
+    pub fn ids(&self) -> impl Iterator<Item = FormId> + '_ {
+        self.refs.keys().copied()
+    }
+
     pub fn by_edid(&self, edid: &str) -> Option<FormId> {
         self.edids.get(&edid.to_ascii_lowercase()).copied()
     }

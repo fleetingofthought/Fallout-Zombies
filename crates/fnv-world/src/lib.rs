@@ -20,6 +20,7 @@
 
 pub mod alt_textures;
 pub mod audio;
+pub mod edit_plugin;
 pub mod effect_shader;
 pub mod fields;
 pub mod grass;

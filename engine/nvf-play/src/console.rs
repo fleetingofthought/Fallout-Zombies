@@ -361,7 +361,7 @@ fn toggle(
     if !c.open {
         // The free camera's mode 1 holds the world in `Menu` with no menu open (`crate::free_cam`).
         let world = *state.get() == PlayState::Playing || (free_cam.holds_world() && *state.get() == PlayState::Menu);
-        let free = world && active.0.is_none() && !loading.active();
+        let free = world && active.0.is_none() && !loading.active() && !free_cam.editor_holds();
         if free && (keys.just_pressed(KeyCode::Backquote) || by_aid) {
             c.open = true;
             // Already `Menu` under the free camera: no change of state, which would close it.

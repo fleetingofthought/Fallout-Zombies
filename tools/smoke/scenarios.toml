@@ -173,6 +173,21 @@ expect = [
 ]
 
 [[scenario]]
+name = "editor-play-in-and-out"
+source = "Play in editor: the editor is the game with its world held; the player drops in without a loading screen and comes back out"
+areas = ["editor"]
+paths = ["engine/nvforever/src/editor.rs", "engine/nvf-play/src/free_cam.rs", "engine/nvf-play/src/control.rs"]
+env = { NVF_EDITOR_TEST_PLAY = "15,28" }
+args = ["--editor", "--cell", "Goodsprings", "--no-voice"]
+run_seconds = 40
+expect = [
+  "editor: playing",
+  { re = 'player dropped: feet \(.*\), on z', label = "the player stands on what is under the camera" },
+  { re = 'editor: back from playing, \d+ moved objects put back', label = "the editor takes the world back" },
+  { re = 'menu pause: the picture stands still', count = 0, label = "streaming and animations keep their clock under the editor" },
+]
+
+[[scenario]]
 name = "auto-fly"
 source = "CLAUDE.md: after renderer changes, the moving-camera smoke test (cell streaming and LOD rebuilds)"
 areas = ["renderer"]

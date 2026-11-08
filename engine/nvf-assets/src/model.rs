@@ -21,6 +21,10 @@ use bevy::image::CompressedImageFormats;
 use bevy::render::render_resource::TextureFormat;
 use bevy::tasks::{futures::check_ready, AsyncComputeTaskPool, Task, TaskPool};
 use bevy::asset::RenderAssetUsages;
+
+/// Keep every model's triangles in the main world: the editor picks on them. The game does
+/// not read them, so it leaves them to the GPU.
+pub static KEEP_MESHES_READABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 use bevy::camera::visibility::DynamicSkinnedMeshBounds;
 use bevy::ecs::system::SystemParam;
 use bevy::image::CompressedImageFormatSupport;
@@ -1584,6 +1588,9 @@ fn prepare_unguarded(sink: &mut impl ModelSink, path: &str, keep_cpu: bool, firs
             first_worn += props.first_person_texture_count();
         }
         let Some((mut mesh, tris)) = build_mesh(data) else { continue };
+        if KEEP_MESHES_READABLE.load(std::sync::atomic::Ordering::Relaxed) {
+            mesh.asset_usage = RenderAssetUsages::all();
+        }
         // A morphing shape: its mesh stays readable in the main world so that
         // `morph::play_vertex_morphs` can rewrite its vertices.
         let morph = morph_of.get(&o.block).filter(|g| g.num_vertices == mesh.count_vertices()).map(|g| {

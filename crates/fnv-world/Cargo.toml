@@ -6,6 +6,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+bytes = "1.9"
 fnv-esm = { path = "../fnv-esm" }
 serde_json.workspace = true
 tracing = "0.1"

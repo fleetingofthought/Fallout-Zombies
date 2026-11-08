@@ -798,7 +798,11 @@ pub fn place_camera(
     mut phys: ResMut<PhysState>,
     mut cams: Query<&mut Transform, With<PlayerCamera>>,
     mut told: Local<Option<bool>>,
+    free: Option<Res<crate::free_cam::FreeCam>>,
 ) {
+    if free.is_some_and(|f| f.editor_holds()) {
+        return;
+    }
     // Say which line the crosshair follows when it changes (smoke tests read it).
     let third = control.crosshair.is_some();
     if *told != Some(third) {

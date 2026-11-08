@@ -307,7 +307,7 @@ pub(crate) fn tick_play_clock(virt: Res<Time<Virtual>>, real: Res<Time<Real>>, l
 /// console's free camera holds the world (`crate::free_cam`, mode 1), and let it run
 /// again after. Nothing else pauses it.
 fn freeze_picture(mode: Res<MenuPause>, paused: Res<Paused>, state: Res<State<PlayState>>, free_cam: Option<Res<crate::free_cam::FreeCam>>, mut clock: ResMut<Time<Virtual>>) {
-    let held_by_cam = free_cam.is_some_and(|f| f.holds_world());
+    let held_by_cam = free_cam.is_some_and(|f| f.holds_world() && !f.editor);
     let stop = picture_held(*mode, paused.0, *state.get()) || held_by_cam;
     if clock.is_paused() != stop {
         let why = if paused.0 {
@@ -1661,7 +1661,7 @@ fn choose(
     mut commands: Commands,
     mut sounds: MessageWriter<crate::ui_sounds::UiSound>,
     mut menu: SaveMenu,
-    (mut request, main_menu, intro, mut to_main, mouse): (ResMut<PageRequest>, Option<Res<crate::main_menu::MainMenu>>, Option<Res<crate::intro::Intro>>, MessageWriter<MainMenuRequest>, Res<ButtonInput<MouseButton>>),
+    (mut request, main_menu, intro, mut to_main, mouse, free_cam): (ResMut<PageRequest>, Option<Res<crate::main_menu::MainMenu>>, Option<Res<crate::intro::Intro>>, MessageWriter<MainMenuRequest>, Res<ButtonInput<MouseButton>>, Res<crate::free_cam::FreeCam>),
     (bindings, pads, sticks, pending, mods): (Option<Res<crate::bindings::Bindings>>, Query<&Gamepad>, Option<Res<crate::pad::StickButtons>>, Option<Res<crate::settings::PendingKeep>>, Option<Res<ModsEntry>>),
     meters: Query<(&PauseButton, &RelativeCursorPosition)>,
 ) {
@@ -2097,7 +2097,11 @@ fn choose(
                 }
                 Some(1) => {
                     info!("pause menu: quit");
-                    exit.write(AppExit::Success);
+                    if free_cam.editor {
+                        to_main.write(MainMenuRequest);
+                    } else {
+                        exit.write(AppExit::Success);
+                    }
                 }
                 Some(_) => {
                     info!("pause menu: quit cancelled");

@@ -247,6 +247,19 @@ pub struct Location {
     pub interior: Option<u32>,
 }
 
+/// The editor drops the player into the space being played, without a loading screen:
+/// on what lies under `feet`, from `up` above it to `down` below it. Nothing is dropped
+/// and streamed again but the cells the spot needs.
+#[derive(Message, Clone, Copy, Debug, PartialEq)]
+pub struct DropPlayer {
+    pub feet: [f32; 3],
+    pub up: f32,
+    pub down: f32,
+    /// Radians, as [`player::Player`]'s.
+    pub heading: f32,
+    pub pitch: f32,
+}
+
 /// Move the player to another place: through a door into an interior (`interior:
 /// Some(cell)`) or out into a worldspace (`interior: None`; `world` names it, and may
 /// differ from the one being played). Render streaming and physics both follow it.
@@ -334,6 +347,7 @@ impl Plugin for PlayPlugin {
             .insert_resource(sim::SimState::new(d.lo, d.schema, d.index))
             .init_state::<PlayState>()
             .add_message::<Travel>()
+            .add_message::<DropPlayer>()
             .add_message::<OpenContainer>()
             .add_message::<RefChanged>()
             .add_message::<ItemUsed>()
