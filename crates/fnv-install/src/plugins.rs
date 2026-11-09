@@ -25,6 +25,14 @@
 //! files [hypothesis: the extension stands for the header's master flag, true of the
 //! game's own files]. Lines are never removed: a plugin no longer in `Data` is skipped
 //! with a warning, and comes back on if the file returns.
+//!
+//! **Language plugins** (#1443): a localized install can keep the English masters and put
+//! its text in one more plugin per master, `<master>_lang.esp` [observed: a Russian
+//! install, docs/spec-notes/fonts.md §2.1]. Such a plugin of one of the game's masters
+//! ([`is_language_plugin`]) gets its new line on, like the masters, after the `.esm`
+//! lines and the language plugins already listed, so the masters' text is replaced but
+//! mods listed later still win; in a new list they follow the masters in the masters'
+//! order [design].
 
 use crate::{guard_write, EngineHome, GameInstall, InstallError, ADDON_MASTERS};
 
@@ -76,6 +84,32 @@ fn is_game_master(name: &str) -> bool {
     name.eq_ignore_ascii_case("FalloutNV.esm") || ADDON_MASTERS.iter().any(|m| m.eq_ignore_ascii_case(name))
 }
 
+/// The language plugin of one of the game's masters: `<master>_lang.esp`, e.g.
+/// `FalloutNV_lang.esp`, `DeadMoney_lang.esp` (module notes).
+pub fn is_language_plugin(name: &str) -> bool {
+    language_master_rank(name).is_some()
+}
+
+/// The rank ([`master_rank`]) of the master a language plugin belongs to.
+fn language_master_rank(name: &str) -> Option<usize> {
+    let l = name.to_ascii_lowercase();
+    let stem = l.strip_suffix("_lang.esp")?;
+    let rank = master_rank(&format!("{stem}.esm"));
+    (rank != usize::MAX).then_some(rank)
+}
+
+/// Where a plugin sorts in a new list: the game's masters in their order, the other
+/// `.esm` files, the language plugins in their masters' order, the other `.esp` files.
+fn sort_key(name: &str) -> (u8, usize, String) {
+    let lower = name.to_ascii_lowercase();
+    match (master_rank(name), language_master_rank(name)) {
+        (r, _) if r != usize::MAX => (0, r, lower),
+        (_, Some(r)) => (2, r, lower),
+        _ if is_esm(name) => (1, 0, lower),
+        _ => (3, 0, lower),
+    }
+}
+
 /// Where a game master sorts among the others: `FalloutNV.esm`, then [`ADDON_MASTERS`].
 fn master_rank(name: &str) -> usize {
     if name.eq_ignore_ascii_case("FalloutNV.esm") {
@@ -85,7 +119,8 @@ fn master_rank(name: &str) -> usize {
 }
 
 /// The `.esm` and `.esp` files in the game's `Data`, as named there: the game's masters in
-/// their order, then the other `.esm` files, then the `.esp` files, each by name.
+/// their order, then the other `.esm` files, then the language plugins in their masters'
+/// order, then the other `.esp` files by name.
 pub fn data_plugins(game: &GameInstall) -> Result<Vec<String>, InstallError> {
     let rd = std::fs::read_dir(&game.data).map_err(|e| InstallError::Io(game.data.clone(), e))?;
     let mut names: Vec<String> = rd
@@ -94,7 +129,7 @@ pub fn data_plugins(game: &GameInstall) -> Result<Vec<String>, InstallError> {
         .map(|e| e.file_name().to_string_lossy().into_owned())
         .filter(|n| is_plugin(n))
         .collect();
-    names.sort_by_key(|n| (master_rank(n), !is_esm(n), n.to_ascii_lowercase()));
+    names.sort_by_key(|n| sort_key(n));
     Ok(names)
 }
 
@@ -133,17 +168,22 @@ impl PluginList {
     }
 
     /// Gives each of `present` (in [`data_plugins`]' order) without a line one: a game
-    /// master on, anything else off; an `.esm` after the last `.esm` line, an `.esp` at
-    /// the end. Returns the names added.
+    /// master or a language plugin on, anything else off; an `.esm` after the last `.esm`
+    /// line, a language plugin after the last `.esm` or language plugin line, another
+    /// `.esp` at the end. Returns the names added.
     pub fn add_new(&mut self, present: &[String]) -> Vec<String> {
         let mut added = Vec::new();
         for name in present {
             if self.contains(name) {
                 continue;
             }
-            let entry = PluginEntry { name: name.clone(), active: is_game_master(name) };
+            let language = is_language_plugin(name);
+            let entry = PluginEntry { name: name.clone(), active: is_game_master(name) || language };
             if is_esm(name) {
                 let at = self.entries.iter().rposition(|e| is_esm(&e.name)).map_or(0, |i| i + 1);
+                self.entries.insert(at, entry);
+            } else if language {
+                let at = self.entries.iter().rposition(|e| is_esm(&e.name) || is_language_plugin(&e.name)).map_or(0, |i| i + 1);
                 self.entries.insert(at, entry);
             } else {
                 self.entries.push(entry);
@@ -232,6 +272,38 @@ mod tests {
         let text = l.to_text();
         let body: Vec<&str> = text.lines().filter(|s| !s.starts_with(';')).collect();
         assert_eq!(body, ["*FalloutNV.esm", "*HonestHearts.esm", "ModMaster.esm", "*Old.esp", "New.esp"]);
+    }
+
+    #[test]
+    fn language_plugins_are_the_game_masters_own() {
+        for n in ["FalloutNV_lang.esp", "falloutnv_LANG.ESP", "DeadMoney_lang.esp", "CaravanPack_lang.esp"] {
+            assert!(is_language_plugin(n), "{n}");
+        }
+        for n in ["MyMod_lang.esp", "FalloutNV_lang.esm", "FalloutNV.esp", "_lang.esp", "FalloutNV-lang.esp"] {
+            assert!(!is_language_plugin(n), "{n}");
+        }
+    }
+
+    #[test]
+    fn language_plugins_follow_the_masters_and_are_on() {
+        // A new list: in Data's order, the language plugins after the masters and the other
+        // .esm files, in the masters' order, before the other .esp files.
+        let mut present = names(&["Zed.esp", "DeadMoney_lang.esp", "Mod.esm", "FalloutNV_lang.esp", "Aaa.esp", "DeadMoney.esm", "FalloutNV.esm"]);
+        present.sort_by_key(|n| sort_key(n));
+        assert_eq!(present, names(&["FalloutNV.esm", "DeadMoney.esm", "Mod.esm", "FalloutNV_lang.esp", "DeadMoney_lang.esp", "Aaa.esp", "Zed.esp"]));
+        let mut l = PluginList::default();
+        l.add_new(&present);
+        let body: Vec<String> = l.to_text().lines().filter(|s| !s.starts_with(';')).map(str::to_string).collect();
+        assert_eq!(body, ["*FalloutNV.esm", "*DeadMoney.esm", "Mod.esm", "*FalloutNV_lang.esp", "*DeadMoney_lang.esp", "Aaa.esp", "Zed.esp"]);
+        // In a list with mods, a new language plugin goes before them, so they still win.
+        let mut l = PluginList::parse("*FalloutNV.esm\n*Mod.esp\n");
+        assert_eq!(l.add_new(&names(&["FalloutNV.esm", "FalloutNV_lang.esp", "Mod.esp"])), names(&["FalloutNV_lang.esp"]));
+        let body: Vec<String> = l.to_text().lines().filter(|s| !s.starts_with(';')).map(str::to_string).collect();
+        assert_eq!(body, ["*FalloutNV.esm", "*FalloutNV_lang.esp", "*Mod.esp"]);
+        // A line the player turned off stays off.
+        let mut l = PluginList::parse("*FalloutNV.esm\nFalloutNV_lang.esp\n");
+        assert!(l.add_new(&names(&["FalloutNV.esm", "FalloutNV_lang.esp"])).is_empty());
+        assert!(!l.entries[1].active);
     }
 
     #[test]

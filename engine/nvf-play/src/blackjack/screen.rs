@@ -97,6 +97,7 @@ pub fn draw(
     window: Query<&Window, With<PrimaryWindow>>,
     mut images: ResMut<Assets<Image>>,
     formats: Option<Res<CompressedImageFormatSupport>>,
+    glyphs: Res<crate::pad::PadGlyphs>,
     roots: Query<Entity, With<BlackjackRoot>>,
     time: AidTime,
     (mut kit, mut shown): (Local<Option<Kit>>, Local<Option<String>>),
@@ -114,7 +115,7 @@ pub fn draw(
     let Some(s) = screen.0.as_ref() else { return };
     let bc = crate::interface::bc_supported(formats.as_deref());
     let kit = kit.get_or_insert_with(|| Kit::load(data.as_deref(), &mut images, bc));
-    let mut c = Ctx { kit, data: data.as_deref(), images: &mut images, bc };
+    let mut c = Ctx { kit, data: data.as_deref(), images: &mut images, bc, glyphs: &glyphs };
     spawn(&mut commands, &mut c, s, view.as_deref(), view_w, now);
 }
 

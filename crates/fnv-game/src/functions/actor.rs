@@ -300,13 +300,16 @@ pub fn set_actor_value(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, Strin
 /// change: (code, old value, new value) [observed: data3, ModAV Luck +1 gave (11, 10,
 /// 11), -1 (11, 11, 10)].
 fn watched(g: &mut Game, ctx: &Ctx, a: &Args, f: fn(&mut Game, &Ctx, &Args) -> Result<Value, String>) -> Result<Value, String> {
-    let target = ctx.subject().ok().zip(a.code(0).ok()).filter(|_| !g.gaps.av_handlers.is_empty());
+    let target = ctx.subject().ok().zip(a.code(0).ok()).filter(|_| !g.gaps.av_handlers.is_empty() || g.jg8_listening(crate::nvse_jg8::Ev::NpcActorValue));
     let before = target.and_then(|(r, c)| actor_value(g, r, c).ok());
     let out = f(g, ctx, a)?;
     if let (Some((r, c)), Some(old)) = (target, before) {
         if let Ok(new) = actor_value(g, r, c) {
             if new != old {
-                g.av_event(r, c, old, new);
+                if !g.gaps.av_handlers.is_empty() {
+                    g.av_event(r, c, old, new);
+                }
+                g.jg8_actor_value(r, c, old, new);
             }
         }
     }
@@ -314,6 +317,8 @@ fn watched(g: &mut Game, ctx: &Ctx, a: &Args, f: fn(&mut Game, &Ctx, &Args) -> R
 }
 
 pub fn set_actor_value_watched(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> {
+    // UnsetAV's base to go back to (`crate::nvse_jg6`).
+    crate::nvse_jg6::note_set_av(g, ctx, a);
     watched(g, ctx, a, set_actor_value)
 }
 pub fn mod_actor_value_watched(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> {
@@ -562,6 +567,10 @@ fn base_factions<'d>(g: &'d Game, r: FormId) -> &'d [(FormId, i8)] {
 pub fn faction_rank(g: &Game, r: FormId, f: FormId) -> i32 {
     if let Some(&rank) = g.extra.get(&r).and_then(|e| e.factions.get(&f)) {
         return rank as i32;
+    }
+    // SetBaseFactionRank's (`crate::nvse_jip11`).
+    if let Some(rank) = factions_source(g, r).and_then(|s| g.base_rank_override(s, f)) {
+        return rank.max(-1) as i32;
     }
     base_factions(g, r).iter().find(|(x, _)| *x == f).map(|(_, rank)| *rank as i32).unwrap_or(-1)
 }
@@ -838,8 +847,29 @@ fn keeps<'a>(g: &'a Game) -> impl Iterator<Item = &'a FactionKeep> {
     g.detection_round.as_ref().map(|round| &round.kept).into_iter().chain(g.faction_frame.as_ref())
 }
 
+/// The actor base that supplies `r`'s factions (its template chain's "Factions" source).
+fn factions_source(g: &Game, r: FormId) -> Option<FormId> {
+    if g.other.jip11.base_ranks.is_empty() {
+        return None;
+    }
+    base_of(g, r).map(|b| g.data.base_template_source(b, |d| d.template_factions))
+}
+
+/// SetBaseFactionRank changed a base: every kept faction list goes.
+pub(crate) fn forget_all_factions(g: &Game) {
+    for keep in keeps(g) {
+        if let Ok(mut k) = keep.factions.write() {
+            k.clear();
+        }
+    }
+    forget_relations(g);
+}
+
 fn factions_now(g: &Game, r: FormId) -> Vec<FormId> {
     let mut out: Vec<FormId> = base_factions(g, r).iter().map(|f| f.0).collect();
+    if let Some(s) = factions_source(g, r) {
+        out.extend(g.base_rank_overrides(s).into_iter().map(|(f, _)| f));
+    }
     if let Some(e) = g.extra.get(&r) {
         out.extend(e.factions.keys().copied());
     }

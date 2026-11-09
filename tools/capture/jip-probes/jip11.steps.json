@@ -1,0 +1,159 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jip11",
+ "title": "jip11, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.GetActorAlpha)\nEnd\n",
+   "label": "jip11.alpha.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.GetActorGravityMult)\nEnd\n",
+   "label": "jip11.gravity.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetFormIDString (rObj.GetActorLeveledList))\nEnd\n",
+   "label": "jip11.leveled.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.GetActorLightAmount)\nEnd\n",
+   "label": "jip11.light.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetActorLightAmount)\nEnd\n",
+   "label": "jip11.light.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.GetActorMovementFlags)\nEnd\n",
+   "label": "jip11.movement.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.GetKillXP)\nEnd\n",
+   "label": "jip11.killxp.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.GetRadiationLevelAlt)\nEnd\n",
+   "label": "jip11.rads.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetRadiationLevelAlt)\nEnd\n",
+   "label": "jip11.rads.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.GetBaseActorValueAlt Strength)\nEnd\n",
+   "label": "jip11.baseav.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0C\"\nSetFunctionValue (GetBaseActorValueAlt Strength rObj)\nEnd\n",
+   "label": "jip11.baseav.docbase",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.GetDetectionValue rP)\nEnd\n",
+   "label": "jip11.detection.doc.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rP.GetDetectionValue rObj)\nEnd\n",
+   "label": "jip11.detection.player.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetFormIDString (rObj.GetCurrentStablePackage))\nEnd\n",
+   "label": "jip11.stable.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetFormIDString (rObj.GetInterruptPackage))\nEnd\n",
+   "label": "jip11.interrupt.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.GetTargetUnreachable)\nEnd\n",
+   "label": "jip11.unreachable.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0C\"\nSetFunctionValue (GetFormIDString (GetActorUnarmedEffect rObj))\nEnd\n",
+   "label": "jip11.unarmed.docbase",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.IsEquippedWeaponScoped)\nEnd\n",
+   "label": "jip11.scoped.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.IsEquippedWeaponSilenced)\nEnd\n",
+   "label": "jip11.silenced.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetActorDiveBreath)\nEnd\n",
+   "label": "jip11.breath.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetFallTimeRemaining)\nEnd\n",
+   "label": "jip11.falltime.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aList := rObj.GetCombatAllies\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip11.allies.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aList := rObj.GetCombatTargets\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip11.targets.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aList := rObj.GetDetectedActors\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip11.detected.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := rP.GetActiveEffects\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip11.effects.player",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := rP.GetActiveEffects 2\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip11.effects.player.actor",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := rP.GetActiveEffects 4\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip11.effects.player.ingestible",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nrP.ForceActorDetectionValue -100\nlet fA := rObj.GetDetectionValue rP\nrP.ForceActorDetectionValue\nSetFunctionValue (sv_Construct \"%g %g\" fA (rObj.GetDetectionValue rP))\nEnd\n",
+   "label": "jip11.force.detection",
+   "field": "value",
+   "text": true
+  }
+ ]
+}

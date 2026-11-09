@@ -16,6 +16,10 @@ use crate::data::CombatForms;
 pub struct Rules {
     // Weapon Damage Formula
     pub damage_weapon_mult: f32,
+    /// The weapon damage penalty below 75 % condition: 0.67, or JIP's
+    /// SetConditionDamagePenalty (`fnv_game::Game::condition_damage_penalty`)
+    /// [documented: GECK wiki SetConditionDamagePenalty].
+    pub condition_damage_penalty: f32,
     pub damage_skill_base: f32,
     pub damage_skill_mult: f32,
     pub melee_damage_strength_mult: f32,
@@ -277,6 +281,7 @@ impl Rules {
                 spread_mult: n(),
                 concentrated_fire_bonus: n(),
             },
+            condition_damage_penalty: crate::damage::CONDITION_DAMAGE_PENALTY,
             defaulted,
         }
     }

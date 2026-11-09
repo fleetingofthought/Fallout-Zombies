@@ -79,6 +79,11 @@ impl MorphMeshes {
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
+
+    /// The registered meshes (nvforever's profile aid, `profile change sources:`).
+    pub fn ids(&self) -> impl Iterator<Item = AssetId<Mesh>> + '_ {
+        self.entries.iter().map(|(id, ..)| *id)
+    }
 }
 
 /// Rewrite every registered mesh whose weights changed since its last write.

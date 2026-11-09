@@ -53,6 +53,7 @@ pub mod frame;
 pub mod hotkey_panel;
 pub mod items;
 pub mod item_mod;
+pub mod labels;
 pub mod repair;
 pub mod sounds;
 pub mod stats;
@@ -150,21 +151,43 @@ pub enum Page {
 impl Page {
     pub const ALL: [Page; 3] = [Page::Stats, Page::Items, Page::Data];
 
-    /// The page's title at the screen's top left [observed: the owner's screenshots].
+    /// The page's title at the screen's top left [observed: the owner's screenshots]: its
+    /// setting's text when the load order defines it (`labels`, #1443).
     pub fn title(self) -> &'static str {
+        use labels::label;
         match self {
-            Page::Stats => "STATS",
-            Page::Items => "ITEMS",
-            Page::Data => "DATA",
+            Page::Stats => label("sStats", "STATS"),
+            Page::Items => label("sInventoryItems", "ITEMS"),
+            Page::Data => label("sData", "DATA"),
         }
     }
 
-    /// The page's tabs, left to right [observed: the owner's screenshots].
+    /// The page's tabs, left to right [observed: the owner's screenshots]: each one's
+    /// setting's text when the load order defines it (`labels`, #1443).
     pub fn tabs(self) -> [&'static str; 5] {
+        use labels::label;
         match self {
-            Page::Stats => ["Status", "S.P.E.C.I.A.L.", "Skills", "Perks", "General"],
-            Page::Items => ["Weapons", "Apparel", "Aid", "Misc", "Ammo"],
-            Page::Data => ["Local Map", "World Map", "Quests", "Misc", "Radio"],
+            Page::Stats => [
+                label("sStatsStatus", "Status"),
+                label("sStatsSpecial", "S.P.E.C.I.A.L."),
+                label("sStatsSkills", "Skills"),
+                label("sStatsPerks", "Perks"),
+                label("sStatsGeneral", "General"),
+            ],
+            Page::Items => [
+                label("sInventoryWeapons", "Weapons"),
+                label("sInventoryApparel", "Apparel"),
+                label("sInventoryAid", "Aid"),
+                label("sInventoryMisc", "Misc"),
+                label("sInventoryAmmo", "Ammo"),
+            ],
+            Page::Data => [
+                label("sLocalMapTabText", "Local Map"),
+                label("sWorldMapTabText", "World Map"),
+                label("sQuestsTabText", "Quests"),
+                label("sMiscTabText", "Misc"),
+                label("sCommsTabText", "Radio"),
+            ],
         }
     }
 

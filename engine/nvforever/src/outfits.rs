@@ -958,7 +958,7 @@ pub(crate) mod tests {
             health: None, owner: None, lock: None, teleport: None, enable_parent: None, linked: None,
             patrol_idle: None, patrol_topic: None, merchant_container: None, marker_reputation: None,
             open_by_default: false, primitive: None, activate_parents: Vec::new(), parent_activate_only: false,
-            prompt: None, radiation: None, radius: None, encounter_zone: None, level_modifier: None,
+            prompt: None, radiation: None, radius: None, encounter_zone: None, level_modifier: None, map_marker: None, radio: None,
         }
     }
 

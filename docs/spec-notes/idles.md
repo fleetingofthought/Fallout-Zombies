@@ -209,6 +209,18 @@ below 30).
   A collection idle ends when its actor walks off or is drawn into a conversation (the
   conversation's gestures, §12, take its place; before #1745 Chet's marker sweep played on
   and held him from turning to the player).
+- **Seated by a Find or Use Item At package** (2026-11-08) [documented: Category:Packages,
+  "Find: Idles play when 'activating' the target of the find", Use Item At "at its
+  location", actor-behaviour.md §1.5]: an actor seated on furniture (fully on it) whose
+  package is Find or Use Item At plays that package's collection there, laid over the
+  sitting clip by track priority as a seated speaker's gestures are (§7), instead of the
+  tree's furniture fidgets; it ends when the actor starts getting off. Fallout 3's
+  G.O.A.T. (CG03, Tale of Two Wastelands) seats its students by Find packages listing
+  `LooseSitTakingTestA`, `LooseSitTakingTestB` and `LooseSitCheatingOnTest` (FalloutNV.esm
+  leftovers, Special Idle, loop 20 / 20, `SitTakingTest*.kf`) [observed: `fnvtool ai show`,
+  `esm decode`]; before, they leaned back and fidgeted in their chairs (owner report: "none
+  of the NPCs look to be sitting at the school desks"). Other package types keep the rule
+  above [hypothesis: Eat and Sleep are documented too, not built here].
 - **A package's idles end with the package** [design]: an idle that loops for ever and
   was asked for by a package or marker leaves its loop (plays out to the end of its clip)
   when that is no longer the actor's package or marker. A one-shot idle plays to its end

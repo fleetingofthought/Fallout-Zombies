@@ -474,8 +474,9 @@ impl Game<'_> {
     /// Effect List") [hypothesis: the group, data.rs `template_spells`].
     pub fn unarmed_effect(&self, r: FormId) -> Option<(FormId, Option<&str>)> {
         let base = base_of(self, r)?;
-        let (_, d) = self.template_source(base, r, |d| d.template_spells)?;
-        Some((d.unarmed_effect?, d.unarmed_anim.as_deref()))
+        let (src, d) = self.template_source(base, r, |d| d.template_spells)?;
+        // SetActorUnarmedEffect's first (`crate::nvse_jip11`).
+        Some((self.unarmed_override(src).or(d.unarmed_effect)?, d.unarmed_anim.as_deref()))
     }
 
     /// Whether a kill by `killer` earns the player experience: the player's, and a hired
@@ -533,7 +534,8 @@ impl Game<'_> {
         let player = r == FormId::PLAYER_REF;
         // Only actors whose record gives a Health have one to run out of.
         let has_health = self.stats_def(r).is_some_and(|d| d.base_health != 0 || d.zero_health);
-        if (player && self.toggles.god_mode) || (!player && !has_health) {
+        // ToggleImmortalMode 1 and 2 keep the player alive too (`crate::nvse_jip9`).
+        if (player && (self.toggles.god_mode || self.immortal_mode() > 0)) || (!player && !has_health) {
             return;
         }
         if !actor::actor_value(self, r, HEALTH).is_ok_and(|v| v <= 0.0) {
@@ -563,7 +565,16 @@ impl Game<'_> {
         }
         let before = actor::actor_value(self, target, HEALTH).unwrap_or(max_health);
         let essential = self.is_essential(target);
-        let floor = if essential { 1.0 } else { 0.0 };
+        // ToggleImmortalMode [documented]: 1 keeps the player's Health at 1 or more, as an
+        // essential actor's; 2 takes no Health or limb damage at all (`crate::nvse_jip9`).
+        let immortal = if target == FormId::PLAYER_REF { self.immortal_mode() } else { 0 };
+        if immortal == 2 {
+            if let Some(l) = info.limb.as_mut() {
+                l.damage = 0.0;
+            }
+        }
+        let damage = if immortal == 2 { 0.0 } else { damage };
+        let floor = if essential || immortal == 1 { 1.0 } else { 0.0 };
         let dealt = damage.max(0.0).min((before - floor).max(0.0));
         // JIP's hit record, then its hit handlers, before the damage [documented:
         // SetOnHitEventHandler; observed: jip-hits, Health in the handler is the value
@@ -616,7 +627,8 @@ impl Game<'_> {
             let part = crate::challenges::body_part(info.limb.map(|l| l.condition), info.location);
             self.challenge_hit(target, info.weapon, part, dealt, info.critical, out.crippled);
         }
-        if health <= floor && !self.is_dead(target) {
+        // Immortal mode 1 holds the player at 1 HP: no death, no knockout.
+        if health <= floor && !self.is_dead(target) && immortal == 0 {
             if essential {
                 // Said its KOed line when knocked out now (`Game::knock_out`).
                 out.knocked_out = self.knock_out(target, crate::unconscious::Cause::Essential, info.attacker);
@@ -854,6 +866,11 @@ impl Game<'_> {
         }
         if by == Some(FormId::PLAYER_REF) && !new.is_empty() {
             self.count_stat(crate::misc_stats::DISMEMBERED_LIMBS, new.len() as f64);
+        }
+        // JohnnyGuitar's limb handlers: (actor, limb) (`crate::nvse_jg8`).
+        for &(l, _) in &new {
+            let (a, limb) = (fnv_script::vm::XVal::Ref(r.0), fnv_script::vm::XVal::Num(f64::from(l)));
+            self.jg8_fire(crate::nvse_jg8::Ev::LimbGone, &[a.clone(), limb.clone()], vec![a, limb]);
         }
         new
     }

@@ -351,7 +351,133 @@ pub struct WorldSounds {
     /// Placed objects with a sound of their own, by the space they are in: (reference,
     /// sound, kind, the place of one that never moves); found the first frame.
     sources: Option<HashMap<crate::music::Space, Vec<ObjectSource>>>,
+    /// The index over each space's `sources`, made the first frame the space is played
+    /// ([`SourceIndex`]).
+    index: HashMap<crate::music::Space, SourceIndex>,
+    /// This frame's candidates and the sources in reach (reused).
+    near: Vec<u32>,
+    heard: Vec<(u32, [f32; 3])>,
     pub stats: WorldSoundStats,
+}
+
+/// The objects' own sounds of one space, indexed so that a frame visits only those that
+/// can be in reach (`crate::sound_grid`) [design]. The answer is the walk over the whole
+/// list's ([`scan_all`]): each candidate gets the same test ([`source_heard`]).
+///
+/// - A static's place is its placement and never changes (the list says so), and a
+///   source of another kind is where its run-time state puts it, or at its placement
+///   while it has none ([`ref_pos`]). So the grid holds every source at its placement,
+///   and the sources other than statics that have a run-time state (`live`) are tested
+///   every frame wherever they are, the grid's copy of them left out.
+/// - Which of them have a state changes only when a state is made or dropped. A state
+///   made adds to the world's count of states; one dropped (a cell reset) or made
+///   with other flags moves [`fnv_sim::world::World::presence_serial`]; a world
+///   restored starts from a serial no other world used. So `live` is made again when
+///   that pair is not the one it was made at.
+/// - The reaches are read from the sound forms once ([`Sfx`] gets its forms when it is
+///   made; only tests add to them later, so a change in their number makes the index
+///   again).
+struct SourceIndex {
+    /// Each entry's reach (`None`: its sound is not in the load order; never sent).
+    reach: Vec<Option<f32>>,
+    grid: crate::sound_grid::FixedGrid,
+    /// The entries that are not statics, (reference, entry) in FormID order; those of
+    /// them with a run-time state now (and the flag by entry), and the world's (presence
+    /// serial, number of states) then.
+    movable: Vec<(u32, u32)>,
+    live: Vec<u32>,
+    is_live: Vec<bool>,
+    live_key: Option<(u64, usize)>,
+    /// The number of sound forms the reaches were read from.
+    sounds: usize,
+}
+
+/// The squared distance between two places, as the reach test measures it.
+fn dist2(a: [f32; 3], b: [f32; 3]) -> f32 {
+    (a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)
+}
+
+/// Where a placed object's own sound is heard from when the listener at `eye` is within
+/// its `reach` and the object is enabled.
+fn source_heard(sim: &SimState, eye: [f32; 3], &(id, _, _, fixed): &ObjectSource, reach: f32) -> Option<[f32; 3]> {
+    let at = fixed.or_else(|| ref_pos(sim, id))?;
+    if dist2(at, eye) > reach * reach || !sim.world.is_enabled(FormId(id)).unwrap_or(false) {
+        return None;
+    }
+    Some(at)
+}
+
+/// The reach of a sound: its maximum distance and a tenth more.
+fn reach_of(sfx: &Sfx, sound: FormId) -> Option<f32> {
+    sfx.forms.sounds.get(&sound).map(|s| s.max_distance * 1.1)
+}
+
+/// The world's number of reference states, when its iterator says it exactly (a
+/// `BTreeMap`'s does); `None` otherwise, and the caller takes every frame as a change.
+fn state_count(sim: &SimState) -> Option<usize> {
+    let (lo, hi) = sim.world.changed().size_hint();
+    (hi == Some(lo)).then_some(lo)
+}
+
+impl SourceIndex {
+    fn build(list: &[ObjectSource], sim: &SimState, reach: impl Fn(FormId) -> Option<f32>, sounds: usize) -> SourceIndex {
+        let reach: Vec<Option<f32>> = list.iter().map(|e| reach(e.1)).collect();
+        let place = |&(id, _, _, fixed): &ObjectSource| fixed.or_else(|| sim.refs.get(FormId(id)).map(|p| p.pos));
+        // The grid's reach is the one the squared test reads: a negative reach squares as
+        // its size does.
+        let grid = crate::sound_grid::FixedGrid::build(list.iter().zip(&reach).enumerate().filter_map(|(i, (e, r))| Some((i as u32, place(e)?, r.as_ref()?.abs()))));
+        let mut movable: Vec<(u32, u32)> = list.iter().zip(&reach).enumerate().filter(|(_, (e, r))| e.3.is_none() && r.is_some()).map(|(i, (e, _))| (e.0, i as u32)).collect();
+        movable.sort_unstable();
+        SourceIndex { reach, grid, movable, live: Vec::new(), is_live: vec![false; list.len()], live_key: None, sounds }
+    }
+
+    /// The entries of `list` (the one the index was made over) heard at `eye`, and where
+    /// from, in list order, into `out`; `near` is scratch.
+    fn heard(&mut self, list: &[ObjectSource], sim: &SimState, eye: [f32; 3], near: &mut Vec<u32>, out: &mut Vec<(u32, [f32; 3])>) {
+        let key = state_count(sim).map(|n| (sim.world.presence_serial(), n));
+        if key.is_none() || key != self.live_key {
+            // Both in FormID order (`World::changed` gives the states so): one walk down
+            // the two lists.
+            self.live.clear();
+            let mut states = sim.world.changed().map(|(id, _)| id.0).peekable();
+            for &(id, i) in &self.movable {
+                while states.next_if(|&s| s < id).is_some() {}
+                let live = states.peek() == Some(&id);
+                self.is_live[i as usize] = live;
+                if live {
+                    self.live.push(i);
+                }
+            }
+            self.live.sort_unstable();
+            self.live_key = key;
+        }
+        self.grid.near(eye, |c, r| dist2(c, eye) > r * r, near);
+        near.retain(|&i| !self.is_live[i as usize]);
+        near.extend_from_slice(&self.live);
+        near.sort_unstable();
+        out.clear();
+        for &i in near.iter() {
+            let Some(reach) = self.reach[i as usize] else { continue };
+            if let Some(at) = source_heard(sim, eye, &list[i as usize], reach) {
+                out.push((i, at));
+            }
+        }
+    }
+}
+
+/// The entries of `list` heard at `eye`, and where from, in list order, by testing every
+/// one: what [`SourceIndex::heard`] must answer (the tests', and in debug builds a check
+/// now and then).
+#[cfg(any(test, debug_assertions))]
+fn scan_all(list: &[ObjectSource], sim: &SimState, eye: [f32; 3], reach: impl Fn(FormId) -> Option<f32>) -> Vec<(u32, [f32; 3])> {
+    let mut out = Vec::new();
+    for (i, e) in list.iter().enumerate() {
+        let Some(r) = reach(e.1) else { continue };
+        if let Some(at) = source_heard(sim, eye, e, r) {
+            out.push((i as u32, at));
+        }
+    }
+    out
 }
 
 /// Log what a shot's impact picked (`crate::combat`), for the summary's count.
@@ -724,7 +850,15 @@ fn objects(
 
 /// Placed objects' own sounds near the listener, sent to the ambient every frame (see
 /// the module notes).
-fn object_sources(mut ws: ResMut<WorldSounds>, sim: Res<SimState>, loc: Res<crate::Location>, player: Option<Res<Player>>, sfx: Option<Res<Sfx>>, mut out: MessageWriter<SoundSource>) {
+fn object_sources(
+    mut ws: ResMut<WorldSounds>,
+    sim: Res<SimState>,
+    loc: Res<crate::Location>,
+    player: Option<Res<Player>>,
+    sfx: Option<Res<Sfx>>,
+    #[cfg(debug_assertions)] mut frames: Local<u32>,
+    mut out: MessageWriter<SoundSource>,
+) {
     let (Some(player), Some(sfx)) = (player, sfx) else { return };
     let ws = &mut *ws;
     if ws.sources.is_none() {
@@ -741,13 +875,25 @@ fn object_sources(mut ws: ResMut<WorldSounds>, sim: Res<SimState>, loc: Res<crat
     let eye = player.eye();
     let space = crate::music::Space::of(&loc);
     let Some(list) = ws.sources.as_ref().and_then(|s| s.get(&space)) else { return };
-    for &(id, sound, kind, fixed) in list {
-        let Some(reach) = sfx.forms.sounds.get(&sound).map(|s| s.max_distance * 1.1) else { continue };
-        let Some(at) = fixed.or_else(|| ref_pos(&sim, id)) else { continue };
-        let d2 = (at[0] - eye[0]).powi(2) + (at[1] - eye[1]).powi(2) + (at[2] - eye[2]).powi(2);
-        if d2 > reach * reach || !sim.world.is_enabled(FormId(id)).unwrap_or(false) {
-            continue;
+    let sounds = sfx.forms.sounds.len();
+    if ws.index.get(&space).is_none_or(|x| x.sounds != sounds) {
+        let built = SourceIndex::build(list, &sim, |s| reach_of(&sfx, s), sounds);
+        debug!("world sounds: {} objects' own sounds in this space, {} indexed", list.len(), built.grid.len());
+        ws.index.insert(space, built);
+    }
+    let index = ws.index.get_mut(&space).expect("made above");
+    index.heard(list, &sim, eye, &mut ws.near, &mut ws.heard);
+    #[cfg(debug_assertions)]
+    {
+        // The walk over the whole list, now and then, as the reference.
+        *frames = frames.wrapping_add(1);
+        if *frames % 64 == 1 {
+            let bits = |v: &[(u32, [f32; 3])]| v.iter().map(|&(i, at)| (i, at.map(f32::to_bits))).collect::<Vec<_>>();
+            debug_assert_eq!(bits(&ws.heard), bits(&scan_all(list, &sim, eye, |s| reach_of(&sfx, s))), "world sounds: the index lost or added a source");
         }
+    }
+    for &(i, at) in &ws.heard {
+        let (id, sound, kind, _) = list[i as usize];
         if ws.stats.object_sources_sent.insert(id) {
             ws.stats.object_sources_by_kind[kind] += 1;
         }
@@ -953,5 +1099,162 @@ mod tests {
         assert_eq!((stats.pickups, stats.drops), (1, 1));
         // Both count as heard: a later notice of them makes no sound.
         assert!(hear(&mut app, &[RefChanged::new(0x301), RefChanged::new(dropped_before)]).is_empty());
+    }
+
+    /// The index's answer is the walk over the whole list's ([`scan_all`]): sources across
+    /// cell borders, a reach that ends on a cell border, a negative reach, a sound not in
+    /// the load order, initially disabled and disabled references, statics whose state
+    /// moves (they stay at their placement), others moved by their state into reach,
+    /// moved again with nothing else changing, one state dropped (a cell reset) and
+    /// another made in the same frame (the number of states unchanged), a restored world
+    /// with as many states as the last, and their states gone with a new world.
+    #[test]
+    fn indexed_object_sources_are_the_whole_lists() {
+        use crate::sim::test_world::{item_base, placed, sim};
+        use crate::sound_grid::tests::Lcg;
+        use fnv_sim::forms::{BaseData, BaseForm, Container};
+        use fnv_sim::refs::FLAG_INITIALLY_DISABLED;
+        fn reach(s: FormId) -> Option<f32> {
+            match s.0 - 0x900 {
+                0 => Some(4096.0),
+                1 => Some(300.0),
+                2 => Some(2200.0),
+                3 => Some(6000.0),
+                4 => Some(-500.0),
+                _ => None,
+            }
+        }
+        fn bits(v: &[(u32, [f32; 3])]) -> Vec<(u32, [u32; 3])> {
+            v.iter().map(|&(i, at)| (i, at.map(f32::to_bits))).collect()
+        }
+        /// Every listener: the index's answer and the whole list's; how many heard.
+        fn check(index: &mut SourceIndex, list: &[ObjectSource], sim: &SimState, eyes: &[[f32; 3]]) -> usize {
+            let (mut near, mut out) = (Vec::new(), Vec::new());
+            let mut heard = 0;
+            for &eye in eyes {
+                index.heard(list, sim, eye, &mut near, &mut out);
+                assert_eq!(bits(&out), bits(&scan_all(list, sim, eye, reach)), "listener at {eye:?}");
+                if eye[0].is_finite() {
+                    assert!(near.len() < list.len() / 4, "the index narrows the candidates at {eye:?}");
+                }
+                heard += out.len();
+            }
+            heard
+        }
+        const BASE: u32 = 0x100;
+        const FIRST: u32 = 0x1000;
+        let mut rng = Lcg(11);
+        let mut refs = Vec::new();
+        let mut list: Vec<ObjectSource> = Vec::new();
+        for i in 0..900u32 {
+            let mut pos = [rng.range(-30000.0, 30000.0), rng.range(-30000.0, 30000.0), rng.range(-500.0, 2500.0)];
+            if i % 5 == 0 {
+                pos[0] = 4096.0 * (rng.next_u32() % 13) as f32 - 24576.0;
+            }
+            if i % 7 == 0 {
+                pos[1] = -4096.0 * (rng.next_u32() % 6) as f32;
+            }
+            let mut p = placed(FIRST + i, BASE);
+            p.pos = pos;
+            if i % 13 == 0 {
+                p.flags |= FLAG_INITIALLY_DISABLED;
+            }
+            refs.push(p);
+            let kind = if i % 3 == 0 { STATIC_KIND } else { 0 };
+            list.push((FIRST + i, FormId(0x900 + i % 6), kind, (kind == STATIC_KIND).then_some(pos)));
+        }
+        // A respawning container in a cell, beside the listener at the origin.
+        const CRATE_BASE: u32 = 0x101;
+        const CELL: FormId = FormId(0x200);
+        let crate_ref = FormId(FIRST + 900);
+        let crate_base = BaseForm {
+            id: FormId(CRATE_BASE),
+            sig: *b"CONT",
+            edid: None,
+            name: None,
+            script: None,
+            prompt: None,
+            voice_filter: false,
+            data: BaseData::Container(Container { respawns: true, entries: vec![] }),
+        };
+        let mut p = placed(crate_ref.0, CRATE_BASE);
+        (p.cell, p.pos) = (Some(CELL), [100.0, 0.0, 0.0]);
+        refs.push(p);
+        list.push((crate_ref.0, FormId(0x900), 0, None));
+        let mut sim = sim(vec![item_base(BASE), crate_base], refs);
+        let mut index = SourceIndex::build(&list, &sim, reach, 6);
+        let mut eyes: Vec<[f32; 3]> = (0..120).map(|_| [rng.range(-32000.0, 32000.0), rng.range(-32000.0, 32000.0), rng.range(0.0, 2000.0)]).collect();
+        eyes.extend([[0.0; 3], [4096.0, -4096.0, 0.0], [f32::NAN, 0.0, 0.0]]);
+        // On the edge of a source's reach.
+        for &(_, sound, _, fixed) in list.iter().filter(|e| e.3.is_some()).take(30) {
+            let (at, r) = (fixed.unwrap(), reach(sound).unwrap_or(0.0).abs());
+            eyes.push([at[0] + r, at[1], at[2]]);
+        }
+        assert!(check(&mut index, &list, &sim, &eyes) > 0, "some sources are heard");
+
+        // Disabled now, enabled now; a static's state moved (it stays at its placement);
+        // others moved by their state, one beside a listener.
+        let at = |i: u32| FormId(FIRST + i);
+        let eye = eyes[0];
+        sim.world.set_enabled(at(1), false).unwrap();
+        sim.world.set_enabled(at(13), true).unwrap();
+        sim.world.get(at(3)).unwrap().pos = eye;
+        sim.world.get(at(4)).unwrap().pos = [eye[0] + 100.0, eye[1], eye[2]];
+        sim.world.get(at(8)).unwrap().pos = [1e7, 1e7, 0.0];
+        let (mut near, mut out) = (Vec::new(), Vec::new());
+        let mine = |out: &[(u32, [f32; 3])]| out.iter().any(|&(i, _)| i == 4);
+        assert!(check(&mut index, &list, &sim, &eyes) > 0);
+        index.heard(&list, &sim, eye, &mut near, &mut out);
+        assert!(mine(&out), "a source moved beside the listener is heard there");
+        // Moved again, nothing else changing (no new state, no serial).
+        sim.world.get(at(4)).unwrap().pos = [eye[0] + 1e6, eye[1], eye[2]];
+        check(&mut index, &list, &sim, &eyes);
+        index.heard(&list, &sim, eye, &mut near, &mut out);
+        assert!(!mine(&out), "a source moved away is no longer heard");
+        sim.world.get(at(4)).unwrap().pos = [eye[0], eye[1] + 50.0, eye[2]];
+        check(&mut index, &list, &sim, &eyes);
+        let heard = |out: &[(u32, [f32; 3])], id: FormId| out.iter().any(|&(i, _)| list[i as usize].0 == id.0);
+        // The container gets a state where it stands, and the index sees it.
+        sim.world.get(crate_ref).unwrap();
+        check(&mut index, &list, &sim, &eyes);
+        index.heard(&list, &sim, [0.0; 3], &mut near, &mut out);
+        assert!(heard(&out, crate_ref), "the container is heard beside its listener");
+        // Between two frames, one state dropped and another made, the number of states the
+        // same: the container's state goes with its cell's reset, and a source with no
+        // state so far gets one and is moved beside a listener. A state made as placed
+        // leaves the presence serial, so only the reset's drop tells the index that the
+        // states changed.
+        let fresh = at(2);
+        assert!(sim.world.changed().all(|(id, _)| id != fresh), "a source with no state so far");
+        let states = sim.world.changed().count();
+        assert_eq!(sim.world.reset_containers(CELL), vec![crate_ref]);
+        sim.world.get(fresh).unwrap().pos = [eye[0], eye[1] + 100.0, eye[2]];
+        assert_eq!(sim.world.changed().count(), states, "as many states as before");
+        check(&mut index, &list, &sim, &eyes);
+        index.heard(&list, &sim, eye, &mut near, &mut out);
+        assert!(heard(&out, fresh), "the source with a new state is heard beside the listener");
+        // A restored world with as many states as the last (it starts from a serial no
+        // other world used): other sources have them, one beside the listener.
+        let before: Vec<FormId> = sim.world.changed().map(|(id, _)| id).collect();
+        sim.world = fnv_sim::World::new(sim.forms, sim.refs, fnv_sim::SimConfig::default());
+        let fresh: Vec<FormId> = list
+            .iter()
+            .filter(|e| e.3.is_none() && reach(e.1).is_some_and(|r| r > 0.0) && !before.contains(&FormId(e.0)) && sim.world.is_enabled(FormId(e.0)).unwrap_or(false))
+            .map(|e| FormId(e.0))
+            .collect();
+        sim.world.get(fresh[0]).unwrap().pos = [eye[0] - 100.0, eye[1], eye[2]];
+        for &id in &fresh[1..] {
+            if sim.world.changed().count() >= before.len() {
+                break;
+            }
+            sim.world.get(id).unwrap();
+        }
+        assert_eq!(sim.world.changed().count(), before.len(), "as many states as the last world");
+        check(&mut index, &list, &sim, &eyes);
+        index.heard(&list, &sim, eye, &mut near, &mut out);
+        assert!(heard(&out, fresh[0]), "a source the restored world moved is heard beside the listener");
+        // A new world: every state gone, every source at its placement again.
+        sim.world = fnv_sim::World::new(sim.forms, sim.refs, fnv_sim::SimConfig::default());
+        check(&mut index, &list, &sim, &eyes);
     }
 }

@@ -504,6 +504,8 @@ fn sim_with_placed(id: u32, pos: [f32; 3], rot: [f32; 3]) -> SimState {
             radius: None,
             encounter_zone: None,
             level_modifier: None,
+            map_marker: None,
+            radio: None,
         },
     );
     let forms: &'static FormStore = Box::leak(Box::default());

@@ -244,15 +244,19 @@ impl Game<'_> {
                 continue;
             }
             if let Some(old) = held.and_then(|h| stages.iter().find(|s| s.stage == h)) {
+                // The record's effect and SetHardcoreStageEffect's (`crate::nvse_jip11`).
+                let gone: Vec<FormId> = [Some(old.spell), self.stage_spell(old.stage, old.spell)].into_iter().flatten().collect();
                 if let Some(x) = self.extra.get_mut(&p) {
-                    x.spells.retain(|&s| s != old.spell);
+                    x.spells.retain(|s| !gone.contains(s));
                 }
-                self.dispel(p, None, |e| e.source == old.spell);
+                self.dispel(p, None, |e| gone.contains(&e.source));
             }
             match want {
                 Some(s) => {
                     self.player.need_stages.insert(code, s.stage);
-                    self.add_spell(p, s.spell);
+                    if let Some(spell) = self.stage_spell(s.stage, s.spell) {
+                        self.add_spell(p, spell);
+                    }
                 }
                 None => {
                     self.player.need_stages.remove(&code);

@@ -214,12 +214,14 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             XVal::Num(crate::functions::actor::actor_value_capped(g, a, code))
         }
         "getquestfailed" => yes(form(args, 0).is_some_and(|q| g.quest_state(q).failed)),
-        // RACE DATA flags bit by bit [observed: plugins1, CaucasianOld 0 0 0].
+        // RACE DATA flags bit by bit [observed: plugins1, CaucasianOld 0 0 0]: the bit's
+        // value, not 1 [observed: jg4 race.get.child.2 read 4, race.set.testqa.1.1 2,
+        // race.set.testqa.3.1 8; race.get.caucasian.0 1].
         "getraceflag" => {
             let f = form(args, 0).unwrap_or(FormId(0));
             let flags = crate::nvse::record_value(g, f, "DATA", "flags").and_then(|v| v.num().ok()).unwrap_or(0.0) as u64;
             let k = num(args, 1, -1.0);
-            yes((0.0..32.0).contains(&k) && flags >> (k as u64) & 1 != 0)
+            XVal::Num(if (0.0..32.0).contains(&k) { (flags & 1 << (k as u64)) as f64 } else { 0.0 })
         }
         "isdllloaded" => {
             let n = text(args, 0).to_ascii_lowercase();

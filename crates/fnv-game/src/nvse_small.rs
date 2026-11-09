@@ -537,14 +537,18 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
             let skill = w.and_then(|w| crate::nvse::record_value(g, w, "DNAM", "skill"));
             yes(matches!(skill, Some(XVal::Num(s)) if s == num(args, 0, -1.0)))
         }
-        // Each loaded plugin as [name, version, description] [documented: TTW_GetPlugins;
-        // decision: version 0 and an empty description, NVForever keeps no plugin
-        // header's version or description].
+        // Each loaded plugin as [name, version, description] [documented: TTW_GetPlugins]:
+        // the version is the TES4 HEDR version, as GetPluginHeaderVersion gives it
+        // (`GameData::plugin_versions`); the description is empty [decision: no plugin
+        // header's description is kept]. TTW's start-up check (`TTWGenericHandlerScript`)
+        // calls a plugin below 1.3 an unconverted Fallout 3 mod (Fallout 3's plugins are
+        // 0.94 [observed: Fallout3.esm as TTW converts it is 1.34]); with version 0 it
+        // showed "you have Fallout 3 mods installed" for every load order.
         "ttw_getplugins" => {
-            let names = g.data.load_order.clone();
+            let plugins: Vec<(String, f32)> = g.data.load_order.iter().cloned().zip(g.data.plugin_versions.iter().copied()).collect();
             let mut rows = Vec::new();
-            for n in names {
-                rows.push(list(g, vec![XVal::Str(n), XVal::Num(0.0), XVal::Str(String::new())]));
+            for (n, v) in plugins {
+                rows.push(list(g, vec![XVal::Str(n), XVal::Num(f64::from(v)), XVal::Str(String::new())]));
             }
             list(g, rows)
         }
@@ -556,6 +560,7 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // creator"; before, nothing opened and the birth scene went on without it].
         "ttw_showgeneprojector" => {
             g.race_menu = crate::game::RaceMenu::Creator;
+            g.race_menu_studio = true;
             g.open_menu(crate::game::menus::RACE);
             zero
         }

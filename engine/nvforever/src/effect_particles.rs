@@ -96,6 +96,13 @@ impl Default for EffectParticles {
     }
 }
 
+impl EffectParticles {
+    /// The bursts' meshes (the profile aid's `profile change sources:` line).
+    pub fn mesh_ids(&self) -> impl Iterator<Item = AssetId<Mesh>> + '_ {
+        self.bursts.values().map(|b| b.mesh.id())
+    }
+}
+
 /// A number in −1..1.
 fn spread(rng: &mut SplitMix) -> f32 {
     rng.next_f32() * 2.0 - 1.0

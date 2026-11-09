@@ -1,0 +1,331 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jip9",
+ "title": "jip9, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := ToggleHUDCursor\nlet fRes := ToggleHUDCursor 1\nlet fA := ToggleHUDCursor\nToggleHUDCursor fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (ToggleHUDCursor))\nEnd\n",
+   "label": "jip9.hudcursor",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := ToggleMouseMovement\nlet fRes := ToggleMouseMovement 1\nlet fA := ToggleMouseMovement\nToggleMouseMovement fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (ToggleMouseMovement))\nEnd\n",
+   "label": "jip9.mouse.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := ToggleMouseMovement\nlet fRes := ToggleMouseMovement 9\nlet fA := ToggleMouseMovement\nToggleMouseMovement fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (ToggleMouseMovement))\nEnd\n",
+   "label": "jip9.mouse.9",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := ToggleVanityWheel\nlet fRes := ToggleVanityWheel 0\nlet fA := ToggleVanityWheel\nToggleVanityWheel fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (ToggleVanityWheel))\nEnd\n",
+   "label": "jip9.vanity",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := ToggleCameraCollision\nlet fRes := ToggleCameraCollision 0\nlet fA := ToggleCameraCollision\nToggleCameraCollision fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (ToggleCameraCollision))\nEnd\n",
+   "label": "jip9.camcoll",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := ToggleImmortalMode\nlet fRes := ToggleImmortalMode 1\nlet fA := ToggleImmortalMode\nToggleImmortalMode fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (ToggleImmortalMode))\nEnd\n",
+   "label": "jip9.immortal.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := ToggleImmortalMode\nlet fRes := ToggleImmortalMode 5\nlet fA := ToggleImmortalMode\nToggleImmortalMode fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (ToggleImmortalMode))\nEnd\n",
+   "label": "jip9.immortal.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetCursorPos X 0)\nEnd\n",
+   "label": "jip9.cursor.X0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetCursorPos X 1)\nEnd\n",
+   "label": "jip9.cursor.X1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetCursorPos Y 0)\nEnd\n",
+   "label": "jip9.cursor.Y0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetCursorPos Y 1)\nEnd\n",
+   "label": "jip9.cursor.Y1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetGameVolume 0)\nEnd\n",
+   "label": "jip9.volume.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetGameVolume 1)\nEnd\n",
+   "label": "jip9.volume.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetGameVolume 2)\nEnd\n",
+   "label": "jip9.volume.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetGameVolume 3)\nEnd\n",
+   "label": "jip9.volume.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetGameVolume 4)\nEnd\n",
+   "label": "jip9.volume.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetGameVolume 5)\nEnd\n",
+   "label": "jip9.volume.5",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetGameVolume 6)\nEnd\n",
+   "label": "jip9.volume.6",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := GetGameVolume 4\nSetGameVolume 4 30\nlet fA := GetGameVolume 4\nSetGameVolume 4 150\nlet fB := GetGameVolume 4\nSetGameVolume 4\nlet fRes := GetGameVolume 4\nSetGameVolume 4 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g %g\" fSave fA fB fRes (GetGameVolume 4))\nEnd\n",
+   "label": "jip9.volume.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (SetFontFile 9 \"textures\\fonts\\glow_monofonto_large.fnt\")\nEnd\n",
+   "label": "jip9.font.set.9",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (SetFontFile 2 \"textures\\fonts\\nvf no such font.fnt\")\nEnd\n",
+   "label": "jip9.font.set.missing",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetFontFile 2)\nEnd\n",
+   "label": "jip9.font.get.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := GetInteractionDisabledType 28\nSetInteractionDisabledType 1 28\nlet fA := GetInteractionDisabledType 28\nlet fB := GetInteractionDisabledType 21\nSetInteractionDisabledType fSave 28\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fA fB (GetInteractionDisabledType 28))\nEnd\n",
+   "label": "jip9.interact.type",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rItem := GetHotkeyItemRef 1\nlet rObj := GetHotkeyItem 1\nif rItem\nlet sText := GetFormIDString (rItem.GetBaseObject)\nelse\nlet sText := \"none\"\nendif\nSetFunctionValue (sv_Construct \"%z %z\" sText (GetFormIDString rObj))\nEnd\n",
+   "label": "jip9.hotkey.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rItem := GetHotkeyItemRef 2\nlet rObj := GetHotkeyItem 2\nif rItem\nlet sText := GetFormIDString (rItem.GetBaseObject)\nelse\nlet sText := \"none\"\nendif\nSetFunctionValue (sv_Construct \"%z %z\" sText (GetFormIDString rObj))\nEnd\n",
+   "label": "jip9.hotkey.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rItem := GetHotkeyItemRef 3\nlet rObj := GetHotkeyItem 3\nif rItem\nlet sText := GetFormIDString (rItem.GetBaseObject)\nelse\nlet sText := \"none\"\nendif\nSetFunctionValue (sv_Construct \"%z %z\" sText (GetFormIDString rObj))\nEnd\n",
+   "label": "jip9.hotkey.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rItem := GetHotkeyItemRef 4\nlet rObj := GetHotkeyItem 4\nif rItem\nlet sText := GetFormIDString (rItem.GetBaseObject)\nelse\nlet sText := \"none\"\nendif\nSetFunctionValue (sv_Construct \"%z %z\" sText (GetFormIDString rObj))\nEnd\n",
+   "label": "jip9.hotkey.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rItem := GetHotkeyItemRef 5\nlet rObj := GetHotkeyItem 5\nif rItem\nlet sText := GetFormIDString (rItem.GetBaseObject)\nelse\nlet sText := \"none\"\nendif\nSetFunctionValue (sv_Construct \"%z %z\" sText (GetFormIDString rObj))\nEnd\n",
+   "label": "jip9.hotkey.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rItem := GetHotkeyItemRef 6\nlet rObj := GetHotkeyItem 6\nif rItem\nlet sText := GetFormIDString (rItem.GetBaseObject)\nelse\nlet sText := \"none\"\nendif\nSetFunctionValue (sv_Construct \"%z %z\" sText (GetFormIDString rObj))\nEnd\n",
+   "label": "jip9.hotkey.6",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rItem := GetHotkeyItemRef 7\nlet rObj := GetHotkeyItem 7\nif rItem\nlet sText := GetFormIDString (rItem.GetBaseObject)\nelse\nlet sText := \"none\"\nendif\nSetFunctionValue (sv_Construct \"%z %z\" sText (GetFormIDString rObj))\nEnd\n",
+   "label": "jip9.hotkey.7",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rItem := GetHotkeyItemRef 8\nlet rObj := GetHotkeyItem 8\nif rItem\nlet sText := GetFormIDString (rItem.GetBaseObject)\nelse\nlet sText := \"none\"\nendif\nSetFunctionValue (sv_Construct \"%z %z\" sText (GetFormIDString rObj))\nEnd\n",
+   "label": "jip9.hotkey.8",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fRes := -1\nlet rItem := GetHotkeyItemRef 1\nif rItem\nlet fRes := rItem.SetHotkeyItemRef 1\nendif\nlet fA := -1\nif rItem\nlet fA := rItem.SetHotkeyItemRef 2\nendif\nSetFunctionValue (sv_Construct \"%g %g\" fRes fA)\nEnd\n",
+   "label": "jip9.hotkey.reset",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetPipboyRadio\nSetFunctionValue (GetFormIDString rObj)\nEnd\n",
+   "label": "jip9.radio",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetEnemyHealthTarget\nSetFunctionValue (GetFormIDString rObj)\nEnd\n",
+   "label": "jip9.enemytarget",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := -1\nlet fY := -1\nlet fZ := -1\nlet fRes := 0\nrP.GetPosEx fX fY fZ\nSetFunctionValue (sv_Construct \"%g %.3f %.3f %.3f\" fRes fX fY fZ)\nEnd\n",
+   "label": "jip9.posex",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%.3f %.3f %.3f\" (rP.GetPos X) (rP.GetPos Y) (rP.GetPos Z))\nEnd\n",
+   "label": "jip9.posex.getpos",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := -1\nlet fY := -1\nlet fZ := -1\nlet fRes := rP.GetNifBlockTranslationAlt \"Bip01 Head\" fX fY fZ 0\nSetFunctionValue (sv_Construct \"%g %.3f %.3f %.3f\" fRes fX fY fZ)\nEnd\n",
+   "label": "jip9.niftrans.head.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := -1\nlet fY := -1\nlet fZ := -1\nlet fRes := rP.GetNifBlockTranslationAlt \"Bip01 Head\" fX fY fZ 1\nSetFunctionValue (sv_Construct \"%g %.3f %.3f %.3f\" fRes fX fY fZ)\nEnd\n",
+   "label": "jip9.niftrans.head.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := -1\nlet fY := -1\nlet fZ := -1\nlet fRes := rP.GetNifBlockRotationAlt \"Bip01 Head\" fX fY fZ 0\nSetFunctionValue (sv_Construct \"%g %.3f %.3f %.3f\" fRes fX fY fZ)\nEnd\n",
+   "label": "jip9.nifrot.head.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := -1\nlet fY := -1\nlet fZ := -1\nlet fRes := rP.GetNifBlockRotationAlt \"Bip01 Head\" fX fY fZ 1\nSetFunctionValue (sv_Construct \"%g %.3f %.3f %.3f\" fRes fX fY fZ)\nEnd\n",
+   "label": "jip9.nifrot.head.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := -1\nlet fY := -1\nlet fZ := -1\nlet fRes := rP.GetNifBlockRotationAlt \"Bip01 Head\" fX fY fZ 2\nSetFunctionValue (sv_Construct \"%g %.3f %.3f %.3f\" fRes fX fY fZ)\nEnd\n",
+   "label": "jip9.nifrot.head.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := -1\nlet fY := -1\nlet fZ := -1\nlet fRes := rP.GetNifBlockRotationAlt \"Bip01 Head\" fX fY fZ 3\nSetFunctionValue (sv_Construct \"%g %.3f %.3f %.3f\" fRes fX fY fZ)\nEnd\n",
+   "label": "jip9.nifrot.head.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fX := -1\nlet fY := -1\nlet fZ := -1\nlet fRes := rP.GetNifBlockTranslationAlt \"NvfNoSuchBlock\" fX fY fZ 1\nSetFunctionValue (sv_Construct \"%g %.3f %.3f %.3f\" fRes fX fY fZ)\nEnd\n",
+   "label": "jip9.niftrans.missing",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nrP.GetPosEx (float fP) (float fQ) (float fW)\nSetFunctionValue (sv_Construct \"%.3f %.3f %.3f\" fP fQ fW)\nEnd\n",
+   "label": "jip9.posex.inline",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fRes := rP.GetNifBlockRotationAlt \"Bip01 Head\" (float fP) (float fQ) (float fW) 0\nSetFunctionValue (sv_Construct \"%g\" fRes)\nEnd\n",
+   "label": "jip9.nifrot.head.inline",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (ar_Size (rP.GetNifBlockTranslation \"Bip01 Head\" 1))\nEnd\n",
+   "label": "jip9.niftrans.head.array",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 0)\nEnd\n",
+   "label": "jip9.material.upperbody.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 1)\nEnd\n",
+   "label": "jip9.material.upperbody.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 2)\nEnd\n",
+   "label": "jip9.material.upperbody.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 3)\nEnd\n",
+   "label": "jip9.material.upperbody.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 4)\nEnd\n",
+   "label": "jip9.material.upperbody.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 5)\nEnd\n",
+   "label": "jip9.material.upperbody.5",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 6)\nEnd\n",
+   "label": "jip9.material.upperbody.6",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 7)\nEnd\n",
+   "label": "jip9.material.upperbody.7",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 8)\nEnd\n",
+   "label": "jip9.material.upperbody.8",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"UpperBody\" 9)\nEnd\n",
+   "label": "jip9.material.upperbody.9",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := rP.GetMaterialPropertyValue \"UpperBody\" 7\nlet fRes := rP.SetMaterialPropertyValue \"UpperBody\" 7 0.5\nlet fA := rP.GetMaterialPropertyValue \"UpperBody\" 7\nrP.SetMaterialPropertyValue \"UpperBody\" 7 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (rP.GetMaterialPropertyValue \"UpperBody\" 7))\nEnd\n",
+   "label": "jip9.material.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fX\nfloat fY\nfloat fZ\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.GetMaterialPropertyValue \"NvfNoSuchBlock\" 7)\nEnd\n",
+   "label": "jip9.material.missing",
+   "field": "value"
+  }
+ ]
+}

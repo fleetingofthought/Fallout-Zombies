@@ -475,7 +475,7 @@ fn window(look: &RepairLook, v: &View) -> std::ops::Range<usize> {
     }
 }
 
-fn spawn(commands: &mut Commands, look: &mut RepairLook, v: &View, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool) {
+fn spawn(commands: &mut Commands, look: &mut RepairLook, v: &View, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool, glyphs: &crate::pad::PadGlyphs) {
     let node = Node { position_type: PositionType::Absolute, left: Val::Percent(50.0), margin: UiRect::left(u(-MAIN.x / 2.0)), top: crate::interface::from_top((960.0 - MAIN.y) / 2.0, 0.5), width: u(MAIN.x), height: u(MAIN.y), ..default() };
     let bright = color(Shade::Bright);
     let dim = amber(DIM);
@@ -576,9 +576,9 @@ fn spawn(commands: &mut Commands, look: &mut RepairLook, v: &View, data: Option<
             let all = format!("Repair All ({})  {}", v.total, crate::pad::hint_as(&[KeyCode::KeyA], hint_at, v.labels));
             let done = format!("Done  {}", crate::pad::hint_as(&[KeyCode::KeyE, KeyCode::Escape], hint_at, v.labels));
             for (k, (label, b, on)) in [(all.as_str(), RepairButton::All, v.all_ready), (done.as_str(), RepairButton::Done, true)].into_iter().enumerate() {
-                let w = look.row.font.width(label);
+                let w = crate::pad::hint_width(&look.row, label, glyphs);
                 m.spawn((Button, b, at(BUTTONS.x - w - 10.0, BUTTONS.y + k as f32 * BUTTON_STEP, w + 10.0, 44.0))).with_children(|t| {
-                    text(t, &look.row, label, 0.0, 0.0, if on { bright } else { dim });
+                    crate::pad::set_hint(t, &look.row, label, 0.0, crate::pipboy::frame::base(&look.row.font), if on { bright } else { dim }, glyphs);
                 });
             }
             // The bottom bracket: a line along 680 with short sides fading up.
@@ -602,6 +602,7 @@ fn draw(
     data: Option<Res<GameData>>,
     mut images: ResMut<Assets<Image>>,
     formats: Option<Res<CompressedImageFormatSupport>>,
+    glyphs: Res<crate::pad::PadGlyphs>,
 ) {
     let Some(open) = menu.0.as_mut() else { return };
     let bc = bc_supported(formats.as_deref());
@@ -620,7 +621,7 @@ fn draw(
     for e in &roots {
         commands.entity(e).despawn();
     }
-    spawn(&mut commands, &mut look, &v, data.as_deref(), &mut images, bc);
+    spawn(&mut commands, &mut look, &v, data.as_deref(), &mut images, bc, &glyphs);
     open.selected = v.selected;
     open.drawn = Some(v);
 }

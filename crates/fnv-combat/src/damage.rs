@@ -342,7 +342,7 @@ pub fn hit(
     let kind = AttackKind::of(w);
     let n = h.projectiles.max(1) as f32;
     let weapon_base = w.base_damage as f32 * r.damage_weapon_mult;
-    let cond = condition_mult(h.condition);
+    let cond = 1.0 - (CONDITION_DAMAGE_THRESHOLD - h.condition.clamp(0.0, 1.0)).max(0.0) * r.condition_damage_penalty;
     // Crippled-arm penalty for melee and unarmed [documented].
     let arm = weapon_base * (r.damage_arm_condition_base - 1.0 + r.damage_arm_condition_mult * a.arm_condition.clamp(0.0, 1.0)) / 2.0;
     let base = match kind {

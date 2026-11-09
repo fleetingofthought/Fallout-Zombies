@@ -1,0 +1,132 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jip10",
+ "title": "jip10, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := GetQuests\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.quests.active",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := GetQuests 1\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.quests.done",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := GetActiveObjectives\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.objectives.active",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C1C\"\nlet aList := GetQuestObjectives rObj 0\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.objectives.vms01.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C1C\"\nlet aList := GetQuestObjectives rObj 1\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.objectives.vms01.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C1C\"\nlet aList := GetObjectiveTargets rObj 10\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.targets.vms01.10",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := rP.GetAllPerks\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.perks.player",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := rP.GetAllPerks 0 1\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.perks.player.hidden",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aList := rP.GetAllPerks 1\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.perks.player.mates",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aList := rObj.GetFactions\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.factions.docref",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0C\"\nlet aList := GetFactions rObj\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.factions.doc",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aList := rObj.GetLinkedChildren\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.linked.docref",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aList := rObj.GetEnableChildren\nlet sText := \"\"\nlet fA := ar_Size aList\nif fA > 0\nlet sText := sv_Construct \"%g %z\" fA (ToString aList[0])\nelse\nlet sText := sv_Construct \"%g\" fA\nendif\nSetFunctionValue sText\nEnd\n",
+   "label": "jip10.enable.docref",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fRes := rObj.AddScriptVariable \"nvfProbeVar\"\nlet fA := rObj.AddScriptVariable \"nvfProbeVar\"\nrObj.SetVariable \"nvfProbeVar\" 2.5\nlet fB := rObj.GetVariable \"nvfProbeVar\"\nlet sText := sv_Construct \"%g %g %g %g\" fRes fA fB (rObj.HasVariableAdded \"nvfProbeVar\")\nrObj.RemoveScriptVariable \"nvfProbeVar\"\nSetFunctionValue (sv_Construct \"%z %g\" sText (rObj.HasVariableAdded \"nvfProbeVar\"))\nEnd\n",
+   "label": "jip10.vars.add",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fA := GetScriptEventDisabled rObj \"OnHit\"\nSetScriptEventDisabled rObj \"OnHit OnLoad\" 1\nlet fB := GetScriptEventDisabled rObj \"onload\"\nSetScriptEventDisabled rObj \"OnHit OnLoad\" 0\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB (GetScriptEventDisabled rObj \"OnHit\"))\nEnd\n",
+   "label": "jip10.events.disabled",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.FakeScriptEvent \"OnTriggerEnter\")\nEnd\n",
+   "label": "jip10.fake.onadd",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rObj.FakeScriptEvent \"OnActivate\")\nEnd\n",
+   "label": "jip10.fake.onactivate",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nrP.SetRefExtraData 2 -903.5\nrP.SetRefExtraData 19 \"Girly\"\nrP.SetRefExtraData 18 7\nlet fA := rP.GetRefExtraData 2\nlet sText := rP.GetRefExtraData 19\nlet fB := rP.RefHasExtraData\nlet fRes := rP.RefHasExtraData 200\nrP.SetRefExtraData\nSetFunctionValue (sv_Construct \"%g [%z] %g %g %g\" fA sText fB fRes (rP.RefHasExtraData))\nEnd\n",
+   "label": "jip10.extra.data",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nrObj.AddRefMapMarker\nlet fA := rObj.RefHasMapMarker\nrObj.RemoveRefMapMarker\nSetFunctionValue (sv_Construct \"%g %g\" fA (rObj.RefHasMapMarker))\nEnd\n",
+   "label": "jip10.mapmarker",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fRes := WriteStringToFile \"nvf_probe_jip10.txt\" 0 \"one%rtwo%rthree\"\nlet fA := WriteStringToFile \"nvf_probe_jip10.txt\" 1 \"%rfour\"\nlet sText := ReadStringFromFile \"nvf_probe_jip10.txt\" 2 2\nSetFunctionValue (sv_Construct \"%g %g [%z] [%z]\" fRes fA sText (ReadStringFromFile \"nvf_probe_jip10.txt\"))\nEnd\n",
+   "label": "jip10.file.roundtrip",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rItem\nfloat fRes\nfloat fA\nfloat fB\nstring_var sText\narray_var aList\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (ReadStringFromFile \"nvf_probe_no_such_file.txt\")\nEnd\n",
+   "label": "jip10.file.missing",
+   "field": "value",
+   "text": true
+  }
+ ]
+}

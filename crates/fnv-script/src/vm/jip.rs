@@ -90,13 +90,25 @@ pub const JIP_NAMES: [&str; 1] = ["JIP NVSE Plugin"];
 /// the version the owner's game reports (the one whose behaviour NVForever's functions
 /// follow, extender-compat.md §5.7) [observed: the peer's lu-leveled and mcm sets,
 /// nvse.log and GetPluginVersion, 2026-10-26; names are matched without regard to case].
-pub const PLUGINS: [(&str, f64); 6] = [
+///
+/// Two more are built into the engine but are not on the owner's install, so no version
+/// could be read; Tale of Two Wastelands' start-up checks (`TTWGenericHandlerScript`:
+/// "lStewieAl's Tweaks" at least 941, `IsPluginInstalled ttw_nvse`) showed their "plugin
+/// missing" messages although NVForever runs the functions TTW calls from them
+/// (`TTW_GetPlugins` and the other `TTW_*`, StewieGetValue; `fnv_game::nvse_small`)
+/// [design, owner 2026-11-08: "technically the dll is present, just in engine"]:
+/// Stewie's Tweaks is reported at 941, the lowest TTW 3.4 accepts, and ttw_nvse at 1,
+/// as TTW only asks whether it is there. Most of Stewie's tweaks themselves are not
+/// built (ext-small.md).
+pub const PLUGINS: [(&str, f64); 8] = [
     ("JIP NVSE Plugin", JIP_VERSION),
     ("JIP LN NVSE", JIP_VERSION),
     ("ShowOffNVSE Plugin", 184.0),
     ("kNVSE", 37.0),
     ("JohnnyGuitarNVSE", 528.0),
     ("MCM Extensions", 1.0),
+    ("lStewieAl's Tweaks", 941.0),
+    ("ttw_nvse", 1.0),
 ];
 
 impl Vm<'_, '_> {

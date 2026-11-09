@@ -425,6 +425,42 @@ fn texture_read(
     }
 }
 
+/// A font's picture from its `.tex` file, read before the `.dds` (docs/spec-notes/fonts.md
+/// §2.2): a Russian install's fonts describe the letters of their `.tex`, while the `.dds`
+/// beside it is the English one [observed: #1439]; in an English install the two are the
+/// same picture. Only where the `.dds` is there too, so a font with a `.tex` alone (font 9)
+/// still draws nothing, as in the original (§3.1). None, with a warning for a broken file,
+/// when there is none.
+pub fn font_tex(font: &Font, data: &GameData) -> Option<fnv_font::Tex> {
+    if !data.vfs.exists(&font.texture_path()) {
+        return None;
+    }
+    let path = font.tex_path();
+    match fnv_font::Tex::parse(&data.read(&path)?) {
+        Ok(t) => Some(t),
+        Err(e) => {
+            warn!("interface: {path}: {e}; the .dds is drawn instead");
+            None
+        }
+    }
+}
+
+/// A `.tex` picture as an interface image, made as [`font_texture`] makes a `.dds` one.
+fn tex_image(path: &str, tex: fnv_font::Tex, images: &mut Assets<Image>) -> Option<(Handle<Image>, Vec2)> {
+    let format = bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb;
+    match nvf_assets::texture::checked_image(tex.width, tex.height, 1, format, tex.rgba) {
+        Ok(mut image) => {
+            image.sampler = ImageSampler::linear();
+            let size = image.size().as_vec2();
+            Some((images.add(image), size))
+        }
+        Err(e) => {
+            warn!("interface: {path}: {e}");
+            None
+        }
+    }
+}
+
 /// A stand-in font for measuring when the game's cannot be read: every character as wide
 /// as the next.
 pub fn plain_font(size: f32, advance: f32) -> Font {
@@ -480,7 +516,7 @@ pub fn face(path: &str, stand_in: Font, data: Option<&GameData>, images: &mut As
                 return None;
             }
         };
-        let image = font_texture(&font.texture_path(), d, images, bc)?;
+        let image = font_tex(&font, d).and_then(|t| tex_image(&font.tex_path(), t, images)).or_else(|| font_texture(&font.texture_path(), d, images, bc))?;
         Some(Face { font, image: Some(image) })
     });
     read.unwrap_or_else(|| {
@@ -506,6 +542,26 @@ pub const FONT_FILES: [&str; 9] = [
 /// Where a font's letters stand from a line's top: the tallest glyph's rise [design].
 pub fn line_base(face: &Face) -> f32 {
     face.font.glyphs.iter().skip(0x20).take(0x5F).filter(|g| g.drawn()).map(|g| g.ascent).fold(0.0, f32::max).max(face.font.size * 0.75)
+}
+
+/// The font's x-height: the rise of its typical lowercase letter, the band the eye centres
+/// on for mixed-case text (so a button glyph next to "Yes" sits on it, not on the cap
+/// height) [design]. The median of the lowercase letters, so the ascenders in the range
+/// (`b`, `d`, `f`, `h`, `k`, `l`, `t`) do not pull it up to their own or the capitals'
+/// rise. A font with no lowercase letters at all — its text is all capitals — centres on
+/// its capitals instead ([`line_base`]).
+pub fn x_height(face: &Face) -> f32 {
+    let mut rises = [0.0f32; 0x1A];
+    let mut n = 0;
+    for g in face.font.glyphs.iter().skip(0x61).take(0x1A).filter(|g| g.drawn()) {
+        rises[n] = g.ascent;
+        n += 1;
+    }
+    if n == 0 {
+        return line_base(face);
+    }
+    rises[..n].sort_by(f32::total_cmp);
+    rises[n / 2]
 }
 
 /// Draw a line of text at `origin` (what its `x` and `base` are measured from). Every
@@ -921,5 +977,45 @@ mod tests {
                 None => assert_eq!(ui, 1.0),
             }
         }
+    }
+
+    /// A font whose capitals and lowercase ascenders rise `24`, other lowercase letters
+    /// `17`, and whose `drawn` letters carry a picture. `lowercase_off`: those letters
+    /// have no picture, as in the caps-only title font.
+    fn measured_font(lowercase_off: bool) -> Face {
+        let mut glyphs = vec![Glyph::default(); 256];
+        let mut put = |code: u8, ascent: f32| {
+            glyphs[code as usize] = Glyph { width: 10.0, height: 10.0, ascent, ..Glyph::default() };
+        };
+        for code in 0x20..0x7Fu8 {
+            let c = code as char;
+            let ascender = matches!(c, 'b' | 'd' | 'f' | 'h' | 'k' | 'l' | 't');
+            let ascent = if c.is_ascii_uppercase() || ascender { 24.0 } else { 17.0 };
+            put(code, ascent);
+        }
+        if lowercase_off {
+            for code in 0x61..=0x7Au8 {
+                glyphs[code as usize] = Glyph::default();
+            }
+        }
+        Face { font: Font { size: 31.0, texture: String::new(), glyphs }, image: None }
+    }
+
+    /// #1829: the hint glyphs sit on the x-height band, not the cap-height middle. The
+    /// lowercase ascenders (`b`, `d`, `f`, `h`, `k`, `l`, `t`) are in the lowercase range,
+    /// so taking their tallest rise would return the cap height and change nothing.
+    #[test]
+    fn the_x_height_is_the_lowercase_band_not_the_cap_height() {
+        let face = measured_font(false);
+        assert_eq!(line_base(&face), 24.0);
+        assert_eq!(x_height(&face), 17.0);
+    }
+
+    /// A font with no lowercase picture has no x-height band to centre on: all its text is
+    /// capitals, so the glyphs centre on those.
+    #[test]
+    fn a_caps_only_font_centres_its_glyphs_on_the_cap_height() {
+        let face = measured_font(true);
+        assert_eq!(x_height(&face), line_base(&face));
     }
 }

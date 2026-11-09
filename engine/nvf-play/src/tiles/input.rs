@@ -680,9 +680,10 @@ pub(crate) fn feed(
         aid_at = aid.now;
     }
     // The menus that take input, back to front (see the module doc): the HUD only under
-    // the test aid.
+    // the test aid, or with a script's HUD cursor (ToggleHUDCursor, `fnv_game::nvse_jip9`).
     let mut taking = Vec::new();
-    if aid_at.is_some() && menus.hud {
+    let hud_cursor = rt.game.other.jip9.hud_cursor;
+    if (aid_at.is_some() || hud_cursor) && menus.hud {
         taking.extend(rt.game.ui_tree.menu(super::draw::HUD_MENU));
     }
     // The dialogue menu, under anything over the conversation (it does not take with one up).
@@ -720,7 +721,16 @@ pub(crate) fn feed(
     // frame: so the HUD, which takes input only under the aid and is drawn in none, is hit
     // where its tiles stand.
     let anchor = super::draw::menu_anchor(dialog_menu.is_some() && taking.len() == 1);
-    let cursor = || aid_at.or_else(|| devices.windows.single().ok().and_then(|w| Some(to_menu_units(w.cursor_position()?, Vec2::new(w.width(), w.height()), anchor))));
+    // The HUD alone under a script's cursor is hit where its tiles stand, in no frame.
+    let hud_alone = hud_cursor && aid_at.is_none() && taking.len() == 1 && rt.game.ui_tree.menu(super::draw::HUD_MENU) == taking.first().copied();
+    let cursor = || {
+        aid_at.or_else(|| {
+            devices.windows.single().ok().and_then(|w| {
+                let p = w.cursor_position()?;
+                Some(if hud_alone { to_units(p, w.height()) } else { to_menu_units(p, Vec2::new(w.width(), w.height()), anchor) })
+            })
+        })
+    };
     let wait_tiled = super::wait_menu::tiled(menus.sleep_wait, &rt.game);
     inputs.wait_check.wrote = None;
     if !wait_tiled {
@@ -931,6 +941,7 @@ mod tests {
             .init_resource::<ButtonInput<KeyCode>>()
             .init_resource::<ButtonInput<MouseButton>>()
             .init_resource::<Assets<Image>>()
+            .init_resource::<crate::pad::PadGlyphs>()
             .init_resource::<MessageClick>()
             .init_resource::<WaitSliderCheck>()
             .init_resource::<PointerAid>()

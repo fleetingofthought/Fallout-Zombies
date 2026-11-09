@@ -191,9 +191,9 @@ SetChallengeForm1 TestChal ItemC");
     assert_eq!(n(&mut g, "GetChallengeValue2 TestChal"), 0.0);
     assert_eq!(n(&mut g, "GetChallengeValue3 TestChal"), 9.0);
     assert_eq!(n(&mut g, "GetChallengeForm1 TestChal"), f64::from(ITEM_C));
-    // A negative threshold is kept in the field's range.
+    // A negative threshold is kept and read back signed (lutana1 chal.setthreshold.neg).
     q(&mut g, "SetChallengeThreshold TestChal -4");
-    assert_eq!(n(&mut g, "GetChallengeThreshold TestChal"), 0.0);
+    assert_eq!(n(&mut g, "GetChallengeThreshold TestChal"), -4.0);
     // Not a challenge: 0, and nothing is made.
     assert_eq!(n(&mut g, "GetChallengeThreshold ItemA"), 0.0);
     q(&mut g, "SetChallengeThreshold ItemA 3");
@@ -210,7 +210,8 @@ fn casinos_read_and_set_their_record() {
     assert_eq!(n(&mut g, "GetCasinoShufflePercent TestCasino"), 0.5);
     assert_eq!(n(&mut g, "GetCasinoBJ17Stand TestCasino"), 0.0);
     assert_eq!(n(&mut g, "GetCasinoReelStops TestCasino 7"), 2.0);
-    assert_eq!(n(&mut g, "GetCasinoReelStops TestCasino 8"), 0.0);
+    // A symbol outside 1-7: -1 (lutana1 csno.reel.8).
+    assert_eq!(n(&mut g, "GetCasinoReelStops TestCasino 8"), -1.0);
     q(&mut g, "SetCasinoNumDecks TestCasino 6
 SetCasinoMaxWinnings TestCasino 12000
 SetCasinoBJPayout TestCasino 2.5
@@ -225,6 +226,12 @@ SetCasinoReelStops TestCasino 7 3");
     assert_eq!(n(&mut g, "GetCasinoReelStops TestCasino 7"), 3.0);
     // The tables play to the changed max winnings.
     assert_eq!(fnv_game::casino::max_winnings(&g, FormId(CSNO), 0), 12000);
+    // As given, 0 decks and a share above 1 too (lutana1 csno.setnumdecks.0,
+    // csno.setshufflepercent.over).
+    q(&mut g, "SetCasinoNumDecks TestCasino 0
+SetCasinoShufflePercent TestCasino 1.5");
+    assert_eq!(n(&mut g, "GetCasinoNumDecks TestCasino"), 0.0);
+    assert_eq!(n(&mut g, "GetCasinoShufflePercent TestCasino"), 1.5);
 }
 
 #[test]
@@ -251,16 +258,29 @@ ReplaceRecipeOutputForm TestRecipe ItemC ItemA");
     assert_eq!(n(&mut g, "GetRecipeInputCount TestRecipe ItemB"), 1.0);
     assert_eq!(n(&mut g, "GetRecipeOutputCount TestRecipe ItemA"), 1.0);
     assert_eq!(n(&mut g, "GetRecipeOutputCount TestRecipe ItemC"), 0.0);
-    // GetRecipeInputForms and GetRecipeOutputForms read the change too.
-    assert_eq!(forms(&mut g, "GetRecipeInputForms TestRecipe"), vec![ITEM_A, ITEM_B]);
-    assert_eq!(forms(&mut g, "GetRecipeOutputForms TestRecipe"), vec![ITEM_A, ITEM_B]);
+    // GetRecipeInputForms and GetRecipeOutputForms read the change too; an added entry
+    // goes first (lutana1 rcpe.addinput.order).
+    assert_eq!(forms(&mut g, "GetRecipeInputForms TestRecipe"), vec![ITEM_B, ITEM_A]);
+    assert_eq!(forms(&mut g, "GetRecipeOutputForms TestRecipe"), vec![ITEM_B, ITEM_A]);
     q(&mut g, "RemoveRecipeInputForm TestRecipe ItemA
 RemoveRecipeOutputForm TestRecipe ItemB
 SetRecipeOutputCount TestRecipe ItemA 0");
     assert_eq!(forms(&mut g, "GetRecipeInputForms TestRecipe"), vec![ITEM_B]);
     assert_eq!(forms(&mut g, "GetRecipeOutputForms TestRecipe"), vec![ITEM_A]);
-    // A count of 0 is refused.
-    assert_eq!(n(&mut g, "GetRecipeOutputCount TestRecipe ItemA"), 1.0);
+    // A count of 0 is kept (lutana1 rcpe.setoutcount.0).
+    assert_eq!(n(&mut g, "GetRecipeOutputCount TestRecipe ItemA"), 0.0);
+    // An item added twice is listed twice, the later first; the count read and the entry
+    // removed are the first (lutana1 rcpe.addinput).
+    q(&mut g, "AddRecipeInputForm TestRecipe ItemC 3
+AddRecipeInputForm TestRecipe ItemC 2");
+    assert_eq!(n(&mut g, "GetRecipeInputCount TestRecipe ItemC"), 2.0);
+    q(&mut g, "RemoveRecipeInputForm TestRecipe ItemC");
+    assert_eq!(n(&mut g, "GetRecipeInputCount TestRecipe ItemC"), 3.0);
+    q(&mut g, "RemoveRecipeInputForm TestRecipe ItemC");
+    // Without a skill the level stays (lutana1 rcpe.setskill.neg).
+    q(&mut g, "SetRecipeRequiredSkill TestRecipe -1");
+    assert_eq!(n(&mut g, "GetRecipeRequiredSkill TestRecipe"), -1.0);
+    assert_eq!(n(&mut g, "GetRecipeRequiredSkillLevel TestRecipe"), 45.0);
     // The recipe no longer takes ItemA.
     assert_eq!(forms(&mut g, "GetFormRecipes ItemA"), vec![RCPE2]);
 }
@@ -338,12 +358,14 @@ SetActivatorRadioStation 0 TestActivator");
 fn misc_getters() {
     let f = fixture();
     let mut g = game(&f);
-    assert_eq!(n(&mut g, "GetMessageDisplayTime"), 2.0);
+    assert_eq!(n(&mut g, "GetDefaultMessageTime"), 2.0);
     q(&mut g, "SetDefaultMessageTime 3.5");
-    assert_eq!(n(&mut g, "GetMessageDisplayTime"), 3.5);
     assert_eq!(n(&mut g, "GetDefaultMessageTime"), 3.5);
-    q(&mut g, "SetDefaultMessageTime -1");
-    assert_eq!(n(&mut g, "GetMessageDisplayTime"), 3.5);
+    // Kept as given (lutana1 misc.setdmt).
+    q(&mut g, "SetDMT -1");
+    assert_eq!(n(&mut g, "GetDefaultMessageTime"), -1.0);
+    // Not registered by the installed JIP LN: its own text (lutana1 misc.mdt).
+    assert_eq!(q(&mut g, "SetFunctionValue (GetMDT)"), XVal::Str("GetMDT".into()));
     assert_eq!(n(&mut g, "GetPCCanUsePowerArmor"), 0.0);
     q(&mut g, "SetPCCanUsePowerArmor 1");
     assert_eq!(n(&mut g, "GetPCCanUsePowerArmor"), 1.0);

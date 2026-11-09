@@ -241,6 +241,26 @@ it), `engine/nvf-assets/src/texture.rs` (`pc_texture`).
 - Lines are 2 thick on a PC; lines at brightness 200, text 255.
 - A text's letters stand 15/31 of the font's size under its top [hypothesis for every
   font but 2, where it was measured: message-menu.md §3].
+- **The words** (#1443). Where a menu file names a game setting for a label, the label is
+  that setting's text: the ITEMS heading `sInventoryWeight`, `sHitPointsShort`,
+  `sInventoryDamageThreshold`, `sInventoryCaps` (`inventory_menu.xml`'s
+  `IM_Headline_Player*Info`); the STATS heading `sStatsLVLAbbrev`, `sStatsHP`,
+  `sStatsAP`, `sStatsXP`, its tabs `sStatsStatus` … `sStatsGeneral` and its
+  `sStatsCNDAbbrev`, `sStatsRADAbbrev`, `sStatsEFFAbbrev` (`stats_menu.xml`); DATA's
+  title `sData` and `sPlaceMarker`, `sShowLocation` (`map_menu.xml`); the item card's
+  `sInventoryDamage`, `sInventoryWeightUpper`, `sInventoryValue`, `sInventoryStrReq`,
+  `sInventoryDamagePerSecond`, `sInventoryCondition`, `sInventoryEffects`
+  (`item_stats_display.xml`); the hints `sInventoryRepair`, `sInventoryMod`
+  [documented: the menu files]. The STATS and ITEMS titles, the ITEMS and DATA tabs,
+  Maintain and the "Level" under the player's name have settings no menu file names:
+  `sStats`, `sInventoryItems`, `sInventoryWeapons`, `sInventoryApparel`,
+  `sInventoryAid`, `sInventoryMisc`, `sInventoryAmmo`, `sLocalMapTabText`,
+  `sWorldMapTabText`, `sQuestsTabText`, `sMiscTabText`, `sCommsTabText`,
+  `sMaintainItem`, `sLevelAbbrev` [observed: a Russian install's language plugin
+  defines each, and its text there is the word of that place, 2026-11-08]. The English
+  masters define none of them [observed: FalloutNV.esm and the add-ons], so an English
+  install shows NVForever's own words; a plugin that defines one is drawn with its
+  text (`pipboy::labels`) [design].
 
 ## 5. The pages
 
@@ -720,22 +740,67 @@ fonts) and the owner's five DATA screenshots (§1), compared at 1280 × 720 with
   from the playing file's loudness (root mean square over 2048 samples) with a slow
   rise and fall of its own [design: whether the original draws the sound itself or a
   model is not known].
-- **World Map**: the worldspace's picture `WRLD ICON`
-  (`interface\worldmap\wasteland_nv_1024_no_map.dds`), drawn 2048 square [documented:
-  `filewidth` 2048; `MNAM` usable 2048] at alpha 128 [documented]; the menu file names
-  `wasteland_1024_no_map.dds`, which the plugin does not use [observed]. Where cells fall on it: the cells from `MNAM`'s north-west cell to its
-  south-east cell (−35, 35 to 25, −25: 61 a side) fill the middle 0.7876 of the picture
-  from (0.108, 0.102) [observed: fitted to Goodsprings as the screenshot shows its roads,
-  the arc of Hoover Dam and the ring of Jacobstown, 309.8 units a texel, within 4 texels
-  each; corner to corner on the whole picture put Goodsprings 11,000 units off its
-  road]. The menu file keeps the picture's edges at most to the window's middle; it opens
-  centred on the player [hypothesis: the owner's view was elsewhere]; dragged it pans,
-  the wheel zooms 1.25 a step from 1 to 4 times [design].
+- **World Map**: follow a worldspace's `WNAM` parent while `PNAM` bit 2,
+  "Use Map Data", is set; the last worldspace is the map root. The root supplies the
+  picture (`ICON`) and cell span (`MNAM`) [documented: xEdit `wbDefinitionsFNV.pas`
+  WRLD, `wbWorldMapData`; `schemas/fnv/world.json`]. A child without that bit uses its
+  own picture and span, or has no map. The picture uses `MNAM`'s usable width and height
+  (2048 square for the main map), drawn at alpha 128 [documented: `map_menu.xml`].
+  - Each position uses its **own** worldspace's `ONAM` scale `s`, cell X offset `ox`
+    and cell Y offset `oy`, and bounds `NAM0` / `NAM9` [documented: xEdit
+    `wbWorldMapOffset`, `wbWorldObjectBounds`; `schemas/fnv/world.json`]. With
+    `c = (NAM0 + NAM9) / 2` on each axis, its map position is
+    `Xmap = s * (X - c.x) + c.x + ox`, `Ymap = s * (Y - c.y) + c.y + oy`.
+    Without `ONAM`, use scale 1 and offsets 0; without both bounds, use centre 0.
+    This applies to roots and children alike; ancestor transforms are not composed
+    [observed: run08 captures of MapMenu traits, 2026-11-07].
+  - From the root's `MNAM` north-west `(nwx, nwy)` and south-east `(sex, sey)` cells,
+    let `cx = sex - nwx + 1`, `cy = nwy - sey + 1`. Texture coordinates are
+    `u = 0.5 + F * ((Xmap / 4096 - nwx) / cx - 0.5)` and
+    `v = 0.5 + F * (((nwy + 1) - Ymap / 4096) / cy - 0.5)`, with
+    `F = 51/64 = 0.796875` on both axes, independent of picture and usable sizes
+    [observed: run08 captures of MapMenu traits, 2026-11-07]. The arrow's and every
+    marker's `_x`/`_y` fit exactly with no residual. This replaces the earlier
+    fitted origin and span. The traits are texture coordinates 0..1 [documented:
+    `map_menu.xml`].
+  - Three main-map markers, as the original reported them [observed: run08, the
+    `_x`/`_y` of MapMenu's marker tiles on the Mojave Wasteland map (WastelandNV),
+    2026-11-07; X/Y are the marker references' positions in the load order's winning
+    records (FalloutNV.esm and the four add-ons), read with fnvtool]. WastelandNV's
+    `ONAM` is scale 1 with offsets 0, so `Xmap = X`. Texels are of the 1024 picture
+    (`_x * 1024`); "old fit" is the earlier origin (0.108, 0.102) and span 0.7876.
+
+    | Marker (reference) | X, Y | Original `_x`, `_y` | In texels | Old fit, texels (off by) |
+    |---|---|---|---|---|
+    | Goodsprings (0x000CDF51) | −70992, 2560 | 0.33236843, 0.5636847 | 340.3, 577.2 | 344.2, 572.2 (+3.8, −5.1) |
+    | Hoover Dam (0x00135E5F) | 74712, 24848 | 0.79706764, 0.49260074 | 816.2, 504.4 | 814.5, 500.2 (−1.7, −4.2) |
+    | Jacobstown (0x000CDF57) | −108427.35, 96469.77 | 0.21297449, 0.26417476 | 218.1, 270.5 | 223.4, 269.0 (+5.3, −1.5) |
+
+    The rule above gives the original's `_x`/`_y` for all three to under 0.0001 texel,
+    and for all 184 markers placed in WastelandNV itself that the capture read (the
+    other five on the map are placed in child worldspaces); the old fit missed those
+    184 by 5.0 texels on average and 9.8 at most (the larger axis of each). The old fit was tuned on places on
+    the picture, not on the markers: Goodsprings' roads at (342, 575), the arc of Hoover
+    Dam at (815, 496) and the ring of Jacobstown at (225, 270). Those lie 1.7/2.2,
+    1.2/8.4 and 6.9/0.5 texels (x/y) from where the original draws the markers, which
+    is how far the new rule moves away from them. These numbers replace the screenshot
+    fit; the test `the_wasteland_map_puts_markers_where_the_original_reads_them`
+    (`engine/nvf-play/src/pipboy/data/model.rs`) checks the three rows within 0.01
+    texel, room for 32-bit rounding only.
+  - The map shows every worldspace in this family, each marker projected with its
+    own worldspace's numbers; inside a child it still shows the root's picture and
+    the whole family's markers. The arrow uses the current worldspace's numbers;
+    outdoor quest markers in any family worldspace use the same projection
+    [observed: run08 captures of MapMenu traits, 2026-11-07].
+  - The menu file keeps the picture's edges at most to the window's middle
+    [documented: `map_menu.xml`]; NVForever opens centred on the player, pans when
+    dragged, and zooms 1.25 a wheel step from 1 to 4 times
+    [design: `engine/nvf-play/src/pipboy/data.rs`].
   - Map markers: references of the `MapMarker` STAT (0x10) with `XMRK`; name `FULL`, type
     `TNAM` (0 None … 14 Vault [documented: xEdit; observed: vaults 14, a cave 5, Camp
     McCarran 8, Hoover Dam 7]), flags `FNAM`, radius `XRDS`. Shown when the player has been
-    within the radius (`XRDS`, noted four times a second, not saved) with its type's
-    icon, or when ShowMap or the Visible flag made it known, with the undiscovered icon
+    within the radius (`XRDS`) in the marker's own worldspace with its type's icon,
+    or when ShowMap or the Visible flag made it known, with the undiscovered icon
     [hypothesis]. Icons `interface\icons\world map\icon_map_<type>.dds`, the inverted form
     under the highlight box [hypothesis: by the files' names]; 24 wide, 1.75 times and
     brightness 255 (else 220) under the box [documented: the template's 1.75 and
@@ -759,11 +824,13 @@ fonts) and the owner's five DATA screenshots (§1), compared at 1280 × 720 with
     follows the pointer over the map and takes a marker's place and name within 40
     [hypothesis: the screenshots show it away from the middle, once round a door with
     the door's place name]; at first it is at the window's middle. A World Map marker
-    with a reputation (REFR `WMI1`, 36 in FalloutNV.esm [observed]) shows, on the line
-    under its name, the reputation's name and the player's standing title with it,
-    "Goodsprings: Neutral" ("The reputation that is shown when the player hovers over the
-    icon on the world map" [documented: GECK wiki Reference, Map Marker]; the wording and
-    the second line are a hypothesis, owner-review.md).
+    with a reputation (`REFR WMI1`) carries its reputation in parentheses on a
+    second line in the original [observed: run08 captures of MapMenu traits,
+    2026-11-07]. The field is the reputation shown on hover [documented: GECK wiki
+    Reference, Map Marker]. NVForever keeps its current reputation name and standing
+    wording; that wording remains the maintainer's open review item
+    [design: `engine/nvf-play/src/pipboy/data/model.rs::reputation_line`;
+    `docs/owner-review.md`].
   - A click on a marker (the button pressed and let go without the pointer moving
     more than 6 units [design]) asks whether to travel there: fast travel,
     `fast-travel.md`.

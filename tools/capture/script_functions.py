@@ -242,6 +242,10 @@ def _item_mod_handler(flag):
 # Parameters where a page's argument table is missing or short: what the game took
 # [observed: the probe named] or what the page's own example passes [documented].
 PARAM_FIXES = {
+    # [documented: SetCursorTrait's example "SetCursorTrait 0 255"; the table lists the
+    # trait only].
+    "SetCursorTrait": [{"name": "iTrait", "type": "int", "kind": "int"},
+                       {"name": "fValue", "type": "float", "kind": "float"}],
     # [observed: jip-probes rules1/rules2 (#1021): `let x := ref.SetNthPackage package
     # index` compiled in the game and replaced the package at the index].
     "SetNthPackage": [{"name": "package", "type": "form", "kind": "form"},
@@ -297,6 +301,10 @@ PARAM_FIXES = {
 # e.g. "GetConditionFormOneFloat HitReactionIdles 0 1"; the template says
 # GetConditionFormOneInt / SetConditionFormOneInt].
 NAME_FIXES = {
+    # The template's name has a space for the underscore, so only "Ar" was kept
+    # [documented: the page's link, Ar_SortEditor; observed 2026-11-08: a variable aR
+    # compiles in the original with JohnnyGuitar loaded, so no command is named Ar].
+    "Ar SortEditor": "Ar_SortEditor",
     "GetConditionFormOneFloat": "GetConditionFormOneFloat",
     "SetConditionFormOneFloat": "SetConditionFormOneFloat",
     "SetConditionFormOneForm": "SetConditionFormOneForm",

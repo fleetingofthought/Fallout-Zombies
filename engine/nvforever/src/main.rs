@@ -907,6 +907,8 @@ fn main() -> AppExit {
     // Boxes that ask nothing (the add-on packs' start-up chain) do not stop a test of a level.
     args.no_messages |= args.editor;
     let _ = COMMAND_LINE.set(line);
+    // Taking over a load: tell the old run at once that this run takes part (#1903).
+    let handoff_marked = args.handoff.as_deref().map(handoff::mark_started);
     // On a processor with L3 domains of different sizes, the game's threads on the largest
     // (cpu_placement.rs): before any thread pool or other thread starts, so all of them
     // start there. Logged once the log is up.
@@ -915,18 +917,19 @@ fn main() -> AppExit {
         eprintln!("explore: the free-camera explorer (--explore)");
     }
     let developer_data = args.data.is_some();
-    match setup::text_code_page() {
-        Ok(c) => {
+    let code_page_named = match setup::text_code_page() {
+        Ok((c, named)) => {
             if c != fnv_util::text::CodePage::default() {
                 eprintln!("setup: game text read as {c}");
             }
             fnv_util::text::set_code_page(c);
+            named
         }
         Err(e) => {
             eprintln!("error: {e}");
             return AppExit::error();
         }
-    }
+    };
     // The languages of NVForever's own words (#1443): beside the program, in the home.
     let exe_dir = std::env::current_exe().ok().and_then(|e| e.parent().map(std::path::Path::to_path_buf));
     let home = fnv_install::EngineHome::default_root();
@@ -983,6 +986,10 @@ fn main() -> AppExit {
     // a warning, and the rest of the start uses the list without it (world.rs).
     let opened = world::open_plugins(args.data(), &args.plugins);
     args.plugins = opened.plugins.iter().map(|p| p.name.clone()).collect();
+    // No setting names the code page: the plugins' own text says it (#1443).
+    if !code_page_named {
+        setup::guess_code_page(&opened.plugins);
+    }
     // `--load`: the save's place decides where the world starts (its worldspace before
     // the world is opened); its body waits for the scripts (nvf_play::save). It is read
     // in full now, remapped to the plugins opened and checked as the restore will
@@ -1489,6 +1496,7 @@ fn main() -> AppExit {
     .add_systems(Update, (locomotion::walk_test, locomotion::turn_to, locomotion::drive, weapons::reparent).chain())
     // Clips that drive actors' part materials (the Securitron screens), once posed.
     .add_systems(Update, actor_materials::pose.after(locomotion::drive))
+    .init_resource::<actor_materials::PlayerRigMaterials>()
     .add_systems(Update, actor_materials::pose_player.after(nvf_play::player::BodySet))
     .add_systems(Update, timelapse.after(sky::update_sky))
     // The sun's cascades reach behind the player's body (sky::SUN_REACH_BACK).
@@ -1833,6 +1841,10 @@ fn main() -> AppExit {
             app.insert_resource(handoff::LoadFailed(why)).add_systems(Update, handoff::tell_load_failed);
         }
         if let Some(file) = args.handoff.clone() {
+            match &handoff_marked {
+                Some(Err(e)) => warn!("handoff: started as the new run, but cannot tell the old run so ({}: {e}); it ends after {} s", handoff::started_marker(&file).display(), handoff::JOIN_WAIT_SECS),
+                _ => info!("handoff: started as the new run (ready file {})", file.display()),
+            }
             app.insert_resource(handoff::Hidden::new(file, args.window_maximized));
         }
         nvf_play::save::add_save_hook(&mut app, sky::SAVE_HOOK);

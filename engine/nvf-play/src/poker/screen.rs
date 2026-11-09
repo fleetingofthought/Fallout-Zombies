@@ -4,7 +4,7 @@
 //! NVForever's, set out as on the mock-up the owner approved, 2026-10-16].
 
 use super::{PokerInput, PokerScreen, PokerView, Session, BIG_BLIND, PLAYER, SMALL_BLIND};
-use crate::interface::{amber, at, face, plain_font, set_line, Face};
+use crate::interface::{amber, at, face, plain_font, Face};
 use crate::pause::AidTime;
 use bevy::image::CompressedImageFormatSupport;
 use bevy::prelude::*;
@@ -55,6 +55,7 @@ enum Font {
 
 struct Ctx<'a> {
     kit: &'a Kit,
+    glyphs: &'a crate::pad::PadGlyphs,
 }
 
 impl Ctx<'_> {
@@ -77,9 +78,9 @@ impl Ctx<'_> {
     #[allow(clippy::too_many_arguments)]
     fn text(&self, p: &mut ChildSpawnerCommands, f: Font, s: &str, x: f32, top: f32, align: f32, color: Color) -> f32 {
         let (face, base) = self.face(f);
-        let line = self.line(f, s);
-        set_line(p, face, &line, x - line.width * align, top + base, color);
-        line.width
+        let width = crate::pad::hint_width(face, s, self.glyphs);
+        crate::pad::set_hint(p, face, s, x - width * align, top + base, color, self.glyphs);
+        width
     }
 }
 
@@ -132,10 +133,21 @@ pub fn choices(s: &Session) -> Vec<(String, PokerInput, bool)> {
         out.push((format!("{} ALL IN", h(KeyCode::KeyA)), PokerInput::AllIn, turn));
         out.push((format!("{} FOLD", h(KeyCode::KeyF)), PokerInput::Fold, turn));
     } else if s.ended.is_none() {
-        out.push((format!("{} NEXT HAND", h(KeyCode::Space).to_uppercase()), PokerInput::Next, s.leaving.is_none()));
+        out.push((format!("{} NEXT HAND", upper_unless_glyph(h(KeyCode::Space))), PokerInput::Next, s.leaving.is_none()));
     }
-    out.push((format!("{} LEAVE", crate::pad::hint(&[KeyCode::Tab, KeyCode::Escape], at).to_uppercase()), PokerInput::Exit, s.leaving.is_none()));
+    out.push((format!("{} LEAVE", upper_unless_glyph(crate::pad::hint(&[KeyCode::Tab, KeyCode::Escape], at))), PokerInput::Exit, s.leaving.is_none()));
     out
+}
+
+/// A hint in the all-caps choices row: the key's name is uppercased, but a checked button's
+/// name is left as it is, or `pad::find_glyph` (which matches "Circle)" and not "CIRCLE)")
+/// would not draw its picture.
+fn upper_unless_glyph(hint: String) -> String {
+    if crate::pad::has_glyph(&hint) {
+        hint
+    } else {
+        hint.to_uppercase()
+    }
 }
 
 /// What the screen shows; drawn again when it changes.
@@ -166,6 +178,7 @@ pub fn draw(
     window: Query<&Window, With<PrimaryWindow>>,
     mut images: ResMut<Assets<Image>>,
     formats: Option<Res<CompressedImageFormatSupport>>,
+    glyphs: Res<crate::pad::PadGlyphs>,
     roots: Query<Entity, With<PokerRoot>>,
     (mut kit, mut shown): (Local<Option<Kit>>, Local<Option<String>>),
 ) {
@@ -184,7 +197,7 @@ pub fn draw(
         glow: face(GLOW_FONT, plain_font(31.0, 12.0), data.as_deref(), &mut images, bc),
         plain: face(PLAIN_FONT, plain_font(36.0, 15.0), data.as_deref(), &mut images, bc),
     });
-    spawn(&mut commands, &Ctx { kit }, s, view.as_deref(), view_w);
+    spawn(&mut commands, &Ctx { kit, glyphs: &glyphs }, s, view.as_deref(), view_w);
 }
 
 fn spawn(commands: &mut Commands, c: &Ctx, s: &Session, view: Option<&PokerView>, view_w: f32) {
@@ -235,8 +248,9 @@ fn spawn(commands: &mut Commands, c: &Ctx, s: &Session, view: Option<&PokerView>
         let mut x = view_w - EDGE;
         let y = 960.0 - EDGE - CHOICES_UP;
         for (label, cmd, on) in choices(s).into_iter().rev() {
-            let w = c.width(Font::Glow, &label);
-            c.text(r, Font::Glow, &label, x, y, 1.0, amber(if on { 255.0 } else { DIM }));
+            // The drawn width, not the text's: a hint that names a button draws its
+            // picture, so the click box and the gap must follow that width.
+            let w = c.text(r, Font::Glow, &label, x, y, 1.0, amber(if on { 255.0 } else { DIM }));
             if on {
                 r.spawn((Button, PokerButton(cmd), at(x - w - 8.0, y - 8.0, w + 16.0, LINE + 16.0)));
             }

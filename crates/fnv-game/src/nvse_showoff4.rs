@@ -146,23 +146,29 @@ pub fn transpose(a: &Matrix) -> Matrix {
 }
 
 /// The rotation matrix of a quaternion `[w, x, y, z]` [documented: Quaternion_GetMatrix's
-/// layout], normalised first; the usual right-handed form R·v [hypothesis: the page gives
-/// no convention]. `None` for a zero quaternion.
+/// layout]. Not normalised: the diagonal is `2(w² + a²) − 1` [observed 2026-11-08:
+/// showoff4.quat.unnormal, (2 0 0 0) gives 7 7 7], and the matrix is the transpose of the
+/// usual right-handed R·v form [observed: showoff4.quat.z90, (0.7071 0 0 0.7071) gives
+/// m[0][1] 1 and m[1][0] −1; the x and y terms transposed alike, hypothesis], worked in
+/// single precision [observed: m[0][0] −5.96046e-08, exactly 2·0.70710677² − 1 in f32].
+/// A zero quaternion gives −1 on the diagonal [hypothesis: nothing is refused once
+/// nothing is normalised].
 pub fn quat_to_matrix(q: [f64; 4]) -> Option<[[f64; 3]; 3]> {
-    let n = q.iter().map(|c| c * c).sum::<f64>().sqrt();
-    if n == 0.0 || !n.is_finite() {
+    if q.iter().any(|c| !c.is_finite()) {
         return None;
     }
-    let [w, x, y, z] = q.map(|c| c / n);
-    Some([
-        [1.0 - 2.0 * (y * y + z * z), 2.0 * (x * y - w * z), 2.0 * (x * z + w * y)],
-        [2.0 * (x * y + w * z), 1.0 - 2.0 * (x * x + z * z), 2.0 * (y * z - w * x)],
-        [2.0 * (x * z - w * y), 2.0 * (y * z + w * x), 1.0 - 2.0 * (x * x + y * y)],
-    ])
+    let [w, x, y, z] = q.map(|c| c as f32);
+    let m = [
+        [2.0 * (w * w + x * x) - 1.0, 2.0 * (x * y + w * z), 2.0 * (x * z - w * y)],
+        [2.0 * (x * y - w * z), 2.0 * (w * w + y * y) - 1.0, 2.0 * (y * z + w * x)],
+        [2.0 * (x * z + w * y), 2.0 * (y * z - w * x), 2.0 * (w * w + z * z) - 1.0],
+    ];
+    Some(m.map(|r| r.map(f64::from)))
 }
 
-/// The quaternion `[w, x, y, z]` of a rotation matrix (the inverse of
-/// [`quat_to_matrix`]), by the largest of the trace and the diagonal; `w` not negative
+/// The quaternion `[w, x, y, z]` of a rotation matrix in the usual right-handed form (so
+/// not the inverse of [`quat_to_matrix`], which gives the transpose [observed 2026-11-08:
+/// showoff4.quat.back and quat.back.270 equal with this, quat.z90 transposed]), by the largest of the trace and the diagonal; `w` not negative
 /// [hypothesis: q and −q are the same rotation, the page picks neither].
 pub fn matrix_to_quat(m: [[f64; 3]; 3]) -> [f64; 4] {
     let t = m[0][0] + m[1][1] + m[2][2];
@@ -473,7 +479,11 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         }
         // Pages marked Incomplete with no summary, arguments or result: 0 [decision: no
         // behaviour to build from; ext-showoff.md §7 asks for the pages].
-        "getactorfadestate" | "getcalculatedactorspread" | "isformloading" => zero,
+        "getcalculatedactorspread" | "isformloading" => zero,
+        // −1 for an actor not fading [observed 2026-11-08: showoff4.fadestate.doc, Doc
+        // Mitchell standing in his house]; NVForever fades no actor in or out the way the
+        // state would track, so always −1 [hypothesis: other states unknown].
+        "getactorfadestate" => XVal::Num(-1.0),
         _ => return None,
     };
     Some(Ok(v))
@@ -498,13 +508,17 @@ mod tests {
     }
 
     #[test]
-    fn a_quaternion_and_its_matrix_go_both_ways() {
-        // 90 degrees about Z.
+    fn a_quaternion_and_its_matrix_as_the_game_gives_them() {
+        // 90 degrees about Z: the transpose of the right-handed form, in f32.
         let h = std::f64::consts::FRAC_1_SQRT_2;
         let r = quat_to_matrix([h, 0.0, 0.0, h]).unwrap();
-        assert!((r[0][1] + 1.0).abs() < 1e-12 && (r[1][0] - 1.0).abs() < 1e-12 && (r[2][2] - 1.0).abs() < 1e-12);
-        let q = matrix_to_quat(r);
+        assert!((r[0][1] - 1.0).abs() < 1e-6 && (r[1][0] + 1.0).abs() < 1e-6 && (r[2][2] - 1.0).abs() < 1e-6);
+        assert_eq!(format!("{:e}", quat_to_matrix([h, 0.0, 0.0, h]).unwrap()[0][0]), "-5.960464477539063e-8");
+        // Not normalised.
+        let u = quat_to_matrix([2.0, 0.0, 0.0, 0.0]).unwrap();
+        assert_eq!([u[0][0], u[1][1], u[2][2]], [7.0, 7.0, 7.0]);
+        // Back from the right-handed form.
+        let q = matrix_to_quat([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]);
         assert!((q[0] - h).abs() < 1e-12 && (q[3] - h).abs() < 1e-12);
-        assert!(quat_to_matrix([0.0; 4]).is_none());
     }
 }

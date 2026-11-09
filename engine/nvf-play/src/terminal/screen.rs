@@ -418,11 +418,17 @@ fn blur(a: &mut [f32], w: usize, h: usize, sigma: f32, reach: usize) {
 /// dark text over a lit cell; the two share one layout.
 fn soft_faces(path: &str, data: &GameData, images: &mut Assets<Image>) -> Option<(Face, Face)> {
     let font = Font::parse(&data.read(&crate::interface::font_file(path))?).ok()?;
-    let bytes = data.read(&font.texture_path())?;
-    let dds = fnv_dds::Dds::parse(&bytes).ok()?;
-    let (w, h) = (dds.header.width, dds.header.height);
-    let top = dds.levels.first()?.first()?;
-    let rgba = fnv_dds::to_rgba8(dds.format, top).or_else(|| fnv_dds::decode_blocks(dds.format, w, h, top))?;
+    // The `.tex` before the `.dds`, as every font is drawn (interface::font_tex).
+    let (w, h, rgba) = match crate::interface::font_tex(&font, data) {
+        Some(t) => (t.width, t.height, t.rgba),
+        None => {
+            let bytes = data.read(&font.texture_path())?;
+            let dds = fnv_dds::Dds::parse(&bytes).ok()?;
+            let (w, h) = (dds.header.width, dds.header.height);
+            let top = dds.levels.first()?.first()?;
+            (w, h, fnv_dds::to_rgba8(dds.format, top).or_else(|| fnv_dds::decode_blocks(dds.format, w, h, top))?)
+        }
+    };
     let alpha: Vec<f32> = rgba.iter().skip(3).step_by(4).map(|&a| a as f32 / 255.0).collect();
     let mut bent = |ink: Color, under: Color| {
         let (ink, under) = (ink.to_srgba().green, under.to_srgba().green);

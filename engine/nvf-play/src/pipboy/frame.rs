@@ -109,13 +109,14 @@ pub struct Ctx<'a> {
     pub data: Option<&'a GameData>,
     pub images: &'a mut Assets<Image>,
     pub bc: bool,
+    pub glyphs: &'a crate::pad::PadGlyphs,
 }
 
 impl<'a> Ctx<'a> {
-    pub fn new(kit: &'a mut Kit, data: Option<&'a GameData>, images: &'a mut Assets<Image>, formats: Option<&CompressedImageFormatSupport>) -> Ctx<'a> {
+    pub fn new(kit: &'a mut Kit, data: Option<&'a GameData>, images: &'a mut Assets<Image>, formats: Option<&CompressedImageFormatSupport>, glyphs: &'a crate::pad::PadGlyphs) -> Ctx<'a> {
         let bc = crate::interface::bc_supported(formats);
         kit.load(data, images, bc);
-        Ctx { kit, data, images, bc }
+        Ctx { kit, data, images, bc, glyphs }
     }
 
     pub fn picture(&mut self, path: &str) -> Option<Picture> {
@@ -179,9 +180,15 @@ impl<'a> Ctx<'a> {
     /// Draw one line of `s` whose top is at `top`; returns its width.
     #[allow(clippy::too_many_arguments)]
     pub fn text(&mut self, p: &mut ChildSpawnerCommands, font: usize, s: &str, x: f32, top: f32, align: Align, color: Color) -> f32 {
-        let line = self.first_line(font, s);
-        self.set(p, font, &line, x, top, align, color);
-        line.width
+        let face = self.kit.face(font);
+        let width = crate::pad::hint_width(face, s, self.glyphs);
+        let x = match align {
+            Align::Left => x,
+            Align::Right => x - width,
+            Align::Centre => x - width / 2.0,
+        };
+        crate::pad::set_hint(p, face, s, x, top + base(&face.font), color, self.glyphs);
+        width
     }
 
     /// Draw a line already set, its top at `top`.
@@ -427,6 +434,7 @@ pub fn draw(
     data: Option<Res<GameData>>,
     mut images: ResMut<Assets<Image>>,
     formats: Option<Res<CompressedImageFormatSupport>>,
+    glyphs: Res<crate::pad::PadGlyphs>,
     tiles: Option<Res<crate::tiles::stats_menu::StatsTiles>>,
     mut shown: Local<Option<(Page, usize, Frame, bool)>>,
 ) {
@@ -446,7 +454,7 @@ pub fn draw(
     // The screen menu is plain, as the barter menu is: the device's own screen around the
     // pages is `device_screen.rs`'s, on the device only (docs/design/screen-menu.md §2).
     let device = frame == Frame::Device;
-    let mut c = Ctx::new(&mut kit, data.as_deref(), &mut images, formats.as_deref());
+    let mut c = Ctx::new(&mut kit, data.as_deref(), &mut images, formats.as_deref(), &glyphs);
     c.kit.screen = !device;
     let root = Node { overflow: Overflow::clip(), ..at(0.0, 0.0, CANVAS.x, CANVAS.y) };
     commands.spawn((PipBoyRoot, root, UiTargetCamera(screen.camera), Name::new("Pip-Boy menus"))).with_children(|r| {

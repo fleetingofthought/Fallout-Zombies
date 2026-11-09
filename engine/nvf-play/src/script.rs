@@ -1381,7 +1381,8 @@ impl EffectCtx for PlayCtx<'_> {
     }
 
     fn objective_text(&self, quest: FormId, index: i32) -> Option<String> {
-        self.data.quests.get(&quest)?.objectives.get(&index)?.text.as_deref().map(|t| self.game.expand_codes(t))
+        // SetObjectiveText's first (`fnv_game::nvse_jip10`).
+        self.game.objective_text(quest, index).map(|t| self.game.expand_codes(&t))
     }
 
     fn quest_title(&self, quest: FormId) -> Option<String> {
@@ -1768,6 +1769,11 @@ pub(crate) fn run_scripts(
                         Ok(changed_refs) => {
                             info!("load: restored {}: {} changed references, {} quests, {} script instances", path.display(), changed_refs.len(), rt.game.quests.len(), rt.game.instances.len());
                             restored = true;
+                            // SUP's GetSaveName and GetLoadedSaveSize read the last save
+                            // loaded (`fnv_game::nvse_sup4`).
+                            let name = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                            let bytes = std::fs::metadata(&path).map_or(0, |m| m.len());
+                            rt.game.save_files.loaded = Some(fnv_game::nvse_sup4::SaveFile { name, bytes });
                             if let Some(doors) = doors.as_deref_mut() {
                                 doors.rest_as_restored(&sim);
                             }

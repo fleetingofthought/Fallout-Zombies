@@ -256,6 +256,15 @@ location, in cell (radius ignored), near reference; the radius is editable.
 - **Travel**: go to the destination, using navmesh preferred triangles "but not in
   interiors"; stop at the edge of the destination radius; the destination must be on the
   navmesh. Package idles play at the destination.
+  - **At an xMarkerHeading** (built 2026-11-08) [documented: GECK wiki, NPC population,
+    level-design.md: the heading version "shows which way an actor standing there will
+    face"]: an actor whose package location is "near reference" an xMarkerHeading (the
+    engine's base 0x34) turns, once there, to the marker's heading at the standing turn
+    rate (`fnv_ai` `marker_heading`, set in `settle`, for every package type that
+    settles there; a sandbox keeps its own). Owner report (TTW, the G.O.A.T.): Mr.
+    Brotch at `CG03MrBrotchTeachMarker` (heading 22°, towards the desks) faced the lab
+    bench, the heading he walked in with. Whether the original turns for a radius other
+    than 0 (his `CG03MrBrotchGiveGOAT` has 20) is not known; ours turns for any.
 - **Sandbox**: ambient behaviour within the location radius: it scores nearby objects
   (food, furniture, idle markers, other actors), weights them by a per-kind probability
   that drops to zero for the kind just chosen and rises for the others; sleep start
@@ -434,6 +443,24 @@ normal package behavior"]:
     CMNY): it picks it up (the default activation); flora: it harvests it; furniture: it
     sits (or lies) on it; an actor, a container or anything else: it goes up to it (for a
     specific reference, within the target's distance);
+  - furniture another actor sits on, or is on its way to, is passed over, and the
+    furniture it sets off to is kept for it, as for Use Item At (since 2026-11-08)
+    [hypothesis, from an owner report: in Tale of Two Wastelands nobody looked to sit at
+    the school desks in the G.O.A.T.]. Fallout 3's classroom (CG03, `Fallout3.esm`) seats
+    its students by Find packages (`CG03AmataTakeTest`, `CG03ButchTakeTest`,
+    `CG03PaulTakeTest`, `CG03WallyTakeTest`, `CG03SusieMackTakeTest`,
+    `CG03FreddieTakeTest`, `CG03ChristineKendallTakeTest`; target object type Furniture,
+    search near `CG03ClassroomMarker` radius 350, Run In Sequence `LooseSitTakingTest*`
+    idles) [observed: `fnvtool ai show`, TTW 3.4 load order]. Before, Amata and Wally both
+    went to Christine Kendall's desk and Butch and Paul to Susie Mack's, each pair beside
+    one already seated ("cannot use …: in use"), and only three students sat [observed in
+    ours]. Furniture the player or any other actor the engine seats is on is not free
+    either (`Game::furniture_used_by_other`, also for Use Item At): the player has no
+    desk of their own in the data (eight desks, seven students; the classroom trigger
+    `CG03ClassroomTriggerSCRIPT` sets stage 50 once the player sits and stage 60, the
+    test, only once all seven students report `GetSitting` 3), and Paul went to the desk
+    the player sat at and stood by it, so the test never began [observed in ours]. The 16
+    Find packages of the New Vegas masters that look for furniture follow the same rule;
   - a dead actor carrying what it looks for: it takes one from the body;
   - **Allow Killing**: it attacks a living actor it looks for, or one carrying what it
     looks for (the geckos' and stalkers' "Find Food" packages with object type Food and

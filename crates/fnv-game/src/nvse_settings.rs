@@ -62,6 +62,15 @@ fn key(args: &[XVal]) -> Option<String> {
     }
 }
 
+impl Game<'_> {
+    /// A numeric setting of the game's INI text by lower-case "name:category", as
+    /// GetNumericINISetting reads it; `None` when no file the host gave has it.
+    pub fn ini_number(&mut self, key: &str) -> Option<f64> {
+        let texts = &self.data.ini_texts;
+        self.ini.values(texts).get(key).and_then(|s| s.parse::<f64>().ok())
+    }
+}
+
 /// The functions of this file; `None` for any other name.
 pub(crate) fn call(g: &mut Game, name: &str, args: &[XVal]) -> Option<Result<XVal, String>> {
     let texts = g.data.ini_texts.clone();

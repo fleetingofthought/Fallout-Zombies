@@ -259,6 +259,12 @@ const PATROL: u8 = 13;
 const FOLLOW: u8 = 1;
 const GUARD: u8 = 14;
 const START: [f32; 3] = [50.0, 50.0, 0.0];
+/// An xMarkerHeading (the engine's base 0x34) facing 2.0 rad, the package that sends
+/// an actor to it, the actor's base and the actor.
+const HEAD_MARK: u32 = 0x8B0;
+const P_TO_HEADING: u32 = 0x8B1;
+const N_TO_HEADING: u32 = 0x8B2;
+const R_TO_HEADING: u32 = 0x8B3;
 /// A sandbox's switches for everything it does with objects and for talking.
 const NO_OBJECTS: u16 = type_flags::NO_EATING | type_flags::NO_SLEEPING | type_flags::NO_CONVERSATION | type_flags::NO_IDLE_MARKERS | type_flags::NO_FURNITURE;
 const C: Space = Space::Interior(CELL_C);
@@ -279,6 +285,7 @@ fn plugin_bytes() -> Vec<u8> {
         pack(P_DEFAULT, "StayHome", 0, TRAVEL, (3, 0, 64), None),
         pack(P_IN_B, "TravelIntoB", 0, TRAVEL, (1, CELL_B, 0), None),
         pack(P_RADIUS, "TravelNearA", 0, TRAVEL, (0, MARK_A, 150), None),
+        pack(P_TO_HEADING, "TravelToHeading", 0, TRAVEL, (0, HEAD_MARK, 0), None),
         pack(P_PATROL, "PatrolOnce", 0, PATROL, (0, M1, 0), Some(false)),
         // Sent after the player: a Travel package near the player's reference.
         pack(P_HUNT, "HuntThePlayer", 0, TRAVEL, (0, 0x14, 0), None),
@@ -323,6 +330,7 @@ fn plugin_bytes() -> Vec<u8> {
         npc(N_TRAVEL, "Traveller", &[P_TRAVEL_B, P_DEFAULT]),
         npc(N_IN, "Lodger", &[P_IN_B]),
         npc(N_RADIUS, "Visitor", &[P_RADIUS]),
+        npc(N_TO_HEADING, "Teacher", &[P_TO_HEADING]),
         npc(N_PATROL, "Guard", &[P_PATROL]),
         npc(N_LOOP, "Sentry", &[P_LOOP]),
         npc(N_FOLLOW, "Follower", &[P_FOLLOW]),
@@ -382,6 +390,7 @@ fn plugin_bytes() -> Vec<u8> {
     let stat = record(b"STAT", STAT, &[sub(b"EDID", z("Marker"))]);
     let a_refs = [
         placed(b"REFR", MARK_A, "MarkA", STAT, [350.0, 350.0, 0.0], None),
+        placed_with(b"REFR", HEAD_MARK, "TeachMarker", 0x34, [300.0, 200.0, 0.0], 2.0, None, None),
         placed(b"REFR", M1, "M1", STAT, [350.0, 50.0, 0.0], Some(M2)),
         placed_with(b"REFR", M2, "M2", STAT, [350.0, 350.0, 0.0], 0.0, Some(M3), Some(6.0)),
         placed(b"REFR", M3, "M3", STAT, [50.0, 350.0, 0.0], None),
@@ -395,6 +404,7 @@ fn plugin_bytes() -> Vec<u8> {
         placed(b"ACHR", R_HUNTER, "HunterRef", N_HUNTER, [150.0, 150.0, 0.0], None),
         placed(b"ACHR", R_IN, "LodgerRef", N_IN, START, None),
         placed(b"ACHR", R_RADIUS, "VisitorRef", N_RADIUS, START, None),
+        placed(b"ACHR", R_TO_HEADING, "TeacherRef", N_TO_HEADING, START, None),
         placed(b"ACHR", R_PATROL, "GuardRef", N_PATROL, START, None),
         placed(b"ACHR", R_LOOP, "SentryRef", N_LOOP, [60.0, 240.0, 0.0], Some(L1)),
         placed(b"ACHR", R_FOLLOW, "FollowerRef", N_FOLLOW, START, None),
@@ -872,6 +882,19 @@ fn a_radius_is_reached_at_its_edge() {
     assert_eq!(s.ai.agents[&FormId(R_RADIUS)].activity, Activity::There);
     let d = dist(s.feet(R_RADIUS), [350.0, 350.0, 0.0]);
     assert!(d <= 150.0 && d > 90.0, "stopped {d} from the marker");
+}
+
+/// At an xMarkerHeading it stands the way the marker faces (level-design.md: the
+/// heading version "shows which way an actor standing there will face"; Mr. Brotch in
+/// the G.O.A.T. kept the heading he walked in with and faced the wall).
+#[test]
+fn an_actor_at_an_xmarkerheading_turns_to_its_heading() {
+    let f = fixture();
+    let mut s = sim(&f, &[R_TO_HEADING]);
+    s.run(30.0);
+    let a = &s.ai.agents[&FormId(R_TO_HEADING)];
+    assert_eq!(a.activity, Activity::There);
+    assert!(a.face_to == Some(2.0) || (a.walker.heading - 2.0).abs() < 1e-3, "{:?} {}", a.face_to, a.walker.heading);
 }
 
 #[test]

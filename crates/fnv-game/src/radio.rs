@@ -65,6 +65,10 @@ pub const RADIO_HELLO: &str = "RadioHello";
 /// radio.md §2; the same bit as `fnv_world::radio::station_flags::CONTINUOUS`].
 pub const CONTINUOUS: u32 = 0x4000_0000;
 
+/// TACT record-header bit of the editor's "Radio Station" box [hypothesis: radio.md §2,
+/// set on every station a receiver names].
+pub const RADIO_STATION: u32 = 0x0002_0000;
+
 #[derive(Debug, Clone, Default)]
 pub struct Radios {
     /// Default activations whose outcome was "activated", by reference.

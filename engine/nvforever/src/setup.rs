@@ -90,10 +90,28 @@ pub fn game_install(cli: Option<&Path>) -> Result<GameInstall, String> {
 
 /// The code page of the game's text for this run (`fnv_util::text::chosen`, #1439):
 /// `NVF_CODE_PAGE`, else `[Text] CodePage` of the home's NVForever.ini, else
-/// Windows-1252. Set before any of the game's text is read.
-pub fn text_code_page() -> Result<fnv_util::text::CodePage, String> {
-    let ini = EngineHome::user().and_then(|h| Config::load(&h).ok()).and_then(|c| c.code_page);
-    fnv_util::text::chosen(ini.as_deref())
+/// Windows-1252. Set before any of the game's text is read. The flag says whether one of
+/// the two named it; when neither did, [`guess_code_page`] may change it once the
+/// plugins are open.
+pub fn text_code_page() -> Result<(fnv_util::text::CodePage, bool), String> {
+    let ini = EngineHome::user().and_then(|h| Config::load(&h).ok()).and_then(|c| c.code_page).filter(|v| !v.trim().is_empty());
+    let env = std::env::var(fnv_util::text::ENV).ok().filter(|v| !v.trim().is_empty());
+    let named = ini.is_some() || env.is_some();
+    fnv_util::text::chosen(ini.as_deref()).map(|c| (c, named))
+}
+
+/// The code page read from the plugins' own text when no setting names one (#1443,
+/// `fnv_esm::text_guess`): set and said in the log when it is not the default. Runs after
+/// the plugins are opened and before any of their text is decoded.
+pub fn guess_code_page(plugins: &[fnv_esm::Plugin]) {
+    let g = fnv_esm::text_guess::guess(plugins);
+    if let Some(c) = g.code_page {
+        eprintln!(
+            "setup: game text read as {c}, found in the plugins' text ({}); set [Text] CodePage in NVForever.ini to choose another",
+            g.cyrillic().join(", ")
+        );
+        fnv_util::text::set_code_page(c);
+    }
 }
 
 /// Draw the fonts the install's `Fallout_default.ini` names in `[Fonts]` (`sFontFile_N`),

@@ -34,6 +34,8 @@ pub struct Roots {
     pub write: Option<PathBuf>,
     pub lookup: Option<Lookup>,
     pub reader: Option<Reader>,
+    /// The archives the host loaded, by file name (IsBSALoaded, `nvse_jg8`).
+    pub archives: Vec<String>,
 }
 
 static ROOTS: Mutex<Option<Roots>> = Mutex::new(None);
@@ -113,6 +115,11 @@ fn on_disk_any_case(base: &Path, rel: &str) -> Option<PathBuf> {
         };
     }
     Some(p)
+}
+
+/// The archives the host loaded, by file name.
+pub fn archives() -> Vec<String> {
+    roots().archives
 }
 
 /// The game's Data folder, when the host gave one (the last read root).
@@ -535,6 +542,43 @@ fn ini_set(text: &str, section: &str, key: &str, value: &str, section_name: &str
     lines.join("\r\n") + "\r\n"
 }
 
+/// INI text without one key of a section (section and key without regard to case);
+/// `None` when it has no such key.
+fn ini_remove_key(text: &str, section: &str, key: &str) -> Option<String> {
+    let mut cur = String::new();
+    let mut out: Vec<&str> = Vec::new();
+    let mut found = false;
+    for line in text.lines() {
+        let l = line.trim();
+        if let Some(s) = l.strip_prefix('[') {
+            cur = s.trim_end_matches(']').trim().to_ascii_lowercase();
+        } else if cur == section && l.split_once('=').is_some_and(|(k, _)| k.trim().eq_ignore_ascii_case(key)) {
+            found = true;
+            continue;
+        }
+        out.push(line);
+    }
+    found.then(|| out.join("\r\n") + "\r\n")
+}
+
+/// INI text without a section, its heading and its keys; `None` when it has none.
+fn ini_remove_section(text: &str, section: &str) -> Option<String> {
+    let mut cur = String::new();
+    let mut out: Vec<&str> = Vec::new();
+    let mut found = false;
+    for line in text.lines() {
+        let l = line.trim();
+        if let Some(s) = l.strip_prefix('[') {
+            cur = s.trim_end_matches(']').trim().to_ascii_lowercase();
+            found |= cur == section;
+        }
+        if cur != section {
+            out.push(line);
+        }
+    }
+    found.then(|| out.join("\r\n") + "\r\n")
+}
+
 /// A number as LU writes it: no decimals for a whole number [observed: "fNum=6",
 /// "fSet=2.25"].
 fn lu_number(v: f64) -> String {
@@ -885,6 +929,61 @@ pub(crate) fn call(g: &mut Game, name: &str, args: &[XVal]) -> Option<Result<XVa
             g.mod_files.write(&path, new);
             zero
         }
+        // ---- LU's INI writers (`Data\Config`, NVForever's layer) ----
+        // `section keysValues [file]`: each key of the string map set in the section,
+        // numbers as LU writes them [documented: SetINISection; a missing file or folder
+        // is made].
+        "setinisection" => {
+            let Some(raw) = text(args, 0).filter(|s| !s.trim().is_empty()) else { return Some(Ok(zero)) };
+            let Some(XVal::Array(id)) = args.get(1) else { return Some(Ok(zero)) };
+            let pairs: Vec<(String, String)> = g
+                .ext
+                .array(*id)
+                .map(|a| {
+                    a.entries
+                        .iter()
+                        .map(|(k, v)| {
+                            let key = match k {
+                                XKey::Str(s) => s.clone(),
+                                XKey::Num(n) => lu_number(*n),
+                            };
+                            let value = match v {
+                                XVal::Num(n) => lu_number(*n),
+                                other => cell_text(other),
+                            };
+                            (key, value)
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            let path = ini_path(g, text(args, 2).as_deref());
+            let mut t = g.mod_files.read(&path).unwrap_or_default();
+            let sec = raw.trim().to_ascii_lowercase();
+            for (k, v) in pairs {
+                t = ini_set(&t, &sec, &k.to_ascii_lowercase(), &v, raw.trim(), &k);
+            }
+            g.mod_files.write(&path, t);
+            zero
+        }
+        // `Section:Key [file]`: the key removed [documented: RemoveINIKey]; nothing is
+        // written when the file has no such key [hypothesis].
+        "removeinikey" => {
+            let Some((s, k)) = text(args, 0).as_deref().and_then(section_key) else { return Some(Ok(zero)) };
+            let path = ini_path(g, text(args, 1).as_deref());
+            if let Some(t) = g.mod_files.read(&path).and_then(|t| ini_remove_key(&t, &s, &k)) {
+                g.mod_files.write(&path, t);
+            }
+            zero
+        }
+        // `section [file]`: the section and its keys removed [documented: RemoveINISection].
+        "removeinisection" => {
+            let sec = text(args, 0).unwrap_or_default().trim().to_ascii_lowercase();
+            let path = ini_path(g, text(args, 1).as_deref());
+            if let Some(t) = g.mod_files.read(&path).and_then(|t| ini_remove_section(&t, &sec)) {
+                g.mod_files.write(&path, t);
+            }
+            zero
+        }
         "getinisection" => {
             let sec = text(args, 0).unwrap_or_default().to_ascii_lowercase();
             let path = ini_path(g, text(args, 1).as_deref());
@@ -1001,12 +1100,13 @@ pub(crate) fn call(g: &mut Game, name: &str, args: &[XVal]) -> Option<Result<XVa
         // ---- ShowOff's JSON files, under the game's folder (`read_root`) ----
         // `filepath [jsonPointer] [parserMode] [useCache]`: the value at the pointer (the
         // root for ""), converted (`json_to_xval`); kept in the cache when asked
-        // [documented: ReadFromJSON]. A missing file, a parse error or a pointer to
-        // nothing gives 0 [hypothesis: the page names no failure value].
+        // [documented: ReadFromJSON]. A missing file gives no value: the call fails
+        // [observed 2026-11-08: showoff4.readjson.missing, TestExpr 0]; a file that is not
+        // JSON likewise, a pointer to nothing 0 [hypothesis].
         "readfromjson" => {
             let path = text(args, 0).unwrap_or_default();
             let pointer = text(args, 1).unwrap_or_default();
-            let Some(root) = json_file(g, &path) else { return Some(Ok(zero)) };
+            let Some(root) = json_file(g, &path) else { return Some(Err(format!("ReadFromJSON: no JSON file {path}"))) };
             if num(args, 3, 0.0) != 0.0 {
                 g.mod_files.showoff_json.insert(norm(&path), root.clone());
             }

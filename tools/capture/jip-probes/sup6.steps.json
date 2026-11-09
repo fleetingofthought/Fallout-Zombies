@@ -1,0 +1,90 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "sup6",
+ "title": "sup6, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nSetFunctionValue (sv_Construct \"%g %g %g %g %g %g\" (GetCursorTrait 0) (GetCursorTrait 1) (GetCursorTrait 2) (GetCursorTrait 3) (GetCursorTrait 4) (GetCursorTrait 5))\nEnd\n",
+   "label": "sup6.cursor.rest",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nlet fA := GetCursorTrait 0\nSetCursorTrait 0 100\nlet fB := GetCursorTrait 0\nSetCursorTrait 0 fA\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB (GetCursorTrait 0))\nEnd\n",
+   "label": "sup6.cursor.set",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nSetCursorTraitGradual 0 200 50 2\nSetFunctionValue (GetCursorTrait 0)\nEnd\n",
+   "label": "sup6.cursor.gradual",
+   "field": "value"
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nlet fA := GetCursorTrait 0\nSetCursorTraitGradual 0\nlet fB := GetCursorTrait 0\nSetCursorTrait 0 255\nSetFunctionValue (sv_Construct \"%g %g\" ((fA > 50) && (fA <= 200)) (fA == fB))\nEnd\n",
+   "label": "sup6.cursor.gradual.next",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nDebugTextCreate \"NVFProbeText\" 100 100 \"probe\"\nlet fA := DebugTextExists \"NVFProbeText\"\nDebugTextSetPos \"NVFProbeText\" 200 200\nDebugTextSetString \"NVFProbeText\" \"probe 2\"\nDebugTextSetZoom \"NVFProbeText\" 20\nDebugTextDestroy \"NVFProbeText\"\nSetFunctionValue (sv_Construct \"%g %g %g\" fA (DebugTextExists \"NVFProbeText\") (DebugTextExists \"NVFNoSuchText\"))\nEnd\n",
+   "label": "sup6.debugtext",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nGetMouseMovement fX fY 0\nlet fA := fX\nlet fB := fY\nGetMouseMovement fX fY 1\nSetFunctionValue (sv_Construct \"%g %g %g %g %g %g\" fA fB fX fY (GetMouseWheelMovement 0) (GetMouseWheelMovement 1))\nEnd\n",
+   "label": "sup6.mouse.moves",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nGetMousePosition fX fY\nSetFunctionValue (sv_Construct \"%g\" ((fX >= 0) && (fY >= 0)))\nEnd\n",
+   "label": "sup6.mouse.pos",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nSetFunctionValue (sv_Construct \"%g %g %g %g %g\" (GetScreenTrait 0) (GetScreenTrait 1) (GetScreenTrait 2) (GetScreenTrait 3) (GetScreenTrait 4))\nEnd\n",
+   "label": "sup6.screen",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nlet sText := \"\"\nlet fA := 1\nwhile fA <= 9\nlet sText := sText + (sv_Construct \"%g/%g \" (GetFontTrait fA 0) (GetFontTrait fA 1))\nlet fA += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "sup6.fonts",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nSetFunctionValue (sv_Construct \"[%z] [%z] [%z]\" (GetModTraitSTR 0 0) (GetModTraitSTR 0 1) (GetModTraitSTR 0 2))\nEnd\n",
+   "label": "sup6.modtraits",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nSetFunctionValue (sv_Construct \"%g %g %g\" ((GetPCTrait 0) > 0) ((GetPCTrait 2) > 0) ((GetPCTrait 6) > 0))\nEnd\n",
+   "label": "sup6.pctraits",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nlet fA := GetHUDVisibilityFlags\nSetHUDVisibilityFlags 512\nlet fB := GetHUDVisibilityOverride\nSetHUDVisibilityFlags fA\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB (GetHUDVisibilityFlags))\nEnd\n",
+   "label": "sup6.hudflags",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (GetLockPickMenuValue 0) (GetLockPickMenuValue 1) (GetLockPickMenuValue 2) (SetBobbyPinHealth))\nEnd\n",
+   "label": "sup6.lockpick.shut",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "float fA\nfloat fB\nfloat fX\nfloat fY\nstring_var sText\nBegin Function { }\nSetFunctionValue (GetGrenadeTimeHeld)\nEnd\n",
+   "label": "sup6.grenade",
+   "field": "value"
+  }
+ ]
+}

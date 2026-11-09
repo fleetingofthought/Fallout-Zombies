@@ -145,24 +145,54 @@ pub fn dds(w: u32, h: u32, rgba: &[u8], small: bool) -> Vec<u8> {
     out
 }
 
-/// A QR code of `text` as a black-on-white picture: `scale` pixels a module and a quiet
-/// zone of 4 modules [hypothesis: the page gives neither]. `None` when the text is too
-/// long for a code.
-pub fn qr_rgba(text: &str, scale: u32) -> Option<(u32, Vec<u8>)> {
+/// QR codes: pixels a module and the quiet zone in modules [hypothesis: the page gives
+/// neither; chosen so a version-1 code (21 modules) is (21 + 2) x 13 = 299 pixels square,
+/// the one picture size that gives the original's 268,590-byte file for "I love bacon"
+/// as an uncompressed 8-bit RGB PNG (`png_rgb_stored`) [observed: sup5 qr.where]].
+pub const QR_SCALE: u32 = 13;
+pub const QR_BORDER: u32 = 1;
+
+/// A QR code of `text` as a black-on-white RGB picture (3 bytes a pixel): `scale` pixels
+/// a module and a quiet zone of `border` modules, error correction M [hypothesis].
+/// `None` when the text is too long for a code.
+pub fn qr_rgb(text: &str, scale: u32, border: u32) -> Option<(u32, Vec<u8>)> {
     let code = qrcodegen::QrCode::encode_text(text, qrcodegen::QrCodeEcc::Medium).ok()?;
     let n = code.size() as u32;
-    let side = (n + 8) * scale;
-    let mut px = vec![255u8; (side * side * 4) as usize];
+    let side = (n + 2 * border) * scale;
+    let mut px = vec![255u8; (side * side * 3) as usize];
     for y in 0..side {
         for x in 0..side {
-            let (mx, my) = ((x / scale) as i32 - 4, (y / scale) as i32 - 4);
+            let (mx, my) = ((x / scale) as i32 - border as i32, (y / scale) as i32 - border as i32);
             if code.get_module(mx, my) {
-                let o = ((y * side + x) * 4) as usize;
+                let o = ((y * side + x) * 3) as usize;
                 px[o..o + 3].copy_from_slice(&[0, 0, 0]);
             }
         }
     }
     Some((side, px))
+}
+
+/// TextToQRCode's file: the code as an uncompressed RGB PNG ([`QR_SCALE`], [`QR_BORDER`]).
+pub fn qr_png(text: &str) -> Option<Vec<u8>> {
+    let (side, px) = qr_rgb(text, QR_SCALE, QR_BORDER)?;
+    png_rgb_stored(side, side, &px)
+}
+
+/// An 8-bit RGB PNG whose image data is stored, not compressed: one IDAT chunk holding a
+/// zlib stream of stored deflate blocks, no filter on any row [documented: the PNG
+/// specification; RFC 1950, 1951].
+pub fn png_rgb_stored(w: u32, h: u32, rgb: &[u8]) -> Option<Vec<u8>> {
+    let mut out = Vec::new();
+    {
+        let mut e = png::Encoder::new(&mut out, w, h);
+        e.set_color(png::ColorType::Rgb);
+        e.set_depth(png::BitDepth::Eight);
+        e.set_compression(png::Compression::NoCompression);
+        e.set_filter(png::Filter::NoFilter);
+        let mut wr = e.write_header().ok()?;
+        wr.write_image_data(rgb).ok()?;
+    }
+    Some(out)
 }
 
 #[cfg(test)]
@@ -183,8 +213,10 @@ mod tests {
         assert_eq!(crop_rect(100, 50, [10.0, 20.0, 40.0, 90.0], 1.0), Some((10, 40, 10, 10)));
         assert_eq!(crop_rect(100, 50, [10.0, 10.0, 0.0, 10.0], 1.0), None);
         assert_eq!(crop(&px, 3, (1, 1, 2, 1)), px[16..24].to_vec());
-        let (side, q) = qr_rgba("I love bacon", 2).unwrap();
+        let (side, q) = qr_rgb("I love bacon", 2, 4).unwrap();
         assert_eq!(side, (21 + 8) * 2);
-        assert_eq!(q.len() as u32, side * side * 4);
+        assert_eq!(q.len() as u32, side * side * 3);
+        // The original's file for this text was 268,590 bytes [observed: sup5 qr.where].
+        assert_eq!(qr_png("I love bacon").unwrap().len(), 268_590);
     }
 }

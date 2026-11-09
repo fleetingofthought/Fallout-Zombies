@@ -18,6 +18,8 @@ use std::collections::HashMap;
 /// What this batch's setters changed, for the session.
 #[derive(Debug, Default)]
 pub struct LutanaState {
+    /// Batch 2's state: map markers, radio data, hotkey units (`nvse_lu2`).
+    pub lu2: crate::nvse_lu2::State,
     /// Whole copies of the records a setter changed, read by the getters (and by
     /// [`challenge`], [`casino`], [`recipe`]).
     pub challenges: HashMap<FormId, ChallengeDef>,
@@ -31,6 +33,10 @@ pub struct LutanaState {
     pub ref_radius: HashMap<FormId, f32>,
     /// SetDefaultMessageTime's seconds.
     pub message_time: Option<f64>,
+    /// SetRecipeRequiredSkillLevel's level and the level SetRecipeRequiredSkill keeps when
+    /// it takes the skill away: the level stands apart from the skill [observed: lutana1
+    /// rcpe.setskill.neg, rcpe.setlevel.noskill].
+    pub recipe_levels: HashMap<FormId, u32>,
 }
 
 /// A challenge as it stands now: a script's changes, else the record's (CHAL).
@@ -72,6 +78,11 @@ fn casino_mut<'a>(g: &'a mut Game, c: FormId) -> Option<&'a mut CasinoDef> {
     copy_on_write(&mut g.other.lutana.casinos, from, c)
 }
 
+/// A recipe's required skill level: a script's, else the record's skill's (0 without one).
+fn recipe_level(g: &Game, r: FormId) -> u32 {
+    g.other.lutana.recipe_levels.get(&r).copied().or_else(|| recipe(g, r).and_then(|d| d.skill).map(|s| s.1)).unwrap_or(0)
+}
+
 fn recipe_mut<'a>(g: &'a mut Game, r: FormId) -> Option<&'a mut RecipeDef> {
     let from = g.data.recipes.get(&r);
     copy_on_write(&mut g.other.lutana.recipes, from, r)
@@ -91,6 +102,18 @@ fn num(args: &[XVal], k: usize) -> Option<f64> {
         Some(XVal::Num(x)) => Some(*x),
         _ => None,
     }
+}
+
+/// A whole number as a script stores it in a 32-bit record field: truncated and kept as
+/// given, a negative number too (read back with [`signed`]) [observed: lutana1
+/// chal.setthreshold.neg, csno.setmaxwinnings.neg, csno.setnumdecks.0].
+fn int_bits(v: f64) -> u32 {
+    v.trunc().clamp(f64::from(i32::MIN), f64::from(i32::MAX)) as i32 as u32
+}
+
+/// A 32-bit record field read as the game reads it back, signed.
+fn signed(x: u32) -> f64 {
+    f64::from(x as i32)
 }
 
 fn yes(b: bool) -> XVal {
@@ -128,6 +151,27 @@ fn string_map(g: &mut Game, items: Vec<(&str, f64)>) -> XVal {
 
 fn base(g: &Game, f: FormId) -> FormId {
     crate::functions::base_of(g, f).unwrap_or(f)
+}
+
+/// The actor record `f` names (a reference's base): SetServiceFlag and LNSetAggroRadius
+/// change this record's AI data, not its template's, which a "Use AI Data" NPC reads
+/// until then [observed: lutana1 actor.setservice.tender2 (the NPC reads the change, its
+/// template does not), actor.service.tender2.4 (the template's flags read before)].
+fn ai_record(g: &Game, f: FormId) -> Option<FormId> {
+    if g.world.placed.get(f).is_some() || g.world.peek(f).is_some() {
+        return crate::functions::base_of(g, f);
+    }
+    g.data.actors.contains_key(&f).then_some(f)
+}
+
+/// The services as they stand for the actor record `rec`: SetServiceFlag's, else the AI
+/// data it uses (its own, or its template's with "Use AI Data").
+fn services_of(g: &Game, rec: FormId) -> u32 {
+    g.other.lutana.services.get(&rec).copied().unwrap_or_else(|| ai_source(g, rec).and_then(|s| g.data.actors.get(&s)).map_or(0, |d| d.services))
+}
+
+fn aggro_of(g: &Game, rec: FormId) -> u32 {
+    g.other.lutana.aggro_radius.get(&rec).copied().unwrap_or_else(|| ai_source(g, rec).and_then(|s| g.data.actors.get(&s)).map_or(0, |d| d.aggro_radius))
 }
 
 /// The actor record whose AI data `f` (an actor reference or base) uses, following its
@@ -176,15 +220,15 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             match name {
                 "getchallengeform1" => reff(d.form1),
                 "getchallengeform2" => reff(d.form2),
-                "getchallengeinterval" => XVal::Num(f64::from(d.interval)),
-                "getchallengethreshold" => XVal::Num(f64::from(d.threshold)),
+                "getchallengeinterval" => XVal::Num(signed(d.interval)),
+                "getchallengethreshold" => XVal::Num(signed(d.threshold)),
                 // The DATA type (0 KillInFormList … 13 Scripted) [documented:
                 // GetChallengeType's table].
                 "getchallengetype" => XVal::Num(d.kind as f64),
-                "getchallengevalue1" => XVal::Num(f64::from(d.value1)),
-                "getchallengevalue2" => XVal::Num(f64::from(d.value2)),
-                "getchallengevalue3" => XVal::Num(f64::from(d.value3)),
-                _ => XVal::Num(f64::from(d.flags)),
+                "getchallengevalue1" => XVal::Num(signed(d.value1)),
+                "getchallengevalue2" => XVal::Num(signed(d.value2)),
+                "getchallengevalue3" => XVal::Num(signed(d.value3)),
+                _ => XVal::Num(signed(d.flags)),
             }
         }
         "setchallengeform1" | "setchallengeform2" => {
@@ -198,11 +242,11 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             }
             zero
         }
-        // The numbers are u32 fields: kept in range, NaN refused (`nvse::field_number`).
+        // The numbers as given, a negative one too [observed: lutana1
+        // chal.setthreshold.neg reads -5]; NaN refused.
         "setchallengeinterval" | "setchallengethreshold" | "setchallengevalue1" | "setchallengevalue2" | "setchallengevalue3" | "setchallengeflags" => {
-            let v = num(args, 1).and_then(|v| field_number(v.trunc(), U32.0, U32.1));
+            let v = num(args, 1).filter(|v| v.is_finite()).map(int_bits);
             if let (Some(v), Some(d)) = (v, form(args, 0).and_then(|c| challenge_mut(g, c))) {
-                let v = v as u32;
                 match name {
                     "setchallengeinterval" => d.interval = v,
                     "setchallengethreshold" => d.threshold = v,
@@ -220,15 +264,15 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             XVal::Num(match name {
                 "getcasinobj17stand" => f64::from(u8::from(c.stay_soft17)),
                 "getcasinobjpayout" => crate::nvse::record_float(f64::from(c.payout)),
-                "getcasinomaxwinnings" => f64::from(c.max_winnings),
-                "getcasinonumdecks" => f64::from(c.decks),
+                "getcasinomaxwinnings" => signed(c.max_winnings),
+                "getcasinonumdecks" => signed(c.decks),
                 // A share, 1.0 all of the shoe [documented: "1.0 is 100%"].
                 "getcasinoshufflepercent" => crate::nvse::record_float(f64::from(c.shuffle_share)),
-                // `casino symbol`: symbols 1-7, 7 the W [documented]; another symbol 0
-                // [hypothesis].
+                // `casino symbol`: symbols 1-7, 7 the W [documented]; another symbol -1
+                // [observed: lutana1 csno.reel.0, csno.reel.8].
                 _ => match num(args, 1).map(|s| s as i64) {
-                    Some(s @ 1..=7) => f64::from(c.reel_stops[(s - 1) as usize]),
-                    _ => 0.0,
+                    Some(s @ 1..=7) => signed(c.reel_stops[(s - 1) as usize]),
+                    _ => -1.0,
                 },
             })
         }
@@ -238,11 +282,13 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
                 match name {
                     "setcasinobj17stand" => c.stay_soft17 = v != 0.0,
                     "setcasinobjpayout" => c.payout = v.clamp(F32.0, F32.1) as f32,
-                    "setcasinomaxwinnings" => c.max_winnings = v.trunc().clamp(U32.0, U32.1) as u32,
-                    // A shoe of no decks cannot be dealt from: at least 1 [hypothesis].
-                    "setcasinonumdecks" => c.decks = v.trunc().clamp(1.0, U32.1) as u32,
-                    // 0-1 [hypothesis: a share outside it means nothing].
-                    _ => c.shuffle_share = v.clamp(0.0, 1.0) as f32,
+                    // As given, -1 and 0 decks too [observed: lutana1
+                    // csno.setmaxwinnings.neg, csno.setnumdecks.0].
+                    "setcasinomaxwinnings" => c.max_winnings = int_bits(v),
+                    "setcasinonumdecks" => c.decks = int_bits(v),
+                    // As given, outside 0-1 too [observed: lutana1
+                    // csno.setshufflepercent.over, csno.setshufflepercent.neg].
+                    _ => c.shuffle_share = v.clamp(F32.0, F32.1) as f32,
                 }
             }
             zero
@@ -250,98 +296,113 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // `casino symbol stops`: the count as given; the page's "must equal 14" is the
         // record's rule, not checked here [hypothesis].
         "setcasinoreelstops" => {
-            let (s, v) = (num(args, 1).map(|s| s as i64), num(args, 2).and_then(|v| field_number(v.trunc(), U32.0, U32.1)));
+            let (s, v) = (num(args, 1).map(|s| s as i64), num(args, 2).filter(|v| v.is_finite()).map(int_bits));
             if let (Some(s @ 1..=7), Some(v)) = (s, v) {
                 if let Some(c) = form(args, 0).and_then(|c| casino_mut(g, c)) {
-                    c.reel_stops[(s - 1) as usize] = v as u32;
+                    c.reel_stops[(s - 1) as usize] = v;
                 }
             }
             zero
         }
         // ---- recipes (RCPE) [documented: each page] ----
+        // A recipe's lists act on the first entry of the item: the count read, set,
+        // removed or replaced is that entry's; added entries go first [observed: lutana1
+        // rcpe.addinput, rcpe.addinput.order, rcpe.addinput.existing, rcpe.replaceinput,
+        // rcpe.setincount.unlisted: an item added twice is listed twice, the later first].
         "getrecipeinputcount" | "getrecipeoutputcount" => {
             let (Some(r), Some(item)) = (form(args, 0).and_then(|r| recipe(g, r)), form(args, 1)) else { return Some(Ok(zero)) };
             let entries = if name == "getrecipeinputcount" { &r.ingredients } else { &r.outputs };
-            XVal::Num(entries.iter().filter(|e| e.0 == item).map(|e| f64::from(e.1)).sum())
+            XVal::Num(entries.iter().find(|e| e.0 == item).map_or(0.0, |e| f64::from(e.1)))
         }
-        // The actor value code; a recipe with no skill -1 [hypothesis].
+        // The actor value code; a recipe with no skill -1 [documented: the record's DATA].
         "getreciperequiredskill" => XVal::Num(form(args, 0).and_then(|r| recipe(g, r)).and_then(|r| r.skill).map_or(-1.0, |s| f64::from(s.0))),
-        "getreciperequiredskilllevel" => XVal::Num(form(args, 0).and_then(|r| recipe(g, r)).and_then(|r| r.skill).map_or(0.0, |s| f64::from(s.1))),
-        // `recipe code`: a code below 0 takes the skill away, and a recipe without one
-        // gains it at level 0 [hypothesis].
+        "getreciperequiredskilllevel" => XVal::Num(form(args, 0).map_or(0.0, |r| f64::from(recipe_level(g, r)))),
+        // `recipe code`: a code below 0 takes the skill away and keeps the level [observed:
+        // lutana1 rcpe.setskill.neg]; a recipe without one gains it at its level.
         "setreciperequiredskill" => {
             let code = num(args, 1).filter(|c| c.is_finite()).map(f64::trunc);
-            if let (Some(code), Some(r)) = (code, form(args, 0).and_then(|r| recipe_mut(g, r))) {
-                r.skill = (code >= 0.0).then(|| (code.min(f64::from(u16::MAX)) as u16, r.skill.map_or(0, |s| s.1)));
+            if let (Some(code), Some(r)) = (code, form(args, 0)) {
+                let level = recipe_level(g, r);
+                if let Some(d) = recipe_mut(g, r) {
+                    d.skill = (code >= 0.0).then(|| (code.min(f64::from(u16::MAX)) as u16, level));
+                    g.other.lutana.recipe_levels.insert(r, level);
+                }
             }
             zero
         }
-        // `recipe level`: only a recipe with a skill has a level [hypothesis].
+        // `recipe level`: a recipe without a skill keeps the level too [observed: lutana1
+        // rcpe.setlevel.noskill].
         "setreciperequiredskilllevel" => {
             let level = num(args, 1).and_then(|v| field_number(v.trunc(), U32.0, U32.1));
-            if let (Some(level), Some(r)) = (level, form(args, 0).and_then(|r| recipe_mut(g, r))) {
-                if let Some(s) = r.skill.as_mut() {
-                    s.1 = level as u32;
+            if let (Some(level), Some(r)) = (level, form(args, 0)) {
+                if let Some(d) = recipe_mut(g, r) {
+                    if let Some(s) = d.skill.as_mut() {
+                        s.1 = level as u32;
+                    }
+                    g.other.lutana.recipe_levels.insert(r, level as u32);
                 }
             }
             zero
         }
-        // `recipe item count`: a new entry at the end; an item already listed has the
-        // count added to its entry; a count below 1 adds nothing [hypothesis].
+        // `recipe item count`: a new entry first, also for an item already listed, a count
+        // of 0 too [observed: lutana1 rcpe.addinput, rcpe.addinput.zero,
+        // rcpe.addinput.existing]; a negative count adds nothing [hypothesis].
         "addrecipeinputform" | "addrecipeoutputform" => {
-            let (item, count) = (form(args, 1), num(args, 2).and_then(|v| field_number(v.trunc(), 0.0, U32.1)));
-            if let (Some(item), Some(count @ 1.0..)) = (item, count) {
+            let (item, count) = (form(args, 1), num(args, 2).filter(|v| v.is_finite() && *v >= 0.0).map(|v| v.trunc().min(U32.1) as u32));
+            if let (Some(item), Some(count)) = (item, count) {
                 if let Some(r) = form(args, 0).and_then(|r| recipe_mut(g, r)) {
                     let entries = if name == "addrecipeinputform" { &mut r.ingredients } else { &mut r.outputs };
-                    match entries.iter_mut().find(|e| e.0 == item) {
-                        Some(e) => e.1 = e.1.saturating_add(count as u32),
-                        None => entries.push((item, count as u32)),
-                    }
+                    entries.insert(0, (item, count));
                 }
             }
             zero
         }
-        // `recipe item`: every entry of the item removed [hypothesis: a list names an
-        // item once].
+        // `recipe item`: the item's first entry removed [observed: lutana1 rcpe.addinput].
         "removerecipeinputform" | "removerecipeoutputform" => {
             if let (Some(item), Some(r)) = (form(args, 1), form(args, 0).and_then(|r| recipe_mut(g, r))) {
                 let entries = if name == "removerecipeinputform" { &mut r.ingredients } else { &mut r.outputs };
-                entries.retain(|e| e.0 != item);
+                if let Some(i) = entries.iter().position(|e| e.0 == item) {
+                    entries.remove(i);
+                }
             }
             zero
         }
-        // `recipe old new`: the entry keeps its count [documented: the examples].
+        // `recipe old new`: the first entry's item, its count kept [documented: the
+        // examples; observed: lutana1 rcpe.replaceinput].
         "replacerecipeinputform" | "replacerecipeoutputform" => {
             if let (Some(old), Some(new), Some(r)) = (form(args, 1), form(args, 2), form(args, 0).and_then(|r| recipe_mut(g, r))) {
                 let entries = if name == "replacerecipeinputform" { &mut r.ingredients } else { &mut r.outputs };
-                for e in entries.iter_mut().filter(|e| e.0 == old) {
+                if let Some(e) = entries.iter_mut().find(|e| e.0 == old) {
                     e.0 = new;
                 }
             }
             zero
         }
-        // `recipe item count`: a listed item's count; an item not listed is not added
-        // [hypothesis]; a count below 1 is refused [hypothesis].
+        // `recipe item count`: the first entry's count, 0 too [observed: lutana1
+        // rcpe.setincount.0, rcpe.setoutcount.0]; an item not listed is not added
+        // [hypothesis]; a negative count is refused [hypothesis].
         "setrecipeinputcount" | "setrecipeoutputcount" => {
-            let (item, count) = (form(args, 1), num(args, 2).and_then(|v| field_number(v.trunc(), 0.0, U32.1)));
-            if let (Some(item), Some(count @ 1.0..)) = (item, count) {
+            let (item, count) = (form(args, 1), num(args, 2).filter(|v| v.is_finite() && *v >= 0.0).map(|v| v.trunc().min(U32.1) as u32));
+            if let (Some(item), Some(count)) = (item, count) {
                 if let Some(r) = form(args, 0).and_then(|r| recipe_mut(g, r)) {
                     let entries = if name == "setrecipeinputcount" { &mut r.ingredients } else { &mut r.outputs };
-                    for e in entries.iter_mut().filter(|e| e.0 == item) {
-                        e.1 = count as u32;
+                    if let Some(e) = entries.iter_mut().find(|e| e.0 == item) {
+                        e.1 = count;
                     }
                 }
             }
             zero
         }
-        // `item [category]`: the recipes that take the item, in FormID order, those of
-        // the category (or subcategory) only when one is given [documented:
-        // GetFormRecipes; hypothesis: the order]; GetFormRecipeOutputs their outputs,
-        // each once, in that order [documented: GetFormRecipeOutputs].
+        // `item [category]`: the recipes that take the item, those of the category (or
+        // subcategory) only when one is given [documented: GetFormRecipes]: the later
+        // plugin's first, each plugin's in FormID order [observed: lutana1
+        // rcpe.formrecipes.*]. GetFormRecipeOutputs their outputs, each once [documented:
+        // GetFormRecipeOutputs], in that order [hypothesis: lutana1 rcpe.recipeoutputs.*
+        // show another order, with no rule found].
         "getformrecipes" | "getformrecipeoutputs" => {
             let (Some(item), cat) = (form(args, 0), form(args, 1)) else { return Some(Ok(list(g, std::iter::empty()))) };
             let mut ids: Vec<FormId> = g.data.recipes.keys().copied().collect();
-            ids.sort();
+            ids.sort_by_key(|f| (std::cmp::Reverse(f.0 >> 24), f.0));
             let using: Vec<&RecipeDef> = ids.iter().filter_map(|&id| recipe(g, id)).filter(|r| r.ingredients.iter().any(|e| e.0 == item) && cat.is_none_or(|c| r.listed_under(c))).collect();
             let out: Vec<FormId> = if name == "getformrecipes" {
                 using.iter().map(|r| r.form).collect()
@@ -360,49 +421,53 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             yes(g.effects.iter().any(|e| e.target == r && e.effect == m))
         }
         // `npc flag`: the AI data's Buys/Sells and Services flags (1 Weapons … 131072
-        // Repair) [documented: GetServiceFlag's table; AIDT services, xEdit]; the NPC
-        // form's own AI data, following its template [hypothesis: as the vendor reads it].
+        // Repair) [documented: GetServiceFlag's table; AIDT services, xEdit]: the NPC
+        // record's, a "Use AI Data" template's until SetServiceFlag changes the NPC's
+        // [observed: lutana1 actor.service.tender2.4, actor.setservice.tender2]
+        // ([`ai_record`]).
         "getserviceflag" => {
-            let Some(src) = form(args, 0).and_then(|f| ai_source(g, f)) else { return Some(Ok(zero)) };
-            let flags = g.other.lutana.services.get(&src).copied().unwrap_or_else(|| g.data.actors.get(&src).map_or(0, |d| d.services));
+            let Some(rec) = form(args, 0).and_then(|f| ai_record(g, f)) else { return Some(Ok(zero)) };
+            let flags = services_of(g, rec);
             let bit = num(args, 1).map_or(0, |b| b as i64 as u32);
             yes(bit != 0 && flags & bit == bit)
         }
-        // `npc flag on`: changes the AI data's flags, which the vendor's services read
+        // `npc flag on`: changes the NPC record's flags, which the vendor's services read
         // unless "Autocalc Service" takes the class's (`Game::services`).
         "setserviceflag" => {
-            let (Some(src), Some(bit)) = (form(args, 0).and_then(|f| ai_source(g, f)), num(args, 1).map(|b| b as i64 as u32)) else { return Some(Ok(zero)) };
-            let now = g.other.lutana.services.get(&src).copied().unwrap_or_else(|| g.data.actors.get(&src).map_or(0, |d| d.services));
+            let (Some(rec), Some(bit)) = (form(args, 0).and_then(|f| ai_record(g, f)), num(args, 1).map(|b| b as i64 as u32)) else { return Some(Ok(zero)) };
+            let now = services_of(g, rec);
             let new = if num(args, 2).unwrap_or(0.0) != 0.0 { now | bit } else { now & !bit };
-            g.other.lutana.services.insert(src, new);
+            g.other.lutana.services.insert(rec, new);
             zero
         }
         // `[actorBase]`: the AI data's aggro radius [documented: LNGetAggroRadius], the
-        // calling reference's when no base is given.
+        // calling reference's when no base is given; the NPC record's, as the services
+        // [hypothesis: the same AI data as lutana1 actor.setservice.tender2].
         "lngetaggroradius" => {
-            let Some(src) = form(args, 0).or(subject).and_then(|f| ai_source(g, f)) else { return Some(Ok(zero)) };
-            XVal::Num(f64::from(g.other.lutana.aggro_radius.get(&src).copied().unwrap_or_else(|| g.data.actors.get(&src).map_or(0, |d| d.aggro_radius))))
+            let Some(rec) = form(args, 0).or(subject).and_then(|f| ai_record(g, f)) else { return Some(Ok(zero)) };
+            XVal::Num(f64::from(aggro_of(g, rec)))
         }
         // `radius [actorBase]`: read by the aggro checks too (`Game::aggro_radius`),
         // which still need the record's "Aggro Radius Behavior" on.
         "lnsetaggroradius" => {
             let r = num(args, 0).and_then(|v| field_number(v.trunc(), U32.0, U32.1));
-            if let (Some(r), Some(src)) = (r, form(args, 1).or(subject).and_then(|f| ai_source(g, f))) {
-                g.other.lutana.aggro_radius.insert(src, r as u32);
+            if let (Some(r), Some(rec)) = (r, form(args, 1).or(subject).and_then(|f| ai_record(g, f))) {
+                g.other.lutana.aggro_radius.insert(rec, r as u32);
             }
             zero
         }
         // `[actorBase]`: the combat style the actor fights with (`Game::combat_style_id`:
         // the package's, SetCombatStyle's, the AI data's ZNAM) [documented:
         // GetCombatStyle, "the current Combat Style"]; for a base form its AI data's ZNAM;
-        // none 0 [hypothesis: no fall back to DefaultCombatstyle here].
+        // none DefaultCombatstyle [observed: lutana1 actor.combatstyle.doc,
+        // actor.combatstyle.ref.docref, actor.combatstyle.player].
         "getcombatstyle" => {
-            if let Some(b) = form(args, 0) {
-                let src = ai_source(g, b);
-                reff(src.and_then(|s| g.data.actors.get(&s)).and_then(|d| d.combat_style))
+            let own = if let Some(b) = form(args, 0) {
+                ai_source(g, b).and_then(|s| g.data.actors.get(&s)).and_then(|d| d.combat_style)
             } else {
-                reff(subject.and_then(|r| g.combat_style_id(r)))
-            }
+                subject.and_then(|r| g.combat_style_id(r))
+            };
+            reff(own.or_else(|| g.data.by_edid("DefaultCombatstyle")))
         }
         // ---- perks ----
         // [documented: IsTrait] PERK DATA Trait, SetPerkFlag's change first (`nvse_gaps`).
@@ -415,7 +480,7 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // "Ability for type 5, Quest for type 6"]; an entry point 0 (its leveled list is
         // not kept decoded) [hypothesis], a negative index or past the entries 0.
         "getnthperkentryform" => {
-            let e = form(args, 0).and_then(|p| g.data.perks.get(&p)).and_then(|p| num(args, 1).filter(|i| *i >= 0.0).and_then(|i| p.entries.get(i as usize)));
+            let e = form(args, 0).and_then(|p| num(args, 1).and_then(|i| crate::nvse_lu3::nth_entry_of(g, p, i)));
             reff(match e.map(|e| &e.effect) {
                 Some(crate::data::PerkEffect::Ability(s)) => Some(*s),
                 Some(crate::data::PerkEffect::QuestStage { quest, .. }) => Some(*quest),
@@ -444,10 +509,11 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             zero
         }
         // `[cell]`: a string map of "x" and "y", the exterior cell's grid (XCLC)
-        // [documented: GetCellCoords]; an interior cell gives an empty map [hypothesis].
+        // [documented: GetCellCoords]; a cell without a grid (an interior) 0 and 0
+        // [observed: lutana1 cell.coords.doccell].
         "getcellcoords" => {
             let c = cell_arg(g, args, 0);
-            let xy = c.and_then(|c| Some((record_num(g, c, "XCLC", "x")?, record_num(g, c, "XCLC", "y")?)));
+            let xy = c.map(|c| (record_num(g, c, "XCLC", "x").unwrap_or(0.0), record_num(g, c, "XCLC", "y").unwrap_or(0.0)));
             string_map(g, xy.map_or_else(Vec::new, |(x, y)| vec![("x", x), ("y", y)]))
         }
         // `water`: the water type's actor effect (WATR XNAM) [documented:
@@ -465,11 +531,12 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
             reff(c.and_then(|c| crate::nvse_jg5::cell_zone(g, c)))
         }
         // `zone flag`: 1 Never Resets, 2 Match PC Below Minimum Level [documented: the
-        // pages' table]; 1 when every bit of `flag` is set.
+        // pages' table]; 1 when any bit of `flag` is set [observed: lutana1
+        // zone.flag.vault11zone.3].
         "getzoneflag" => {
             let (Some(d), Some(bit)) = (form(args, 0).and_then(|z| g.zone(z)), num(args, 1).map(|b| b as i64 as u8)) else { return Some(Ok(zero)) };
             let flags = u8::from(d.never_resets) | u8::from(d.match_pc_below_min) << 1;
-            yes(bit != 0 && flags & bit == bit)
+            yes(flags & bit != 0)
         }
         // `zone flag on`: read wherever the zone's flags are read through `Game::zone`.
         "setzoneflag" => {
@@ -507,10 +574,12 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // ---- terminals and locks ----
         // `[terminal]`: the base's DNAM difficulty, the number GetLockLevel gives a
         // terminal (0 Very Easy … 4 Very Hard, 5 Requires Key) [documented:
-        // GetTerminalLock, "regardless of locked state"; `terminal::lock_level`].
+        // GetTerminalLock, "regardless of locked state"; `terminal::lock_level`]; a
+        // terminal the record marks Unlocked -1 [observed: lutana1 term.lock.manny].
         "getterminallock" => {
             let t = form(args, 0).or(subject).map(|f| base(g, f));
-            XVal::Num(t.and_then(|t| g.data.terminals.get(&t)).map_or(0.0, |d| f64::from(d.difficulty)))
+            let unlocked = crate::data::terminal_flag::UNLOCKED;
+            XVal::Num(t.and_then(|t| g.data.terminals.get(&t)).map_or(0.0, |d| if d.has(unlocked) { -1.0 } else { f64::from(d.difficulty) }))
         }
         // `[terminal]`: TERM PNAM [documented: GetPasswordNote], SetPasswordNote's first.
         "getpasswordnote" => reff(form(args, 0).or(subject).map(|f| base(g, f)).and_then(|t| record_ref(g, t, "PNAM"))),
@@ -643,7 +712,9 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
                 "setweaponkillimpulse" => ("DNAM/kill_impulse", F32),
                 _ => ("DNAM/impulse_dist", F32),
             };
-            let v = num(args, 1).map(|v| if range == U8 { v.trunc() } else { v }).and_then(|v| field_number(v, range.0, range.1));
+            // The crit flags byte keeps the low 8 bits [observed: lutana1
+            // weap.setcritflags.300 reads 44].
+            let v = num(args, 1).filter(|v| v.is_finite()).map(|v| if range == U8 { f64::from(v.trunc() as i64 as u8) } else { v }).and_then(|v| field_number(v, range.0, range.1));
             if let (Some(w), Some(v)) = (w, v) {
                 g.field_overrides.insert((w, key.into()), XVal::Num(v));
             }
@@ -669,10 +740,13 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         // [documented: GetPCCanUsePowerArmor] SetPCCanUsePowerArmor's state.
         "getpccanusepowerarmor" => yes(g.player.power_armor),
         // [documented: GetMessageDisplayTime, alias GetMDT; SetDefaultMessageTime, alias
-        // SetDMT]: seconds; a time that is not a positive number is refused [hypothesis].
+        // SetDMT]: seconds, 0 and below too [observed: lutana1 misc.setdmt]. The installed
+        // JIP LN registers neither GetMessageDisplayTime nor GetMDT, which read as text in
+        // a script [observed: lutana1 misc.messagedisplaytime, misc.mdt; fnv-script
+        // encodings.json `not_commands`]; kept for a caller by name.
         "getmessagedisplaytime" | "getmdt" => XVal::Num(message_time(g)),
         "setdefaultmessagetime" | "setdmt" => {
-            if let Some(t) = num(args, 0).filter(|t| t.is_finite() && *t > 0.0) {
+            if let Some(t) = num(args, 0).filter(|t| t.is_finite()) {
                 g.other.lutana.message_time = Some(t);
             }
             zero
@@ -716,14 +790,15 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
                 zero
             }
         }
-        // `radius [light]`: the light base's radius (an integer field, so whole and not
-        // below 0), else the calling reference's own [documented: SetRadius].
+        // `radius [light]`: the light base's radius (an integer field, so whole), else the
+        // calling reference's own [documented: SetRadius]; a negative radius as given
+        // [observed: lutana1 radius.set.base.frac, radius.set.base.neg, radius.set.ref].
         "setradius" => {
             let Some(v) = num(args, 0).filter(|v| v.is_finite()) else { return Some(Ok(zero)) };
             if let Some(l) = form(args, 1).filter(|&l| g.data.sig(l) == Some(*b"LIGH")) {
-                g.field_overrides.insert((l, "DATA/radius".into()), XVal::Num(v.trunc().clamp(U32.0, U32.1)));
+                g.field_overrides.insert((l, "DATA/radius".into()), XVal::Num(signed(int_bits(v))));
             } else if let Some(r) = subject.filter(|_| form(args, 1).is_none()) {
-                g.other.lutana.ref_radius.insert(r, v.clamp(0.0, F32.1) as f32);
+                g.other.lutana.ref_radius.insert(r, v.clamp(F32.0, F32.1) as f32);
             }
             zero
         }

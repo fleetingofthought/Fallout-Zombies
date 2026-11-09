@@ -1636,10 +1636,15 @@ pub fn update_night_sky(
         t.translation = cam_pos;
         *vis = if star_vis > 0.0 { Visibility::Inherited } else { Visibility::Hidden };
         if refresh {
-            if let Some(mut mat) = materials.get_mut(&m.0) {
-                let c = sky.color(ColorType::Stars);
-                let v = star_vis * STAR_STRENGTH;
-                mat.base.base_color = Color::LinearRgba(LinearRgba::new(c[0] * v, c[1] * v, c[2] * v, 1.0));
+            let c = sky.color(ColorType::Stars);
+            let v = star_vis * STAR_STRENGTH;
+            let color = Color::LinearRgba(LinearRgba::new(c[0] * v, c[1] * v, c[2] * v, 1.0));
+            // Read first: taking the material mutably marks it changed, and by day (the
+            // stars at 0) every half game minute wrote the same black again.
+            if materials.get(&m.0).is_some_and(|mat| mat.base.base_color != color) {
+                if let Some(mut mat) = materials.get_mut(&m.0) {
+                    mat.base.base_color = color;
+                }
             }
         }
     }
@@ -1654,9 +1659,13 @@ pub fn update_night_sky(
         t.look_at(cam_pos, Vec3::Y);
         let phase = sky.moon_phase();
         if refresh || disc.shown != Some(phase) {
-            if let Some(mut mat) = materials.get_mut(&m.0) {
-                mat.base.base_color_texture = disc.phases[phase].clone();
-                mat.base.base_color = Color::LinearRgba(LinearRgba::new(1.0, 1.0, 1.0, moon_vis));
+            let color = Color::LinearRgba(LinearRgba::new(1.0, 1.0, 1.0, moon_vis));
+            // Read first, as the stars.
+            if materials.get(&m.0).is_some_and(|mat| mat.base.base_color_texture != disc.phases[phase] || mat.base.base_color != color) {
+                if let Some(mut mat) = materials.get_mut(&m.0) {
+                    mat.base.base_color_texture = disc.phases[phase].clone();
+                    mat.base.base_color = color;
+                }
             }
             disc.shown = Some(phase);
         }

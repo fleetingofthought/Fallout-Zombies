@@ -40,6 +40,7 @@ pub mod model;
 pub mod read;
 
 use super::frame::{self, Align, Card, Ctx, Kit, DIMMED, FADE, FILL, LINE, TEXT, THICK};
+use super::labels::label;
 use super::{Page, PageBody, PipBoy, PipBoyScreen};
 use crate::interface::{pipboy_amber as amber, at};
 use bevy::ecs::system::SystemParam;
@@ -329,6 +330,7 @@ pub struct Drawing<'w> {
     data: Option<Res<'w, GameData>>,
     images: ResMut<'w, Assets<Image>>,
     formats: Option<Res<'w, CompressedImageFormatSupport>>,
+    glyphs: Res<'w, crate::pad::PadGlyphs>,
 }
 
 #[derive(SystemParam)]
@@ -543,16 +545,16 @@ pub fn draw(
     if !new && !view.is_changed() && last.as_ref() == Some(snap) {
         return;
     }
-    let mut c = Ctx::new(&mut d.kit, d.data.as_deref(), &mut d.images, d.formats.as_deref());
+    let mut c = Ctx::new(&mut d.kit, d.data.as_deref(), &mut d.images, d.formats.as_deref(), &d.glyphs);
     let v = view.bypass_change_detection();
     v.drawn_at = screen.as_ref().and_then(|s| s.pointer);
     commands.entity(body).despawn_children().with_children(|p| {
         let value = figures;
         let cards = [
-            Card::new(LVL.0, LVL.1, "LVL", snap.level.map_or("--".into(), |l| l.to_string())),
-            Card::new(HP.0, HP.1, "HP", value(snap.hp)),
-            Card::new(AP.0, AP.1, "AP", value(snap.ap)),
-            Card::new(XP.0, XP.1, "XP", value(snap.xp)),
+            Card::new(LVL.0, LVL.1, label("sStatsLVLAbbrev", "LVL"), snap.level.map_or("--".into(), |l| l.to_string())),
+            Card::new(HP.0, HP.1, label("sStatsHP", "HP"), value(snap.hp)),
+            Card::new(AP.0, AP.1, label("sStatsAP", "AP"), value(snap.ap)),
+            Card::new(XP.0, XP.1, label("sStatsXP", "XP"), value(snap.xp)),
         ];
         frame::heading(p, &mut c, Page::Stats.title(), &cards);
         match tab {
@@ -734,7 +736,8 @@ fn status(p: &mut ChildSpawnerCommands, c: &mut Ctx, v: &mut StatsView, s: &Snap
     let o = STATUS.min;
     let h = c.line_height(2) + SUB_VERBUF;
     let mut spots = Vec::new();
-    for (i, name) in ["CND", "RAD", "EFF"].iter().enumerate() {
+    let names = [label("sStatsCNDAbbrev", "CND"), label("sStatsRADAbbrev", "RAD"), label("sStatsEFFAbbrev", "EFF")];
+    for (i, name) in names.iter().enumerate() {
         let r = Rect::new(o.x, o.y + h * i as f32, o.x + SUB_WIDTH, o.y + h * (i as f32 + 1.0));
         let selected = v.status == i;
         if selected || v.hover == Some(Spot::Sub(i)) {
@@ -833,7 +836,7 @@ fn condition(p: &mut ChildSpawnerCommands, c: &mut Ctx, v: &StatsView, s: &Snaps
     // The name and level under him [observed: "Loot - Level 1"], centred, its middle on
     // the area's foot.
     let name = match s.level {
-        Some(l) => format!("{} - Level {l}", s.name),
+        Some(l) => format!("{} - {} {l}", s.name, label("sLevelAbbrev", "Level")),
         None => s.name.clone(),
     };
     let th = c.line_height(2);
@@ -1059,7 +1062,7 @@ fn general(p: &mut ChildSpawnerCommands, c: &mut Ctx, v: &mut StatsView, s: &Sna
         centred(p, c, &model::whole(karma), mid, y, bw);
     }
     // The switch: the other list's name [hypothesis], its key after it.
-    let name = if v.reputation { "General" } else { "Reputation" };
+    let name = if v.reputation { label("sStatsGeneral", "General") } else { "Reputation" };
     let size = text_box(c, name, HINT_HORBUF, HINT_VERBUF);
     let right = GENERAL.x + GENERAL_SWITCH.x;
     let top = GENERAL.y + GENERAL_SWITCH.y;

@@ -779,6 +779,8 @@ mod tests {
             radius: None,
             encounter_zone: None,
             level_modifier: None,
+            map_marker: None,
+            radio: None,
         }
     }
 

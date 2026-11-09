@@ -73,6 +73,12 @@ pub struct LightEmittance {
 }
 
 impl EmittanceState {
+    /// The material copies the light emittance writes (the profile aid's `profile change
+    /// sources:` line).
+    pub fn copies(&self) -> impl Iterator<Item = AssetId<NifMaterial>> + '_ {
+        self.driven.iter().map(|d| d.copy.id())
+    }
+
     fn source(&mut self, world: &WorldData, xemi: u32) -> bool {
         self.sources
             .entry(xemi)

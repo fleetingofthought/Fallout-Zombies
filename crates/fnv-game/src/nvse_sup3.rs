@@ -43,9 +43,10 @@ fn outputs(g: &mut Game, ret: f64, vals: &[f64]) -> XVal {
 
 /// Degrees to look down at a point `d` (target less camera) from level: up is negative
 /// [observed: sup3 cam.calc.x, 100 across and 100 up gives -45, 100 across and 100 down
-/// 45, 30 across and 40 up -53.1301].
+/// 45, 30 across and 40 up -53.1301]. A level point is +0, not -0 [observed: the same
+/// row, `%.4f` writes "0.0000" where it writes -0 as "-0.0000", #1919].
 pub fn angle_x_to(d: [f64; 3]) -> f64 {
-    -d[2].atan2(d[0].hypot(d[1])).to_degrees()
+    -d[2].atan2(d[0].hypot(d[1])).to_degrees() + 0.0
 }
 
 /// The heading, in degrees, of a point `d` (target less camera, X and Y): 0 north (+Y),

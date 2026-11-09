@@ -283,6 +283,8 @@ pub(crate) fn tick(
     // Scripts' GetMineArmed (`fnv_game::nvse_gaps`): live mines not going off and not
     // the player's.
     if let Some(rt) = script.as_deref_mut().and_then(|s| s.rt.as_mut()) {
+        // GetMineArmedEx (`fnv_game::nvse_jg6`): the player's live mines too.
+        rt.game.other.jg6.armed_mines_all = live.keys().filter(|id| !m.burning.contains_key(id)).copied().collect();
         rt.game.gaps.armed_mines = live
             .keys()
             .filter(|id| !m.burning.contains_key(id) && sim.world.peek(**id).and_then(|r| r.extra.owner) != Some(FormId::PLAYER_REF))

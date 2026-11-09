@@ -365,7 +365,12 @@ pub fn keys(
 pub fn draw_hint(p: &mut ChildSpawnerCommands, c: &mut Ctx, o: Option<&Offer>) {
     let Some(o) = o else { return };
     // R, with a controller Y (`inventory_menu.xml`'s Repair, `crate::pad::menu_buttons`).
-    let label = format!("{} {}", hint(o.gear, o.condition), crate::pad::hint(&[KeyCode::KeyR], crate::pad::at_menu(fnv_game::game::menus::INVENTORY)));
+    // The word: its setting's text when the load order defines it (`super::labels`, #1443).
+    let word = match hint(o.gear, o.condition) {
+        "Maintain" => super::labels::label("sMaintainItem", "Maintain"),
+        w => super::labels::label("sInventoryRepair", w),
+    };
+    let label = format!("{} {}", word, crate::pad::hint(&[KeyCode::KeyR], crate::pad::at_menu(fnv_game::game::menus::INVENTORY)));
     info!("pipboy items: {} {label}{}", o.name, if o.usable() { "" } else { " (dim)" });
     let color = amber(if o.usable() { TEXT } else { frame::DIMMED });
     c.text(p, 2, &label, MAIN.min.x + HINT.x - 10.0, MAIN.min.y + HINT.y + frame::BUTTON_TEXT_Y, Align::Right, color);
@@ -376,8 +381,8 @@ pub fn draw_hint(p: &mut ChildSpawnerCommands, c: &mut Ctx, o: Option<&Offer>) {
 fn stat(combat: Option<&crate::combat::Combat>, o: &Offer, condition: f32) -> Option<(&'static str, i32)> {
     let c = combat?;
     match o.gear {
-        Gear::Weapon => c.forms.weapons.get(&o.item).filter(|w| w.base_damage > 0).map(|w| ("DAM", (w.base_damage as f32 * fnv_combat::damage::condition_mult(condition)).round() as i32)),
-        Gear::Armor => c.forms.armor.get(&o.item).map(|a| ("DT", (a.dt * fnv_combat::condition::armor_mult(condition)).round() as i32)),
+        Gear::Weapon => c.forms.weapons.get(&o.item).filter(|w| w.base_damage > 0).map(|w| (super::labels::label("sInventoryDamage", "DAM"), (w.base_damage as f32 * fnv_combat::damage::condition_mult(condition)).round() as i32)),
+        Gear::Armor => c.forms.armor.get(&o.item).map(|a| (super::labels::label("sInventoryDamageThreshold", "DT"), (a.dt * fnv_combat::condition::armor_mult(condition)).round() as i32)),
     }
 }
 
@@ -394,8 +399,8 @@ pub fn draw_list(p: &mut ChildSpawnerCommands, c: &mut Ctx, s: &Session, combat:
     frame::heading(p, c, Page::Items.title(), &[Card::new(MAIN.width() - SKILL_W, SKILL_W, "Repair Skill", format!("{:.0}", s.skill.max(0.0).floor()))]);
     let by = MAIN.min.y + BUTTONS.y + frame::BUTTON_TEXT_Y;
     let cancel = format!("Cancel {}", crate::pad::hint(&[KeyCode::KeyE, KeyCode::Escape], crate::pad::at_menu(fnv_game::game::menus::INVENTORY)));
-    c.text(p, 2, &cancel, MAIN.min.x + BUTTONS.x - 10.0, by, Align::Right, bright);
-    let cw = c.width(2, &cancel);
+    // The drawn width, not the text's: a hint that names a button draws its picture.
+    let cw = c.text(p, 2, &cancel, MAIN.min.x + BUTTONS.x - 10.0, by, Align::Right, bright);
     p.spawn((at(MAIN.min.x + BUTTONS.x - 10.0 - cw, by - 5.0, cw + 10.0, 40.0), RepairCancel, Pickable::default())).observe(on_cancel_click);
     // The rows: the item, then its parts.
     let rows: Vec<(&str, f32, bool)> = std::iter::once((o.name.as_str(), o.condition, o.extra.equipped)).chain(o.parts.iter().map(|q| (q.name.as_str(), q.condition, q.extra.equipped))).collect();
@@ -432,7 +437,7 @@ pub fn draw_list(p: &mut ChildSpawnerCommands, c: &mut Ctx, s: &Session, combat:
     let cr = Rect::from_corners(MAIN.min + COMPARE.min, MAIN.min + COMPARE.max);
     let half = cr.width() / 2.0;
     let cards = |p: &mut ChildSpawnerCommands, c: &mut Ctx, y: f32, cond: f32| {
-        frame::card(p, c, cr.min.x, y, half - 5.0, "CND", "");
+        frame::card(p, c, cr.min.x, y, half - 5.0, super::labels::label("sInventoryCondition", "CND"), "");
         let m = Rect::new(cr.min.x + half - 5.0 - METER.x - 15.0, y + 17.0, cr.min.x + half - 5.0 - 15.0, y + 17.0 + METER.y);
         bar(p, m, cond, bright);
         let (t, v) = stat(combat, o, cond).map_or(("", String::new()), |(t, v)| (t, v.to_string()));

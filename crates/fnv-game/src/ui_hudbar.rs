@@ -9,8 +9,8 @@
 //! console, the first bar of the name is taken [documented: the category page]. Built:
 //! the bars' making, values, look and debug output. Not built (menu-xml.md §9): the
 //! visibility conditions and their gradual vanishing (bar traits 0 and 21-64 are kept and
-//! read back, not acted on), the script-variable and UDF values, the texture sizes read
-//! from the files. The rotation traits are written into the tiles but the tile renderer
+//! read back, not acted on), the texture sizes read from the files. The script-variable
+//! and UDF values are `crate::nvse_sup7`'s. The rotation traits are written into the tiles but the tile renderer
 //! turns no tile yet (`engine/nvf-play/src/tiles/layout.rs`), so HudBarSetRotation shows
 //! nothing until it does.
 
@@ -184,6 +184,32 @@ fn find(g: &Game, name: &str) -> Option<usize> {
     g.ui_extra.bars.list.iter().position(|b| b.name.eq_ignore_ascii_case(name) && (owner.is_empty() || b.owner == *owner))
 }
 
+/// The id of the calling plugin's bar of a name (from the console the first of the
+/// name), for the value sources of `crate::nvse_sup7`.
+pub fn bar_id(g: &Game, name: &str) -> Option<u32> {
+    find(g, name).map(|i| g.ui_extra.bars.list[i].id)
+}
+
+/// A value from a bar's source (SUP's HudBarSetValueScriptVar and HudBarSetValueUDF):
+/// with iCalculateValueMax as HudBarSetValueFloat, the value against the max; without
+/// it the raw value is the meter's share, 0.00-1.00 as HudBarSetValuePercentage's
+/// [documented: "turned into percentage using <MaxValue> if iCalculateValueMax is set
+/// to 1. If not - raw value will be passed"; hypothesis: "passed" as the share, the
+/// value text showing the raw value]. Written only when it changed.
+pub fn set_value(g: &mut Game, i: usize, v: f64, of_max: bool) {
+    let b = &mut g.ui_extra.bars.list[i];
+    let share = if of_max {
+        if b.max != 0.0 { (v / b.max).clamp(0.0, 1.0) } else { 0.0 }
+    } else {
+        v.clamp(0.0, 1.0)
+    };
+    if b.value == v && b.share == share {
+        return;
+    }
+    (b.value, b.share) = (v, share);
+    apply(g, i);
+}
+
 /// A plugin's name by its load-order index, lower case.
 fn plugin_at(g: &Game, index: f64) -> Option<String> {
     g.data.load_order.get(index.max(0.0) as usize).map(|p| p.to_ascii_lowercase())
@@ -301,7 +327,7 @@ fn debug_lines(b: &Bar) -> Vec<String> {
 }
 
 /// A HudBar function by lower-case name; `None` for any other (and for
-/// HudBarSetValueScriptVar and HudBarSetValueUDF, not built).
+/// HudBarSetValueScriptVar and HudBarSetValueUDF, built in `crate::nvse_sup7`).
 /// A non-finite number in a place, size, colour or trait writes 0; the value, max and
 /// percentage setters refuse one with -1 [design: `ui_more::finite`].
 pub(crate) fn call(g: &mut Game, lname: &str, args: &[XVal]) -> Option<Result<XVal, String>> {

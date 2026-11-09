@@ -803,7 +803,7 @@ fn hud_bars_made_of_tiles_in_the_hud() {
     assert!(g.ui_tree.find_tile(&path).is_none());
     run(&mut g, "HudBarDestroyAllBars", &[]);
     assert!(g.ui_extra.bars.list.is_empty());
-    // Not built: the script-variable value.
+    // Not this file's: the script-variable value (`nvse_sup7`, tests/sup7.rs).
     assert!(call(&mut g, "HudBarSetValueScriptVar", None, &[s("x"), x(1.0)]).is_none());
 }
 

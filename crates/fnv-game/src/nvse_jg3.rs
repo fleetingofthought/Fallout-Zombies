@@ -38,10 +38,28 @@ fn index(args: &[XVal], k: usize) -> Option<i64> {
     }
 }
 
-/// An effect shader trait 0-46 [documented: GetEffectShaderTraitNumeric's table]: the
-/// EFSH DATA field, and whether it is one of the blend or Z test enums. The colours (4 fill, 14 edge) are left out: how the page turns three
-/// channels into one number is not documented [decision: 0, ext-jg3.md].
-fn efsh_trait(id: i64) -> Option<(&'static str, bool)> {
+/// What an effect shader trait reads.
+#[derive(Clone, Copy, PartialEq)]
+enum Trait {
+    /// An EFSH DATA number; true for the blend and Z test enums.
+    Field(&'static str, bool),
+    /// An EFSH DATA colour, as one number: red × 65536 + green × 256 + blue [observed: jg3
+    /// efsh.trait.nuke.4 (75, 222, 39) read 4.97207e+06, efsh.trait.nuke.14 (154, 222,
+    /// 131) 1.01495e+07, efsh.trait.cateye.14 (4, 255, 4) 327428].
+    Colour(&'static str),
+}
+
+/// An effect shader trait 0-47 [documented: GetEffectShaderTraitNumeric's table, 0-46]:
+/// the EFSH DATA field. Trait 47, past the table, is the next DATA field, colour key 1
+/// [observed: jg3 efsh.trait.nuke.47 read 1.43523e+07, NukeAtomShader's colour key 1
+/// (218, 255, 202) packed as the colours are]; what lies past 47 is not known (0 here).
+fn efsh_trait(id: i64) -> Option<Trait> {
+    match id {
+        4 => return Some(Trait::Colour("fill_color")),
+        14 => return Some(Trait::Colour("edge_color")),
+        47 => return Some(Trait::Colour("color_key_1")),
+        _ => {}
+    }
     const NAMES: [&str; 47] = [
         "flags",
         "membrane_source_blend",
@@ -92,7 +110,13 @@ fn efsh_trait(id: i64) -> Option<(&'static str, bool)> {
         "scale_key_2_time",
     ];
     let name = *NAMES.get(usize::try_from(id).ok()?)?;
-    (!name.is_empty()).then_some((name, matches!(id, 1..=3 | 23..=27)))
+    (!name.is_empty()).then_some(Trait::Field(name, matches!(id, 1..=3 | 23..=27)))
+}
+
+/// The game's "script call failed": worded as the VM's NoReference, which stops the
+/// script (as `nvse_jg5` does).
+fn failed(name: &str) -> Option<Result<XVal, String>> {
+    Some(Err(fnv_script::vm::VmError::NoReference(name.to_string()).to_string()))
 }
 
 /// An effect shader texture 0-2: fill (ICON), particle shader (ICO2), holes (NAM7)
@@ -127,28 +151,49 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
     let empty = XVal::Str(String::new());
     let v = match name {
         // `shader trait [value]`: the EFSH DATA field [documented: Get/
-        // SetEffectShaderTraitNumeric]; the setter takes the traits its page lists (0-42)
-        // and returns 1 when done [documented: "returning 1 on success"].
+        // SetEffectShaderTraitNumeric]; the setter returns 1 when done [documented:
+        // "returning 1 on success"] and takes every trait the getter reads, not only the
+        // 0-42 its page lists [observed: jg3 efsh.set.nuke.43 and efsh.set.nuke.47 returned
+        // 1 and read the new value back].
         "geteffectshadertraitnumeric" | "seteffectshadertraitnumeric" => {
             let set = name.starts_with("set");
-            let (Some(s), Some((path, by_name))) = (of_sig(g, form(args, 0), b"EFSH"), index(args, 1).and_then(efsh_trait)) else { return Some(Ok(zero)) };
-            if set {
-                if index(args, 1).is_some_and(|t| t > 42) {
-                    return Some(Ok(zero));
+            let (Some(s), Some(t)) = (of_sig(g, form(args, 0), b"EFSH"), index(args, 1).and_then(efsh_trait)) else { return Some(Ok(zero)) };
+            let v = num(args, 2, 0.0);
+            match (t, set) {
+                (Trait::Field(path, by_name), true) => {
+                    // A flag byte and the enums keep whole numbers [observed: jg3
+                    // efsh.set.nuke.0 (2.7 read 2) and efsh.set.nuke.1 (5.5 read 5)].
+                    let v = if path == "flags" || by_name { v.trunc() } else { v };
+                    g.field_overrides.insert((s, format!("DATA/{path}")), XVal::Num(v));
+                    XVal::Num(1.0)
                 }
-                let v = num(args, 2, 0.0);
-                // A flag byte and the enums keep whole numbers [hypothesis].
-                let v = if path == "flags" || by_name { v.trunc() } else { v };
-                g.field_overrides.insert((s, format!("DATA/{path}")), XVal::Num(v));
-                XVal::Num(1.0)
-            } else {
-                XVal::Num(number(field(g, s, "DATA", path)))
+                (Trait::Field(path, _), false) => XVal::Num(number(field(g, s, "DATA", path))),
+                // A colour set as one number reads back as given [observed: jg3
+                // efsh.set.nuke.4, 255 read 255]; kept to the three channels' 24 bits
+                // [hypothesis].
+                (Trait::Colour(path), true) => {
+                    g.field_overrides.insert((s, format!("DATA/{path}")), XVal::Num(v.trunc().clamp(0.0, f64::from(0xFF_FFFF))));
+                    XVal::Num(1.0)
+                }
+                (Trait::Colour(path), false) => match g.field_overrides.get(&(s, format!("DATA/{path}"))) {
+                    Some(v) => v.clone(),
+                    None => {
+                        let ch = |c: &str| number(field(g, s, "DATA", &format!("{path}.{c}")));
+                        XVal::Num(ch("red") * 65536.0 + ch("green") * 256.0 + ch("blue"))
+                    }
+                },
             }
         }
         // `shader id [path]`: 0 fill, 1 particle, 2 holes [documented: Get/
         // SetEffectShaderTexturePath].
         "geteffectshadertexturepath" | "seteffectshadertexturepath" => {
-            let (Some(s), Some(sub)) = (of_sig(g, form(args, 0), b"EFSH"), index(args, 1).and_then(efsh_texture)) else {
+            let sub = index(args, 1).and_then(efsh_texture);
+            // An id past the table fails the call [observed: jg3 efsh.tex.nuke.3 and
+            // efsh.tex.nuke.-1, "script call failed"].
+            if name.starts_with("get") && sub.is_none() && of_sig(g, form(args, 0), b"EFSH").is_some() {
+                return failed(name);
+            }
+            let (Some(s), Some(sub)) = (of_sig(g, form(args, 0), b"EFSH"), sub) else {
                 return Some(Ok(if name.starts_with("get") { empty } else { zero }));
             };
             if name.starts_with("set") {
@@ -176,15 +221,27 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // `set trait [path]`: NAM2-NAM7 [documented: Get/SetMediaSetTraitString, 0-5].
         "getmediasettraitstring" | "setmediasettraitstring" => {
             let sub = index(args, 1).filter(|t| (0..=5).contains(t)).map(|t| format!("NAM{}", t + 2));
+            // A trait past the table fails the call [observed: jg3 mset.str.corp.6 and
+            // mset.str.corp.-1, "script call failed"].
+            if name.starts_with("get") && sub.is_none() && of_sig(g, form(args, 0), b"MSET").is_some() {
+                return failed(name);
+            }
             let (Some(m), Some(sub)) = (of_sig(g, form(args, 0), b"MSET"), sub) else {
                 return Some(Ok(if name.starts_with("get") { empty } else { zero }));
             };
             if name.starts_with("set") {
                 g.field_overrides.insert((m, format!("{sub}/")), XVal::Str(text(args, 2)));
                 zero
+            } else if let Some(v) = g.field_overrides.get(&(m, format!("{sub}/"))) {
+                // A path a script set reads back as given [observed: jg3 mset.setstr.corp.0].
+                v.clone()
             } else {
+                // The record's path reads under `Data\Music\`, the folder the game plays
+                // it from; none reads "" [observed: jg3 mset.str.corp.0-5 and
+                // mset.str.dung.0/3 read `Data\Music\` and the record's path,
+                // mset.str.dung.1 ""].
                 XVal::Str(match field(g, m, &sub, "") {
-                    Some(XVal::Str(p)) => p,
+                    Some(XVal::Str(p)) if !p.is_empty() => format!("Data\\Music\\{p}"),
                     _ => String::new(),
                 })
             }
@@ -200,10 +257,10 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
                 return Some(Ok(if name.starts_with("get") { XVal::Ref(0) } else { zero }));
             };
             if name.starts_with("set") {
-                // A sound form, or none [hypothesis: anything else is refused].
-                let s = form(args, 2);
-                if s.is_none() || of_sig(g, s, b"SOUN").is_some() {
-                    g.field_overrides.insert((m, format!("{sub}/")), XVal::Ref(s.map_or(0, |s| s.0)));
+                // A sound form only: none and other forms change nothing [observed: jg3
+                // mset.setsound.bttl.none and mset.setsound.bttl.notsound].
+                if let Some(s) = of_sig(g, form(args, 2), b"SOUN") {
+                    g.field_overrides.insert((m, format!("{sub}/")), XVal::Ref(s.0));
                 }
                 zero
             } else {
@@ -242,6 +299,11 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // [documented: Get/SetTerminalMenuItemText].
         "getterminalmenuitemtext" | "setterminalmenuitemtext" => {
             let set = name.starts_with("set");
+            // textID 0 fails the call; 3 reads "" here as for an item without text
+            // [observed: jg3 term.text.v34.0.0 "script call failed", term.text.v34.3.0 ""].
+            if !set && index(args, 1) == Some(0) {
+                return failed(name);
+            }
             let (Some(t), Some(which), Some(i)) = (form(args, 0), index(args, 1).filter(|w| matches!(w, 1 | 2)), index(args, 2)) else {
                 return Some(Ok(if set { zero } else { empty }));
             };
@@ -290,18 +352,21 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
                     }
                 }
                 _ => {
-                    // The flag byte keeps its two bits [documented: the page's bits].
-                    g.other.terminal_items.entry((t, i)).or_default().flags = Some((num(args, 2, 0.0) as i64 & 3) as u8);
+                    // The flags are kept whole, not only the page's two bits [observed: jg3
+                    // term.setflags.east.0.7 read 7, term.setflags.v34.4.6 read 6]; a byte, as
+                    // ANAM is [hypothesis].
+                    g.other.terminal_items.entry((t, i)).or_default().flags = Some((num(args, 2, 0.0) as i64).clamp(0, 255) as u8);
                 }
             }
             zero
         }
-        // `quest`: the quest script's delay, SetQuestDelay's first, else the record's,
-        // 5 s when that is 0 or missing [documented: GetQuestDelay; the default:
-        // `crate::quest::QuestDef::script_delay`].
+        // `quest`: the quest script's delay, SetQuestDelay's first, else the record's as
+        // it stands: 0 stays 0, not the 5 s the quest then runs at [documented:
+        // GetQuestDelay; observed: jg3 quest.delay.vcg02 read 0]; a DATA without a delay
+        // reads 0 [hypothesis].
         "getquestdelay" => {
             let Some(q) = form(args, 0).filter(|q| g.data.quests.contains_key(q)) else { return Some(Ok(zero)) };
-            XVal::Num(g.quests.get(&q).and_then(|s| s.delay).unwrap_or_else(|| g.data.quests[&q].script_delay()))
+            XVal::Num(g.quests.get(&q).and_then(|s| s.delay).unwrap_or_else(|| g.data.quests[&q].delay.map_or(0.0, f64::from)))
         }
         _ => return None,
     };

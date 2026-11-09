@@ -85,6 +85,28 @@ pub struct Teleport {
     pub no_alarm: bool,
 }
 
+/// XMRK, the data of a map marker reference [documented: xEdit wbDefinitionsFNV.pas
+/// REFR "Map Marker Data"; schemas/fnv/world.json].
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct MapMarker {
+    /// FNAM: 1 Visible, 2 Can Travel To, 4 "Show All" Hidden.
+    pub flags: u8,
+    /// TNAM's marker type, 0 None … 14 Vault (the icon).
+    pub kind: u8,
+}
+
+/// XRDO, the radio data of a talking activator's reference [documented: xEdit
+/// wbDefinitionsFNV.pas REFR "Radio Data"]: the range's radius, its type (0 Radius,
+/// 1 Everywhere, 2 Worldspace and Linked Interiors, 3 Linked Interiors, 4 Current Cell
+/// Only), the static percentage and the exterior position reference.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct RadioData {
+    pub radius: f32,
+    pub range: u32,
+    pub static_percent: f32,
+    pub position_ref: Option<FormId>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub struct EnableParent {
     pub reference: FormId,
@@ -204,6 +226,13 @@ pub struct PlacedRef {
     /// to JSON.
     #[serde(skip)]
     pub level_modifier: Option<i32>,
+    /// XMRK: the reference is a map marker, with its flags and type [documented: xEdit
+    /// wbDefinitionsFNV.pas REFR "Map Marker Data"]. Not written to JSON.
+    #[serde(skip)]
+    pub map_marker: Option<MapMarker>,
+    /// XRDO: a radio station's broadcast. Not written to JSON.
+    #[serde(skip)]
+    pub radio: Option<RadioData>,
 }
 
 impl PlacedRef {
@@ -428,6 +457,21 @@ fn field_fid(
     }
 }
 
+/// A decoded number or flags value as its number (`{"value": n, …}` or `n`).
+fn code(v: &serde_json::Value) -> Option<u64> {
+    v.as_u64().or_else(|| v.get("value").and_then(serde_json::Value::as_u64))
+}
+
+/// XRDO's broadcast range type as its number: the decoder gives a known value as the
+/// schema's name for it (schemas/fnv/world.json XRDO), an unknown one as the number.
+fn broadcast_range_code(v: &serde_json::Value) -> Option<u64> {
+    const NAMES: [&str; 5] = ["Radius", "Everywhere", "Worldspace and Linked Interiors", "Linked Interiors", "Current Cell Only"];
+    match v.as_str() {
+        Some(name) => NAMES.iter().position(|n| *n == name).map(|i| i as u64),
+        None => code(v),
+    }
+}
+
 /// A decoded boolean enum (`BoolU8`: "True" / "False", or its number).
 fn truthy(v: &serde_json::Value) -> bool {
     match v {
@@ -555,6 +599,16 @@ fn load_ref(
         radius: first(&d, b"XRDS").and_then(serde_json::Value::as_f64).map(|x| x as f32),
         encounter_zone: fid(first(&d, b"XEZN"), "XEZN", issues),
         level_modifier: first(&d, b"XLCM").and_then(serde_json::Value::as_i64).map(|x| x as i32),
+        map_marker: d.iter().any(|x| &x.sig == b"XMRK").then(|| MapMarker {
+            flags: first(&d, b"FNAM").and_then(code).unwrap_or(0) as u8,
+            kind: all(&d, b"TNAM").find_map(|v| v.get("marker_type").and_then(code)).unwrap_or(0) as u8,
+        }),
+        radio: first(&d, b"XRDO").map(|v| RadioData {
+            radius: num(v, "range_radius").unwrap_or(0.0) as f32,
+            range: v.get("broadcast_range_type").and_then(broadcast_range_code).unwrap_or(0) as u32,
+            static_percent: num(v, "static_percentage").unwrap_or(0.0) as f32,
+            position_ref: fid(v.get("position_reference"), "XRDO", issues),
+        }),
     })
 }
 

@@ -876,20 +876,6 @@
    "tags": ["ext", "showoff", "probes", "showoff2"]
   },
   {
-   "id": "L5.ext.showoff4",
-   "layer": 5,
-   "description": "ShowOff NVSE batch 4 (#1010; docs/spec-notes/ext-showoff.md section 7): the matrix and quaternion functions on the pages' examples, SayTo's topic on Doc Mitchell, the pickpocket, quest-message and frozen-regen switches and what they return, the hotkey icon override, the INI cache and ReadFromJSON on missing files, DisableAlt / EnableAlt; set showoff4 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
-   "oracle": {"golden": "jip/showoff4.json"},
-   "candidate": {
-    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
-             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
-             "NVFExtProbe.esp", "--schema", "{schema_dir}",
-             "--steps", "{lab_root}/../tools/capture/jip-probes/showoff4.steps.json", "--start-cell", "0x000DEB16"]
-   },
-   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
-   "tags": ["ext", "showoff", "probes", "showoff4"]
-  },
-  {
    "id": "L5.ext.jg1",
    "layer": 5,
    "description": "JohnnyGuitar NVSE batch 1 (#1007; docs/spec-notes/ext-jg1.md): book, faction, creature, race, weapon world model, music type, container sound and lighting template getters and setters; set jg1 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
@@ -1072,6 +1058,20 @@
    "tags": ["ext", "itr", "probes"]
   },
   {
+   "id": "L5.ext.lu2",
+   "layer": 5,
+   "description": "Lutana batch 2 through JIP LN (#1009; docs/spec-notes/ext-lutana.md section 9): radio data of the pages' references, skill magazines, the quest items switch, form counts by type, the plugins of a form, SetIngestibleFlag put back; set lu2 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/lu2.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/lu2.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "lu", "probes", "lu2"]
+  },
+  {
    "id": "L5.ext.pp",
    "layer": 5,
    "description": "ppNVSE (#1014; docs/spec-notes/ext-pp.md), installed as VanillaPluginsPlus.dll: AX variables, form instances, extended item-mod slots, the sighting node, topic prompts, the camera rotation, line files and the Devkit getters with no Devkit; set pp of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
@@ -1084,6 +1084,34 @@
    },
    "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
    "tags": ["ext", "pp", "probes"]
+  },
+  {
+   "id": "L5.ext.sup6",
+   "layer": 5,
+   "description": "SUP NVSE batch 6 (#1008; docs/spec-notes/ext-sup6.md): the cursor's traits, debug texts, the mouse out of menus, the screen, fonts, plugin header texts, the HUD's visibility flags, the lockpick menu shut and the throw held at rest; set sup6 of tools/capture/jip_probes.py (writes restored), keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/sup6.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/sup6.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "sup", "probes", "sup6"]
+  },
+  {
+   "id": "L5.ext.showoff4",
+   "layer": 5,
+   "description": "ShowOff NVSE batch 4 (#1010; docs/spec-notes/ext-showoff.md section 7): the matrix and quaternion functions on the pages' examples, SayTo's topic on Doc Mitchell, the pickpocket, quest-message and frozen-regen switches and what they return, the hotkey icon override, the INI cache and ReadFromJSON on missing files, DisableAlt / EnableAlt; set showoff4 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/showoff4.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/showoff4.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "showoff", "probes", "showoff4"]
   },
   {
    "id": "L5.ext.sup1",
@@ -1178,6 +1206,188 @@
    },
    "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
    "tags": ["ext", "sup", "probes", "sup5"]
+  },
+  {
+   "id": "L5.ext.showoff5",
+   "layer": 5,
+   "description": "ShowOff NVSE batch 5 (#1010; docs/spec-notes/ext-showoff.md section 8): the level-up menu opened by ShowSkillMenu and closed in the same step, the shot switches, fast travel, AP costs, item values, VATS reads and the player's small states; set showoff5 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/showoff5.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/showoff5.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "showoff", "probes", "showoff5"]
+  },
+  {
+   "id": "L5.ext.jip9",
+   "layer": 5,
+   "description": "JIP LN batch 9 (#1006; docs/spec-notes/jip-ui-9.md): the HUD cursor, mouse, vanity wheel, camera collision and immortal-mode switches, the cursor outside MenuMode, the game volumes, SetFontFile, interaction by type, the hotkeys' inventory references, the Pip-Boy radio, the health bar's actor, GetPosEx and the NIF block translation, rotation and material values on the player; set jip9 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/jip9.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/jip9.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "jip", "probes", "jip9"]
+  },
+  {
+   "id": "L5.ext.jg6",
+   "layer": 5,
+   "description": "JohnnyGuitar batch 6 (#1007; docs/spec-notes/ext-jg6.md): actor values by code and UnsetAV/UnforceAV, RewardKarmaAlt, life states, temporary ingestible effects, available perks, effect shaders, armed mines, visited and expired cells, buffered cells, lighting template cells, the moon phase, radios, talking activator actors, prompt overrides, primitives, CallPerRef and CallPerMobileObject; set jg6 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/jg6.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/jg6.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "jg", "probes", "jg6"]
+  },
+  {
+   "id": "L5.ext.lutana1",
+   "layer": 5,
+   "description": "Lutana batch 1 (#1009; docs/spec-notes/ext-lutana.md), run through JIP LN: challenge, casino and recipe getters and setters (recipe lists, GetFormRecipes order), actor AI data (services, aggro radius, combat style), perk entries, worldspace, cell water and grid, zone flags, activator sounds and radio, terminal locks and password notes, locked-out states and keys, form flags and playability, weapon fields, load screen types, message time, notes and light radii; set lutana1 of tools/capture/jip_probes.py, keyed by probe id, steps in order; every change put back. The load order puts GunRunnersArsenal.esm after LonesomeRoad.esm, as the original's game did (its forms read 05xxxxxx in the golden). Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/lutana1.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "GunRunnersArsenal.esm", "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/lutana1.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "lutana", "probes", "lutana1"]
+  },
+  {
+   "id": "L5.ext.jg3",
+   "layer": 5,
+   "description": "JohnnyGuitar batch 3 (#1007; docs/spec-notes/ext-jg3.md): effect shaders' numeric traits (the colours packed as one number) and texture paths, media sets' numeric, string and sound traits, casinos' chips and winnings, terminals' menu items (count, texts, notes, sub menus, flags) and GetQuestDelay, each setter set, read back and put back; set jg3 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Two calls that crashed the original are not probed (a media set's missing sound, a terminal item past the list). Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/jg3.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/jg3.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "jg", "probes", "jg3"]
+  },
+  {
+   "id": "L5.ext.jg4",
+   "layer": 5,
+   "description": "JohnnyGuitar batch 4 (#1007; docs/spec-notes/ext-jg4.md): idle markers' animations and traits and their setters, regions' weather lists (order, nth entries, membership, override, priority, add, remove, clear), race flags and faction members (rank, template factions, order), each change undone; set jg4 of tools/capture/jip_probes.py, keyed by probe id, steps in order. GetNthRegionWeatherGlobal on an entry without a global crashed the original and is not probed there. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/jg4.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/jg4.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "jg", "probes", "jg4"]
+  },
+  {
+   "id": "L5.ext.jg7",
+   "layer": 5,
+   "description": "JohnnyGuitar batch 7 (#1007; docs/spec-notes/ext-jg7.md): the combat music, level-up menu, yield timer, viewmodel clip distance and LOD level switches read back, barter hiding flags, the reputation change icon's result, a map marker's icon, GetJohnnyPatch, GetDefaultHeapSize, IsMenuPaused, GetLocationSpecificLoadScreensOnly and RefAddr (HSVtoRGB and RGBtoHSV do not compile at run time in the original, so they are not in the set); set jg7 of tools/capture/jip_probes.py, keyed by probe id, steps in order; every change put back. Probed 2026-11-08, 14 of 14. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/jg7.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/jg7.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "jg", "probes", "jg7"]
+  },
+  {
+   "id": "L5.ext.jip10",
+   "layer": 5,
+   "description": "JIP LN batch 10 (#1006; docs/spec-notes/jip-scripts-10.md): the quest and objective lists, an objective's targets, the player's perks and Doc Mitchell's factions, linked and enable children, a variable added to a script and removed, event blocks switched off and put back, FakeScriptEvent, the player's extra data, a reference map marker, and a text file written and read; set jip10 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/jip10.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/jip10.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "jip", "probes", "jip10"]
+  },
+  {
+   "id": "L5.ext.sup7",
+   "layer": 5,
+   "description": "SUP NVSE batch 7 (#1008; docs/spec-notes/ext-sup7.md): the NIF block interpolations on the player's Bip01 Head (the type numbers, the searches' defaults, Stop, the trait, the finish event and its arguments, what a stopped block keeps), the vertices of a node and a missing block, and the HUD bars' script-variable and UDF sources' results; set sup7 of tools/capture/jip_probes.py (writes restored), keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/sup7.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/sup7.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "sup", "probes", "sup7"]
+  },
+  {
+   "id": "L5.ext.lu3",
+   "layer": 5,
+   "description": "Lutana batch 3 through JIP LN (#1009; docs/spec-notes/ext-lutana.md section 10): the activator prompt, the Anim Object idle and the loading screen type's text colour on the pages' example forms, perk ranks and Fast Shot's entry point on the player, the regions and cell references at Doc Mitchell's, SetVariableFloat, the cell event names called as functions; each change put back; set lu3 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/lu3.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/lu3.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "lu", "probes", "lu3"]
+  },
+  {
+   "id": "L5.ext.jip11",
+   "layer": 5,
+   "description": "JIP LN batch 11 (#1006; docs/spec-notes/jip-actors-11.md): Doc Mitchell's and the player's alpha, gravity, leveled list, light, movement flags, kill XP, radiation, base Strength (reference and base form), detection values (and one forced and put back), packages, unarmed effect, the equipped weapon's scope and silencer, breath, fall time, and the combat allies, targets, detected actors and active effects as lists; set jip11 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/jip11.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/jip11.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "jip", "probes", "jip11"]
+  },
+  {
+   "id": "L5.ext.jg8",
+   "layer": 5,
+   "description": "JohnnyGuitar batch 8 (#1007; docs/spec-notes/ext-jg8.md): MD5File and SHA1File of Data\\Credits.txt, IsBSALoaded, a world map icon's DDS header through GetTexture…, GetSystemColor and GetSystemColorAlt, GetSleepWaitMenuState outside the menu, Ar_SortEditor and Ar_Shuffle; set jg8 of tools/capture/jip_probes.py, keyed by probe id, steps in order; reads only. Not probed yet. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/jg8.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/jg8.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "jg", "probes", "jg8"]
+  },
+  {
+   "id": "L5.ext.sup4",
+   "layer": 5,
+   "description": "SUP NVSE batch 4 (#1008; docs/spec-notes/ext-sup4.md): random array keys, invalid references in arrays, Ar_SetFloatsFrom, CallFunctionNextFrame over two frames, the loaded save's size and name, the cells and map markers near the player at Doc Mitchell's, MarkScriptOnLoad from a query, Doc Mitchell's caught-pickpocketing flag (set back), TranslitText; set sup4 of tools/capture/jip_probes.py, keyed by probe id, steps in order. Oracle and candidate as L5.ext.jip.getters.",
+   "oracle": {"golden": "jip/sup4.json"},
+   "candidate": {
+    "argv": ["{candidate}", "ext", "queries", "{data_dir}", "FalloutNV.esm", "DeadMoney.esm", "HonestHearts.esm", "OldWorldBlues.esm", "LonesomeRoad.esm",
+             "TribalPack.esm", "MercenaryPack.esm", "ClassicPack.esm", "CaravanPack.esm", "GunRunnersArsenal.esm",
+             "NVFExtProbe.esp", "--schema", "{schema_dir}",
+             "--steps", "{lab_root}/../tools/capture/jip-probes/sup4.steps.json", "--start-cell", "0x000DEB16"]
+   },
+   "comparator": {"kind": "keyed", "select": "/rows", "key": "id", "fields": ["value"]},
+   "tags": ["ext", "sup", "probes", "sup4"]
   }
  ]
 }

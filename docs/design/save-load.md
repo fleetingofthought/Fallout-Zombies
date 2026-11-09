@@ -343,7 +343,12 @@ and Lonesome Road dropped, 36 more by the game layer; the base game's changes ba
   same way. If the new run ends before it is shown (it stops at the start), the screen
   comes down and the old game goes on; a new run that fails later is on its own (its
   crash report). Closing the old window while it waits ends the new run; a new run
-  still hidden after 120 s shows itself. The new run gets none of the old run's test aids
+  still hidden after 120 s shows itself. The old run never waits for ever (#1903, a
+  Linux report of two games playing from one Continue: the new run loaded with its
+  window shown and never took part): the new run writes a marker as it starts, and the
+  old run ends itself, leaving the new run to play, when the new run is running without
+  one after 30 s, or has not said it is up 135 s after it started. The old run logs the
+  new run's whole command line. The new run gets none of the old run's test aids
   (`NVF_PLAY_TEST_*`) except `NVF_PLAY_TEST_HANDOFF_EXIT=1` (end once it has taken over
   and its world or main menu is in; smoke `load-handoff`; the smoke runner waits for the
   processes a launch starts).

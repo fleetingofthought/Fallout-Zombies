@@ -49,6 +49,11 @@ pub struct LevelUp {
     pub scroll: usize,
     /// The part under the pointer (drawn lit).
     pub hover: Option<Part>,
+    /// ShowPerkMenu's or ShowSkillMenu's title in place of the level's
+    /// (`fnv_game::nvse_showoff5::LevelUpOpen`).
+    pub title: Option<String>,
+    /// ShowPerkMenu: the perks page alone, without Back.
+    pub perks_only: bool,
 }
 
 /// One row as drawn.
@@ -87,7 +92,7 @@ pub struct View {
 
 impl LevelUp {
     pub fn new(level: i32, skills: SkillSheet, perk_due: bool) -> LevelUp {
-        LevelUp { level, skills, perk_due, perks: None, page: Page::Skills, selected: 0, scroll: 0, hover: None }
+        LevelUp { level, skills, perk_due, perks: None, page: Page::Skills, selected: 0, scroll: 0, hover: None, title: None, perks_only: false }
     }
 
     /// The menu for `level`, from the player as the game holds them.
@@ -222,7 +227,7 @@ impl LevelUp {
         let last = self.page == Page::Perks || !self.perk_due;
         View {
             page: self.page,
-            title: rules::title(self.level),
+            title: self.title.clone().unwrap_or_else(|| rules::title(self.level)),
             rows,
             selected: self.selected,
             scroll: self.scroll,
@@ -231,7 +236,7 @@ impl LevelUp {
             counter,
             next: if last { "Done" } else { "Continue" },
             next_on: self.can_continue(),
-            back: self.page == Page::Perks,
+            back: self.page == Page::Perks && !self.perks_only,
             hover: self.hover,
             labels: crate::pad::labels(),
         }

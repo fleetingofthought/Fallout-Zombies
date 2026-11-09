@@ -108,6 +108,15 @@ pub(crate) struct Active {
     addons: Vec<(Entity, Option<Entity>)>,
 }
 
+impl Active {
+    /// The material copies the play writes: overlay fill and edge, their cut copies and
+    /// the copies with holes (the profile aid's `profile change sources:` line).
+    pub(crate) fn materials(&self) -> impl Iterator<Item = AssetId<NifMaterial>> + '_ {
+        let looks = self.fill.iter().chain(&self.edge).chain(self.cut.values().flatten().flatten());
+        looks.map(Handle::id).chain(self.holed.values().map(|(_, copy)| copy.id()))
+    }
+}
+
 /// How many bones of a reference get an add-on model at most [design: the record does
 /// not say how many; effect-shaders.md §8].
 pub const ADDON_PLACES: usize = 8;

@@ -314,14 +314,33 @@ pub fn form_type_code(sig: &[u8; 4]) -> Option<i32> {
 /// the retain flag, otherwise the owner is cleared); without one they are destroyed.
 pub fn remove_all_typed_items(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value, String> {
     let from = ctx.subject()?;
-    let to = a.opt_form(0);
-    let retain = a.num_or(1, 0.0) != 0.0;
-    let silent = hide_flag(a, 2);
-    let code = a.num(3).map(|c| c as i32).unwrap_or(-1);
-    if code == 0 {
-        return none();
-    }
     let except = a.opt_form(4).map(|l| super::refs::list_members(g, l)).unwrap_or_default();
+    let how = RemoveAll { to: a.opt_form(0), retain: a.num_or(1, 0.0) != 0.0, silent: hide_flag(a, 2), code: a.num(3).map(|c| c as i32).unwrap_or(-1), except, quest_items: false, unplayable: false };
+    remove_all(g, from, &how)?;
+    none()
+}
+
+/// What RemoveAllTypedItems and ShowOff's RemoveAllItemsShowOff take: the target, the
+/// owner kept, the messages hidden, the form type code (-1 any, 0 none), the exceptions,
+/// and whether the player's quest items and non-playable biped items go too.
+#[derive(Debug, Clone, Default)]
+pub struct RemoveAll {
+    pub to: Option<FormId>,
+    pub retain: bool,
+    pub silent: bool,
+    pub code: i32,
+    pub except: Vec<FormId>,
+    pub quest_items: bool,
+    pub unplayable: bool,
+}
+
+/// The items `how` picks leave `from` (module notes of [`remove_all_typed_items`]).
+pub fn remove_all(g: &mut Game, from: FormId, how: &RemoveAll) -> Result<(), String> {
+    let (to, retain, silent, code) = (how.to, how.retain, how.silent, how.code);
+    if code == 0 {
+        return Ok(());
+    }
+    let except = &how.except;
     let forms = g.world.forms;
     let stacks: Vec<(FormId, i32)> = {
         let s = g.world.get(from).map_err(|e| e.to_string())?;
@@ -329,10 +348,10 @@ pub fn remove_all_typed_items(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value
     };
     for (item, n) in stacks {
         let Some(it) = forms.item(item) else { continue };
-        if it.non_playable_biped() || except.contains(&item) {
+        if (it.non_playable_biped() && !how.unplayable) || except.contains(&item) {
             continue;
         }
-        if from == FormId::PLAYER_REF && g.world.is_quest_item(item) {
+        if from == FormId::PLAYER_REF && !how.quest_items && g.world.is_quest_item(item) {
             continue;
         }
         if code != -1 && forms.sig(item).as_ref().and_then(form_type_code) != Some(code) {
@@ -350,7 +369,7 @@ pub fn remove_all_typed_items(g: &mut Game, ctx: &Ctx, a: &Args) -> Result<Value
             g.emit(EventKind::ItemAdded { to, item, count: n, silent });
         }
     }
-    none()
+    Ok(())
 }
 
 /// `container.AddItemHealthPercent item count health [hidden]`: AddItem with the items

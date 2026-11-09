@@ -50,8 +50,8 @@ codes have no picture in each font.
 
 ### 2.1 Localized installs: the code page (#1439)
 
-Nothing in this section was looked at in a localized install; it says what NVForever
-assumes and what is still to be checked.
+Most of this section was written before any localized install was looked at; what one
+Russian install showed is in "Seen in a Russian install" below.
 
 - **What is assumed.** A localized release keeps the 256-glyph file of §2 and changes
   two things: the code page of the 8-bit text in its plugins (and its menu files, credits
@@ -68,19 +68,41 @@ assumes and what is still to be checked.
   finds its file [hypothesis: that a localized install's file names use the plugins'
   code page; every vanilla English name is ASCII, the same in all three code pages].
 - **How it is chosen.** `NVF_CODE_PAGE`, else `[Text] CodePage=` in NVForever's own
-  `NVForever.ini` (1252, 1251 or 1250), else Windows-1252 (the English install's, the release this engine targets) [hypothesis]. It is not
-  detected from the install yet: which setting of a localized install names its
-  language (an INI key such as `sLanguage`, a file of its own) was not looked at, so
-  none is read.
+  `NVForever.ini` (1252, 1251 or 1250), else read from the plugins' text, else
+  Windows-1252 (the English install's, the release this engine targets) [hypothesis].
+  No setting of the install names it: a Russian install's `Fallout_default.ini` says
+  `sLanguage=ENGLISH` [observed: the owner's Russian install, 2026-11-08]. So the text
+  of the plugins loaded is sampled (their names and dialogue lines, `FULL` and `NAM1`,
+  `fnv_esm::text_guess`, #1443): a plugin whose letters are mostly bytes 0xC0 to 0xFF
+  is Cyrillic in Windows-1251, where those bytes are the Cyrillic letters [documented:
+  WHATWG windows-1251 index], and Western European text has only its few accented
+  letters there; 1251 is chosen when such plugins hold more of those bytes than the
+  others [design; hypothesis: one Russian install looked at]. Windows-1250 is not told
+  apart from 1252 this way and is still set by hand. The start's log says when the
+  plugins chose it. The game's language plugins (`<master>_lang.esp`) are turned on in
+  NVForever's plugin list when it first lists them (`fnv_install::plugins`).
 - **Every code page here maps all 256 bytes** to a character (the WHATWG tables in
   `encoding_rs`; an undefined slot becomes the C1 control of the same value), so text read
   and written again keeps its bytes [documented: WHATWG Encoding Standard, the
   windows-1250/1251/1252 indexes].
 
-**To check on a Russian install** (owner or the reporting user): the code page of a
-few `FULL` names and dialogue lines in its plugins; whether its `.fnt` files are still
-14 632 bytes with the glyphs of Cyrillic letters at their 1251 codes; whether file names
-in its archives use high bytes; which setting names the language.
+**Seen in a Russian install** [observed: the owner's Russian install, 2026-11-08, read
+with `fnvtool` and looked at as pictures; one install, not a Steam download]:
+
+- `FalloutNV.esm` and the add-ons' masters carry the English text; the Russian text is in
+  one more plugin per master, `<master>_lang.esp` (master: that `.esm` alone), whose
+  records replace the masters' names and lines. Its strings read as Russian in
+  Windows-1251 and as accented Latin letters in Windows-1252.
+- Its fonts are loose files in `Data\Textures\fonts`, under the English files' names
+  (`Fallout_default.ini` names the English files). Each `.fnt` is 14 632 bytes and
+  differs from the English one; its texture name is the English one.
+- Next to each font's `.dds` is a `.tex` of the same name (§2.2). The `.dds` is
+  byte-identical to the English archive's: Latin and Western European letters only. The
+  `.tex` holds Cyrillic letters, and they are where the `.fnt` glyph table says. So the
+  letters to draw are in the `.tex`.
+
+Still to check: whether file names in its archives use high bytes; which setting names
+the language.
 
 The texture of `monofonto_large` is 256 x 256, 16 bits a texel with 4 of them alpha
 [observed]; the letters are in the alpha, the colour is a light grey.
@@ -102,6 +124,32 @@ file of its own.
 **Without the font.** When a font file or its texture cannot be read, the text is drawn
 with Bevy's font, its characters read back from their codes in the run's code page
 (`fnv_font::Line::text`), not as Latin-1 [design, #1439].
+
+### 2.2 The `.tex` picture
+
+Every font of `Fallout - Textures2.bsa` has a `textures\fonts\<texture name>.tex` beside
+its `.dds` (font 9 has only the `.tex`) [observed: archive listing, 2026-11-08].
+
+| Bytes | What | Tag |
+|---|---|---|
+| 0 to 3 | an integer, the width: 512 in the files read | [observed] |
+| 4 to 7 | an integer, the height: 512 | [observed] |
+| 8 to the end | width x height texels of 4 bytes, rows from the top: the colour in bytes 0 to 2 (equal to each other in every texel read, so their order is not known) and the alpha in byte 3 | [observed] |
+
+How it was checked: the English `glow_monofonto_large` and `glow_futura_caps_large`
+`.tex` against their A4R4G4B4 `.dds`. Every texel's four values, rounded to 4 bits, are
+within one step of the `.dds` texel at the same place, with bytes 0 to 2 against red,
+green and blue and byte 3 against alpha. So in an English install the two are the same
+picture, the `.tex` with 8 bits a channel. The files are 1 048 584 bytes, 8 more than
+512 x 512 x 4.
+
+**What NVForever draws** [design, #1439]: a font's `.tex` when its `.dds` is there too,
+else the `.dds` (`interface::font_tex`). This draws a Russian install's letters (§2.1),
+and an English install's fonts change only in getting 8 bits of alpha instead of 4.
+Which file the original reads is not known [hypothesis: the `.tex`, since a localized
+release changed only it]. A font with a `.tex` alone (font 9) is left undrawn, as §3.1
+says the original does. A `.tex` that does not parse (wrong size for its header) is
+skipped with a warning, and the `.dds` is drawn.
 
 ## 3. Setting text
 

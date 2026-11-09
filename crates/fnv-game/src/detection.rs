@@ -670,6 +670,13 @@ impl Game<'_> {
     pub fn detect(&mut self, settings: &Settings, detector: FormId, target: FormId, s: &Situation) -> (Detection, Option<Band>) {
         let p = self.detection_pair(detector, target);
         let mut d = settings.evaluate(&p, s);
+        // ForceActorDetectionValue, and the light GetActorLightAmount reads
+        // (`crate::nvse_jip11`).
+        self.other.jip11.light.insert(target, s.light);
+        if self.other.jip11.forced_detection.contains_key(&target) {
+            d.value = self.forced_detection(target, d.value);
+            d.band = if d.value > 0.0 { Band::Detected } else if d.value > settings.noticed_min { Band::Noticed } else { Band::Hidden };
+        }
         if self.ghost_hidden_from(detector, target) {
             d.value = d.value.min(settings.noticed_min);
             d.band = Band::Hidden;

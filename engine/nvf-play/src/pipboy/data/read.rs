@@ -5,7 +5,7 @@
 //! Subrecords are read from their raw bytes as xEdit lays them out [documented: xEdit
 //! wbDefinitionsFNV.pas, as `schemas/fnv` records them] unless marked otherwise.
 
-use super::model::{game_text, WorldMap, CELL};
+use super::model::{game_text, MapTransform, WorldMap, CELL};
 use fnv_esm::{LoadOrder, Schema};
 use fnv_sim::{FormId, RefTable};
 use fnv_world::fields::{global, num, winner, Fields};
@@ -101,23 +101,54 @@ pub fn markers(lo: &LoadOrder, schema: &Schema, refs: &RefTable) -> Vec<Marker> 
     out
 }
 
-/// The map of worldspace `world`, or of the worldspace it takes its map from: the first
-/// parent with a map picture [hypothesis].
-pub fn world_map(lo: &LoadOrder, schema: &Schema, index: &WorldIndex, world: u32) -> Option<WorldMap> {
-    let mut w = Some(world);
-    for _ in 0..4 {
-        let id = w?;
-        if let Some(f) = fields(lo, schema, id) {
-            let mnam = f.raw(b"MNAM").map(|s| s.data.clone()).filter(|d| d.len() >= 16);
-            if let (Some(texture), Some(m)) = (text(&f, b"ICON"), mnam) {
-                let i32_at = |o: usize| i32::from_le_bytes([m[o], m[o + 1], m[o + 2], m[o + 3]]);
-                let i16_at = |o: usize| i16::from_le_bytes([m[o], m[o + 1]]) as i32;
-                return Some(WorldMap { texture, usable: [i32_at(0) as f32, i32_at(4) as f32], nw: [i16_at(8), i16_at(10)], se: [i16_at(12), i16_at(14)] });
-            }
-        }
-        w = index.worldspaces.get(&id).and_then(|ws| ws.parent);
+/// This worldspace's own map transform; absent ONAM is identity, absent bounds have
+/// centre zero [observed: run08 captures of MapMenu traits, 2026-11-07]. Field layouts
+/// [documented: xEdit wbWorldMapOffset, wbWorldObjectBounds; schemas/fnv/world.json].
+fn map_transform(f: &Fields) -> MapTransform {
+    let floats = |sig: &[u8; 4], count: usize| -> Option<Vec<f32>> {
+        let data = &f.raw(sig)?.data;
+        (data.len() >= count * 4).then(|| data.as_chunks::<4>().0.iter().take(count).map(|b| f32::from_le_bytes(*b)).collect())
+    };
+    let mut t = MapTransform::default();
+    if let Some(o) = floats(b"ONAM", 3) {
+        t.scale = o[0];
+        t.offset = [o[1], o[2]];
     }
-    None
+    if let (Some(min), Some(max)) = (floats(b"NAM0", 2), floats(b"NAM9", 2)) {
+        t.centre = [(min[0] + max[0]) * 0.5, (min[1] + max[1]) * 0.5];
+    }
+    t
+}
+
+/// Follow WNAM only while PNAM bit 2 (Use Map Data) is set [documented: xEdit,
+/// schemas/fnv/world.json]. The root supplies ICON/MNAM; the original worldspace
+/// supplies ONAM and NAM0/NAM9 [observed: run08 captures of MapMenu traits, 2026-11-07].
+pub fn world_map(lo: &LoadOrder, schema: &Schema, world: u32) -> Option<WorldMap> {
+    let mut root = world;
+    let mut f = fields(lo, schema, root).filter(|f| &f.sig == b"WRLD")?;
+    let transform = map_transform(&f);
+    let mut visited = std::collections::HashSet::new();
+    loop {
+        // Broken mods' parent cycles have no map root [design: this reader].
+        if !visited.insert(root) {
+            return None;
+        }
+        let uses_map = f.raw(b"PNAM").and_then(|s| s.data.get(..2)).is_some_and(|b| u16::from_le_bytes([b[0], b[1]]) & 4 != 0);
+        if !uses_map {
+            break;
+        }
+        let Some(parent) = f.formid(b"WNAM", lo) else { break };
+        root = parent;
+        f = fields(lo, schema, root).filter(|f| &f.sig == b"WRLD")?;
+    }
+    let texture = text(&f, b"ICON")?;
+    let m = &f.raw(b"MNAM")?.data;
+    if m.len() < 16 {
+        return None;
+    }
+    let i32_at = |o: usize| i32::from_le_bytes([m[o], m[o + 1], m[o + 2], m[o + 3]]);
+    let i16_at = |o: usize| i16::from_le_bytes([m[o], m[o + 1]]) as i32;
+    Some(WorldMap { root, transform, texture, usable: [i32_at(0) as f32, i32_at(4) as f32], nw: [i16_at(8), i16_at(10)], se: [i16_at(12), i16_at(14)] })
 }
 
 /// A worldspace's `DATA` flags (bit 1: Can't Fast Travel [documented: xEdit]); 0 when
@@ -222,6 +253,132 @@ pub fn doors(lo: &LoadOrder, schema: &Schema, index: &WorldIndex, refs: &RefTabl
 #[cfg(test)]
 mod tests {
     use super::*;
+    use fnv_esm::raw::{write_subrecords, Subrecord};
+    use fnv_esm::Plugin;
+
+    fn sub(sig: &[u8; 4], data: Vec<u8>) -> Subrecord {
+        Subrecord { sig: *sig, data, extended: false }
+    }
+
+    fn floats(sig: &[u8; 4], values: &[f32]) -> Subrecord {
+        sub(sig, values.iter().flat_map(|v| v.to_le_bytes()).collect())
+    }
+
+    fn record(sig: &[u8; 4], id: u32, subs: &[Subrecord]) -> Vec<u8> {
+        let payload = write_subrecords(subs);
+        [&sig[..], &(payload.len() as u32).to_le_bytes(), &[0; 4], &id.to_le_bytes(), &[0; 4], &15u16.to_le_bytes(), &[0; 2], &payload].concat()
+    }
+
+    fn picture(name: &str) -> Vec<Subrecord> {
+        let span = [2048i32.to_le_bytes(), 1024i32.to_le_bytes()].concat();
+        let cells: Vec<u8> = [-2i16, 3, 1, 2].into_iter().flat_map(|v| v.to_le_bytes()).collect();
+        vec![sub(b"ICON", [name.as_bytes(), &[0]].concat()), sub(b"MNAM", [span, cells].concat())]
+    }
+
+    fn parent(id: u32, flags: u16) -> Vec<Subrecord> {
+        vec![sub(b"WNAM", id.to_le_bytes().to_vec()), sub(b"PNAM", flags.to_le_bytes().to_vec())]
+    }
+
+    /// All worldspaces and pictures here are made for these tests.
+    fn maps(records: Vec<Vec<u8>>, test: impl FnOnce(&LoadOrder, &Schema)) {
+        let hedr = [1.34f32.to_le_bytes(), 0i32.to_le_bytes(), 0x800u32.to_le_bytes()].concat();
+        let bytes = [record(b"TES4", 0, &[sub(b"HEDR", hedr)]), records.concat()].concat();
+        let plugins = [Plugin::parse(&bytes, "Maps.esm".into()).unwrap()];
+        let lo = LoadOrder::new(&plugins).unwrap();
+        let schema = Schema::load_dir(concat!(env!("CARGO_MANIFEST_DIR"), "/../../schemas/fnv")).unwrap();
+        test(&lo, &schema);
+    }
+
+    #[test]
+    fn roots_apply_their_own_offsets_and_default_to_identity() {
+        let plain = picture("plain.dds");
+        let mut identity = picture("identity.dds");
+        identity.push(floats(b"ONAM", &[1.0, 0.0, 0.0]));
+        let mut scaled = picture("scaled.dds");
+        scaled.push(floats(b"ONAM", &[2.0, 100.0, -200.0]));
+        maps(vec![record(b"WRLD", 1, &plain), record(b"WRLD", 2, &identity), record(b"WRLD", 3, &scaled)], |lo, schema| {
+            let a = world_map(lo, schema, 1).unwrap();
+            let b = world_map(lo, schema, 2).unwrap();
+            let c = world_map(lo, schema, 3).unwrap();
+            assert_eq!(a.root, 1);
+            assert_eq!(a.transform, MapTransform::default());
+            assert_eq!(a.uv(-100.0, 300.0), b.uv(-100.0, 300.0));
+            assert_eq!(c.transform.apply(-100.0, 300.0), [-100.0, 400.0]);
+            assert_eq!(c.uv(-100.0, 300.0), a.uv(-100.0, 400.0));
+        });
+    }
+
+    #[test]
+    fn a_roots_scale_is_about_its_bounds_centre() {
+        let mut root = picture("bounded.dds");
+        root.push(floats(b"ONAM", &[2.0, 100.0, -200.0]));
+        root.push(floats(b"NAM0", &[-100.0, 200.0]));
+        let incomplete = root.clone();
+        root.push(floats(b"NAM9", &[300.0, 1000.0]));
+        maps(vec![record(b"WRLD", 1, &root), record(b"WRLD", 2, &incomplete)], |lo, schema| {
+            let a = world_map(lo, schema, 1).unwrap();
+            assert_eq!(a.transform.centre, [100.0, 600.0]);
+            assert_eq!(a.transform.apply(-100.0, 300.0), [-200.0, -200.0]);
+            let b = world_map(lo, schema, 2).unwrap();
+            assert_eq!(b.transform.centre, [0.0; 2]);
+            assert_eq!(b.transform.apply(-100.0, 300.0), [-100.0, 400.0]);
+        });
+    }
+
+    #[test]
+    fn a_map_family_uses_each_members_transform_and_only_the_roots_picture() {
+        let mut root = picture("root.dds");
+        root.push(floats(b"ONAM", &[3.0, 99.0, 88.0]));
+        let mut child = parent(1, 4);
+        // Its own picture must be ignored while Use Map Data is set.
+        child.extend(picture("ignored.dds"));
+        child.push(floats(b"ONAM", &[0.5, 1000.0, -2000.0]));
+        child.push(floats(b"NAM0", &[-100.0, 200.0]));
+        child.push(floats(b"NAM9", &[300.0, 1000.0]));
+        maps(vec![record(b"WRLD", 1, &root), record(b"WRLD", 2, &child), record(b"WRLD", 3, &parent(2, 4))], |lo, schema| {
+            let a = world_map(lo, schema, 1).unwrap();
+            let b = world_map(lo, schema, 2).unwrap();
+            let c = world_map(lo, schema, 3).unwrap();
+            assert_eq!((a.root, b.root, c.root), (1, 1, 1));
+            assert_eq!(b.texture, "root.dds");
+            assert_eq!((b.usable, b.nw, b.se), (a.usable, a.nw, a.se));
+            assert_eq!(b.transform.centre, [100.0, 600.0]);
+            assert_eq!(b.transform.apply(500.0, 1000.0), [1300.0, -1200.0]);
+            // The grandchild has identity ONAM, not either ancestor's transform.
+            assert_eq!(c.transform, MapTransform::default());
+            assert_eq!(b.uv(500.0, 1000.0), c.uv(1300.0, -1200.0));
+            assert_ne!(a.uv(1300.0, -1200.0), c.uv(1300.0, -1200.0));
+        });
+    }
+
+    #[test]
+    fn a_child_without_use_map_data_keeps_its_own_map_or_none() {
+        let mut child = parent(1, 2); // Use LOD Data alone does not inherit a map.
+        child.extend(picture("own.dds"));
+        maps(vec![record(b"WRLD", 1, &picture("root.dds")), record(b"WRLD", 2, &child), record(b"WRLD", 3, &parent(1, 0)), record(b"WRLD", 4, &parent(2, 4))], |lo, schema| {
+            let child = world_map(lo, schema, 2).unwrap();
+            assert_eq!((child.root, child.texture.as_str()), (2, "own.dds"));
+            assert!(world_map(lo, schema, 3).is_none());
+            assert_eq!(world_map(lo, schema, 4).unwrap().root, 2);
+        });
+    }
+
+    #[test]
+    fn parent_cycles_and_missing_parent_records_have_no_map() {
+        maps(vec![record(b"WRLD", 1, &parent(2, 4)), record(b"WRLD", 2, &parent(1, 4)), record(b"WRLD", 3, &parent(99, 4))], |lo, schema| {
+            assert!(world_map(lo, schema, 1).is_none());
+            assert!(world_map(lo, schema, 3).is_none());
+        });
+    }
+
+    #[test]
+    fn a_map_family_can_have_more_than_four_generations() {
+        let mut records = vec![record(b"WRLD", 1, &picture("root.dds"))];
+        records.extend((2..=8).map(|id| record(b"WRLD", id, &parent(id - 1, 4))));
+        maps(records, |lo, schema| {
+            assert_eq!(world_map(lo, schema, 8).unwrap().root, 1);
+        });
+    }
 
     #[test]
     fn doors_hidden_from_the_local_map() {

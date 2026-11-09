@@ -540,7 +540,7 @@ fn update_grade(
         Option<Res<crate::death_cam::DeathCam>>,
         Option<Res<nvf_play::vats_mode::VatsMode>>,
     ),
-    (sim, aim, wheel, talk): (Option<Res<nvf_play::sim::SimState>>, Option<Res<nvf_play::aim_zoom::AimZoom>>, Option<Res<nvf_play::weapon_wheel::WeaponWheel>>, Option<Res<nvf_play::dialogue_zoom::DialogueZoom>>),
+    (sim, aim, wheel, talk, creator): (Option<Res<nvf_play::sim::SimState>>, Option<Res<nvf_play::aim_zoom::AimZoom>>, Option<Res<nvf_play::weapon_wheel::WeaponWheel>>, Option<Res<nvf_play::dialogue_zoom::DialogueZoom>>, Option<Res<nvf_play::creator::CreatorMenu>>),
     mut mods: ResMut<ScreenModifiers>,
     mut grades: Query<(&mut ImageSpaceGrade, Has<LensGrade>)>,
     sounds: Option<ResMut<Messages<nvf_play::sfx::PlaySound>>>,
@@ -550,6 +550,15 @@ fn update_grade(
         Some(w) => screen_effect(&mut mods, w, script.as_deref(), now),
         None => (ScreenEffect::default(), Vec::new(), String::new(), String::new()),
     };
+    // The gene projector's studio (`creator_view.rs`) is a picture of its own, not the
+    // scene: the scene's modifiers are left off it (they go on playing and come back when
+    // it closes) [design: owner 2026-11-08, the studio was pure black in Tale of Two
+    // Wastelands' birth scene, where CG00BirthBaseISFX (Bright Scale x2, Bright Clamp
+    // x0.2) and the eye adaptation it drives left the player a silhouette on black]. The
+    // cell's own grade stays.
+    if creator.as_deref().is_some_and(nvf_play::creator::CreatorMenu::in_studio) {
+        effect = ScreenEffect::default();
+    }
     // A new game shows nothing of the world before its opening runs: until the scripts
     // have started the screen is white, as the opening's first modifier then holds it
     // [engineering choice: the script data loads while the room is already drawn].

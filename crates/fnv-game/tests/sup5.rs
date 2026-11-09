@@ -107,6 +107,9 @@ fn excel_cells_sheets_and_arrays() {
     // A missing file: -1 [documented: every Excel page's note].
     assert_eq!(n(&mut g, "ExcelReadFloat \"xlNone\" 0 0 0"), -1.0);
     assert_eq!(n(&mut g, "ExcelGetWorkSheetCount \"xlNone\""), -1.0);
+    // ReadString and SetSheetName too, as numbers [observed: sup5 xl.missing.string].
+    assert_eq!(n(&mut g, "ExcelReadString \"xlNone\" 0 0 0"), -1.0);
+    assert_eq!(n(&mut g, "ExcelSetSheetName \"xlNone\" 0"), -1.0);
     // Writing makes the file and the sheet; 1 when written [documented: ExcelWriteFloat].
     assert_eq!(n(&mut g, "ExcelWriteFloat \"xlBook\" 0 0 0 10"), 1.0);
     assert_eq!(n(&mut g, "XLSWriteString \"xlBook\" 0 4 1 \"MyText\""), 1.0);
@@ -122,8 +125,10 @@ fn excel_cells_sheets_and_arrays() {
     assert_eq!(n(&mut g, "ExcelWriteFloat \"xlBook\" 2 0 0 1.5"), 1.0);
     assert_eq!(n(&mut g, "ExcelGetWorkSheetCount \"xlBook\""), 3.0);
     assert_eq!(s(&mut g, "ExcelSetSheetName \"xlBook\" 1"), "Sheet2");
-    // Names cut to 31 [documented: ExcelSetSheetName].
-    assert_eq!(s(&mut g, "ExcelSetSheetName \"xlBook\" 1 \"A name far longer than thirty-one letters\""), "A name far longer than thirty-o");
+    assert_eq!(n(&mut g, "ExcelSetSheetName \"xlBook\" 7"), -1.0);
+    // Names cut to 31 [documented: ExcelSetSheetName]; a rename returns 1 [hypothesis:
+    // not text, observed: sup5 xl.rename].
+    assert_eq!(n(&mut g, "ExcelSetSheetName \"xlBook\" 1 \"A name far longer than thirty-one letters\""), 1.0);
     assert_eq!(s(&mut g, "ExcelSetSheetName \"xlBook\" 1"), "A name far longer than thirty-o");
     // Erasing [documented: ExcelEraseCell, ExcelEraseSheet].
     assert_eq!(n(&mut g, "ExcelEraseCell \"xlBook\" 0 4 1"), 1.0);
@@ -173,6 +178,9 @@ fn json_files() {
     assert_eq!(n(&mut g, "(JSONGetValue \"good.json\" \"pos\" 0)[\"x\"]"), 1.5);
     assert_eq!(n(&mut g, "(JSONGetValue \"good.json\" \"pos.x\" 0)[0]"), 1.5);
     assert_eq!(n(&mut g, "ar_Size (JSONGetValue \"good.json\" \"nope\" 0)"), -1.0);
+    // A missing file: one empty text whatever the key [observed: sup5 json.name …].
+    let none = s(&mut g, "\"\"\nlet aList := JSONGetValue \"none.json\" \"name\" 0\nlet sOut := sv_Construct \"%g|%z\" (ar_Size aList) (aList[0])");
+    assert_eq!(none, "1|");
 }
 
 #[test]
@@ -242,6 +250,8 @@ fn screenshots_and_qr_codes() {
     q(&mut g, "TextToQRCode \"QrCodes\\MyQrCode\" \"I love bacon\" 0");
     let png = std::fs::read(layer.join("GameRoot/QrCodes/MyQrCode.png")).unwrap();
     assert_eq!(&png[1..4], b"PNG");
+    // The original's size for this text [observed: sup5 qr.where].
+    assert_eq!(png.len(), 268_590);
     // Nothing drawn [decision].
     q(&mut g, "\"\"\nlet aIn := ar_Construct \"array\"\nDrawGraphicsToDDSTextureAndSave \"MyMod\" \"T.dds\" aIn 500 500");
     // No dialog: "" [decision].

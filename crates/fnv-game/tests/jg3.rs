@@ -38,11 +38,14 @@ fn edid(sig: &[u8; 4], fid: u32, name: &str, rest: &[fnv_esm::raw::Subrecord]) -
 
 /// EFSH DATA: 308 bytes [documented: schemas/fnv/effects.json EFSH DATA, from xEdit]:
 /// flags 9 (No Membrane Shader, No Particle Shader), membrane source blend 5, fill alpha
-/// fade in 0.25 s, edge fall off 1.5, particle lifetime 3, scale key 2 time 0.75.
+/// fade in 0.25 s, edge fall off 1.5, particle lifetime 3, scale key 2 time 0.75, fill
+/// colour (1, 2, 3), colour key 1 (4, 5, 6).
 fn efsh_data() -> Vec<u8> {
     let mut d = vec![0u8; 308];
     d[0] = 9;
     d[4..8].copy_from_slice(&5u32.to_le_bytes());
+    d[16..19].copy_from_slice(&[1, 2, 3]);
+    d[188..191].copy_from_slice(&[4, 5, 6]);
     for (at, v) in [(20, 0.25f32), (52, 1.5), (132, 3.0), (184, 0.75)] {
         d[at..at + 4].copy_from_slice(&v.to_le_bytes());
     }
@@ -66,7 +69,7 @@ fn plugin_bytes() -> Vec<u8> {
         "TestMediaSet",
         &[
             sub(b"NAM1", 3i32.to_le_bytes().to_vec()),
-            sub(b"NAM2", z("Data\\Music\\day.wav")),
+            sub(b"NAM2", z("day.wav")),
             sub(b"NAM8", f32b(-6.0)),
             sub(b"PNAM", vec![5]),
             sub(b"DNAM", f32b(20.0)),
@@ -167,15 +170,20 @@ fn effect_shader_traits_and_textures() {
     for (t, want) in [(0, 9.0), (1, 5.0), (5, 0.25), (13, 1.5), (33, 3.0), (46, 0.75), (2, 0.0)] {
         assert_eq!(n(&mut g, &format!("GetEffectShaderTraitNumeric TestShader {t}")), want, "trait {t}");
     }
-    // The colours and a trait past the table read 0.
-    for t in [4, 14, 47, -1] {
-        assert_eq!(n(&mut g, &format!("GetEffectShaderTraitNumeric TestShader {t}")), 0.0, "trait {t}");
-    }
-    // The setter returns 1, takes the traits its page lists (0-42) and nothing past them.
+    // The colours as one number (red × 65536 + green × 256 + blue); 47 is colour key 1;
+    // past it 0 [observed: jg3].
+    assert_eq!(n(&mut g, "GetEffectShaderTraitNumeric TestShader 4"), 66051.0);
+    assert_eq!(n(&mut g, "GetEffectShaderTraitNumeric TestShader 14"), 0.0);
+    assert_eq!(n(&mut g, "GetEffectShaderTraitNumeric TestShader 47"), 263430.0);
+    assert_eq!(n(&mut g, "GetEffectShaderTraitNumeric TestShader -1"), 0.0);
+    // The setter returns 1 and takes every trait the getter reads, past 42 too.
     assert_eq!(n(&mut g, "SetEffectShaderTraitNumeric TestShader 13 2.5"), 1.0);
     assert_eq!(n(&mut g, "GetEffectShaderTraitNumeric TestShader 13"), 2.5);
-    assert_eq!(n(&mut g, "SetEffectShaderTraitNumeric TestShader 46 9"), 0.0);
-    assert_eq!(n(&mut g, "GetEffectShaderTraitNumeric TestShader 46"), 0.75);
+    assert_eq!(n(&mut g, "SetEffectShaderTraitNumeric TestShader 46 9"), 1.0);
+    assert_eq!(n(&mut g, "GetEffectShaderTraitNumeric TestShader 46"), 9.0);
+    assert_eq!(n(&mut g, "SetEffectShaderTraitNumeric TestShader 4 255"), 1.0);
+    assert_eq!(n(&mut g, "GetEffectShaderTraitNumeric TestShader 4"), 255.0);
+    assert_eq!(n(&mut g, "SetEffectShaderTraitNumeric TestShader 48 1"), 0.0);
     assert_eq!(n(&mut g, "SetEffectShaderTraitNumeric TestShader 1 7.9"), 1.0);
     assert_eq!(n(&mut g, "GetEffectShaderTraitNumeric TestShader 1"), 7.0, "an enum keeps a whole number");
     // Textures: 0 fill (ICON), 1 particle (ICO2, none here), 2 holes (NAM7).
@@ -184,6 +192,8 @@ fn effect_shader_traits_and_textures() {
     assert_eq!(s(&mut g, "GetEffectShaderTexturePath TestShader 2"), "effects\\holes.dds");
     q(&mut g, "SetEffectShaderTexturePath TestShader 1 \"effects\\new.dds\"");
     assert_eq!(s(&mut g, "GetEffectShaderTexturePath TestShader 1"), "effects\\new.dds");
+    // An id past the table fails the call [observed: jg3].
+    assert!(g.run_query("Begin Function { }\nstring_var sOut\nlet sOut := GetEffectShaderTexturePath TestShader 3\nEnd\n", RunCtx::default()).is_err());
 }
 
 #[test]
@@ -196,16 +206,20 @@ fn media_set_traits() {
     }
     q(&mut g, "SetMediaSetTraitNumeric TestMediaSet 14 30");
     assert_eq!(n(&mut g, "GetMediaSetTraitNumeric TestMediaSet 14"), 30.0);
+    // The record's path under Data\Music\; a set one as given [observed: jg3].
     assert_eq!(s(&mut g, "GetMediaSetTraitString TestMediaSet 0"), "Data\\Music\\day.wav");
     assert_eq!(s(&mut g, "GetMediaSetTraitString TestMediaSet 5"), "");
-    q(&mut g, "SetMediaSetTraitString TestMediaSet 3 \"Data\\Music\\night.wav\"");
-    assert_eq!(s(&mut g, "GetMediaSetTraitString TestMediaSet 3"), "Data\\Music\\night.wav");
+    q(&mut g, "SetMediaSetTraitString TestMediaSet 3 \"night.wav\"");
+    assert_eq!(s(&mut g, "GetMediaSetTraitString TestMediaSet 3"), "night.wav");
+    assert!(g.run_query("Begin Function { }\nstring_var sOut\nlet sOut := GetMediaSetTraitString TestMediaSet 6\nEnd\n", RunCtx::default()).is_err());
     assert_eq!(n(&mut g, "GetMediaSetTraitSound TestMediaSet 0"), f64::from(SOUN));
     assert_eq!(n(&mut g, "GetMediaSetTraitSound TestMediaSet 1"), 0.0);
     q(&mut g, "SetMediaSetTraitSound TestMediaSet 1 TestSound2");
     assert_eq!(n(&mut g, "GetMediaSetTraitSound TestMediaSet 1"), f64::from(SOUN2));
-    // Not a sound: refused.
+    // Not a sound, or none: refused [observed: jg3].
     q(&mut g, "SetMediaSetTraitSound TestMediaSet 1 TestNote");
+    assert_eq!(n(&mut g, "GetMediaSetTraitSound TestMediaSet 1"), f64::from(SOUN2));
+    q(&mut g, "ref rNone\nSetMediaSetTraitSound TestMediaSet 1 rNone");
     assert_eq!(n(&mut g, "GetMediaSetTraitSound TestMediaSet 1"), f64::from(SOUN2));
 }
 
@@ -242,6 +256,8 @@ fn terminal_menu_items() {
     assert_eq!(s(&mut g, "GetTerminalMenuItemText TestTerminal 1 0"), "Read the log");
     assert_eq!(s(&mut g, "GetTerminalMenuItemText TestTerminal 2 0"), "Done.");
     assert_eq!(s(&mut g, "GetTerminalMenuItemText TestTerminal 1 2"), "", "no item 2");
+    // textID 0 fails the call [observed: jg3].
+    assert!(g.run_query("Begin Function { }\nstring_var sOut\nlet sOut := GetTerminalMenuItemText TestTerminal 0 0\nEnd\n", RunCtx::default()).is_err());
     assert_eq!(n(&mut g, "GetTerminalMenuItemNote TestTerminal 0"), f64::from(NOTE));
     assert_eq!(n(&mut g, "GetTerminalMenuItemSubmenu TestTerminal 1"), f64::from(TERM2));
     assert_eq!(n(&mut g, "GetTerminalMenuItemFlags TestTerminal 0"), 1.0);
@@ -253,7 +269,7 @@ fn terminal_menu_items() {
     assert_eq!(s(&mut g, "GetTerminalMenuItemText TestTerminal 1 0"), "Read it again");
     assert_eq!(n(&mut g, "GetTerminalMenuItemNote TestTerminal 0"), f64::from(NOTE2));
     assert_eq!(n(&mut g, "GetTerminalMenuItemSubmenu TestTerminal 1"), 0.0);
-    assert_eq!(n(&mut g, "GetTerminalMenuItemFlags TestTerminal 0"), 2.0, "the two flag bits kept");
+    assert_eq!(n(&mut g, "GetTerminalMenuItemFlags TestTerminal 0"), 6.0, "the flags kept whole");
     // Choosing the item shows the changes.
     let chosen = fnv_game::terminal::choose(&mut g, FormId(TERM), FormId(TERM), 0).unwrap();
     assert_eq!((chosen.result.as_str(), chosen.note), ("Again.", Some(FormId(NOTE2))));
@@ -265,7 +281,7 @@ fn quest_delay() {
     let f = fixture();
     let mut g = game(&f);
     assert_eq!(n(&mut g, "GetQuestDelay TestQuest"), 0.5);
-    assert_eq!(n(&mut g, "GetQuestDelay TestQuestNoDelay"), 5.0);
+    assert_eq!(n(&mut g, "GetQuestDelay TestQuestNoDelay"), 0.0, "the record's, not the 5 s default");
     q(&mut g, "SetQuestDelay TestQuest 2");
     assert_eq!(n(&mut g, "GetQuestDelay TestQuest"), 2.0);
 }

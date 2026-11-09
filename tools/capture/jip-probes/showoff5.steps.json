@@ -1,0 +1,154 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "showoff5",
+ "title": "showoff5, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetLevelUpMenuCurrentPage)\nEnd\n",
+   "label": "showoff5.levelup.page.closed",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetLevelUpMenuPoints)\nEnd\n",
+   "label": "showoff5.levelup.points.closed",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (SetLevelUpMenuCurrentPage 1)\nEnd\n",
+   "label": "showoff5.levelup.setpage.closed",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fRes := ShowSkillMenu 3\nlet fA := GetLevelUpMenuCurrentPage\nlet fB := GetLevelUpMenuPoints\nSetFunctionValue (sv_Construct \"%g %g %g %g %g %g\" fRes fA fB (GetLevelUpMenuPoints 0 1) (GetLevelUpMenuPoints 1) (SetLevelUpMenuCurrentPage 2))\nEnd\n",
+   "label": "showoff5.levelup.skillmenu",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetLevelUpMenuCurrentPage)\nEnd\n",
+   "label": "showoff5.levelup.after",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (SetForceDrawHitscanProjectiles)\nEnd\n",
+   "label": "showoff5.hitscan.read",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (SetProjectileTracerChanceOverride)\nEnd\n",
+   "label": "showoff5.tracer.read",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetPCHasScriptedFastTravelOverride)\nEnd\n",
+   "label": "showoff5.travel.override",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetPCCanFastTravel)\nEnd\n",
+   "label": "showoff5.travel.can",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nSetFunctionValue (sv_Construct \"%g %g %g\" (GetCalculatedAPCost 0 rObj) (GetCalculatedAPCost 1 rObj) (GetCalculatedAPCost 2 rObj))\nEnd\n",
+   "label": "showoff5.ap.pistol",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"1F4\"\nSetFunctionValue (sv_Construct \"%g %g %g\" (GetCalculatedAPCost 0 rObj) (GetCalculatedAPCost 1 rObj) (GetCalculatedAPCost 2 rObj))\nEnd\n",
+   "label": "showoff5.ap.fists",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetVATSMaxEngageDistance)\nEnd\n",
+   "label": "showoff5.vats.engage",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rDoc.GetVATSTargetable)\nEnd\n",
+   "label": "showoff5.vats.target.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rP.GetVATSTargetable)\nEnd\n",
+   "label": "showoff5.vats.target.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (ToANSIChar 16 1)\nEnd\n",
+   "label": "showoff5.ansi.16",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (ToANSIChar 2 1)\nEnd\n",
+   "label": "showoff5.ansi.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rDoc.IsActorInvisibleToPlayer)\nEnd\n",
+   "label": "showoff5.invisible.doc",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rP.GetNumCombatActorsFromActor)\nEnd\n",
+   "label": "showoff5.combatactors.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (PlayerHasNightVisionActive)\nEnd\n",
+   "label": "showoff5.nightvision",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (PlayerIsDrinkingPlacedWater)\nEnd\n",
+   "label": "showoff5.drinking",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (GetIsActivationPromptShown)\nEnd\n",
+   "label": "showoff5.prompt",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (IsPlayerLookingAround)\nEnd\n",
+   "label": "showoff5.looking",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15169\"\nSetFunctionValue (rP.GetSpellUsageNumEx rObj)\nEnd\n",
+   "label": "showoff5.usage.stimpak",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet rInv := rP.PlaceAtMe rObj 1\nlet fA := rInv.GetCalculatedItemValue\nlet fB := rInv.GetCalculatedItemValue 1\nrInv.Disable\nrInv.MarkForDelete\nSetFunctionValue (sv_Construct \"%g %g\" fA fB)\nEnd\n",
+   "label": "showoff5.itemvalue.pistol",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rP.GetExplosionRefRadius)\nEnd\n",
+   "label": "showoff5.explosion.none",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rP.GetProjectileRefIsStuck)\nEnd\n",
+   "label": "showoff5.stuck.none",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rP.ForceHitStaggerReaction)\nEnd\n",
+   "label": "showoff5.stagger.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rDoc\nref rObj\nref rInv\nfloat fRes\nfloat fA\nfloat fB\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rDoc := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (rP.ForceRecoilAnim)\nEnd\n",
+   "label": "showoff5.recoil.player",
+   "field": "value"
+  }
+ ]
+}

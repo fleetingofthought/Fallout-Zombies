@@ -285,9 +285,9 @@ pub fn rows_marker(rows: usize, first: usize, page: usize, track: f32) -> Option
 /// menu's list of whole rows: `BAR_W` wide at `x`, `y`, `height` high. Nothing when the
 /// list fits.
 #[allow(clippy::too_many_arguments)]
-pub fn spawn_rows_bar(p: &mut ChildSpawnerCommands, kit: &mut Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool, (x, y, height): (f32, f32, f32), rows: usize, first: usize, page: usize) {
+pub fn spawn_rows_bar(p: &mut ChildSpawnerCommands, kit: &mut Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool, glyphs: &crate::pad::PadGlyphs, (x, y, height): (f32, f32, f32), rows: usize, first: usize, page: usize) {
     let Some((my, mh)) = rows_marker(rows, first, page, height - 2.0 * BAR_ARROW) else { return };
-    let mut c = Ctx { kit, data, images, bc };
+    let mut c = Ctx { kit, data, images, bc, glyphs };
     let bright = amber(255.0);
     c.image(p, "arrow_up.dds", at(x, y, BAR_W, BAR_ARROW), bright);
     c.image(p, "arrow_down.dds", at(x, y + height - BAR_ARROW, BAR_W, BAR_ARROW), bright);
@@ -304,6 +304,7 @@ struct Ctx<'a> {
     data: Option<&'a GameData>,
     images: &'a mut Assets<Image>,
     bc: bool,
+    glyphs: &'a crate::pad::PadGlyphs,
 }
 
 impl Ctx<'_> {
@@ -338,21 +339,22 @@ impl Ctx<'_> {
     #[allow(clippy::too_many_arguments)]
     fn text(&mut self, p: &mut ChildSpawnerCommands, title: bool, s: &str, x: f32, top: f32, align: Align, color: Color) -> f32 {
         let face = if title { &self.kit.title } else { &self.kit.body };
-        let line = first_line(&face.font, s);
+        let width = crate::pad::hint_width(face, s, self.glyphs);
         let x = match align {
             Align::Left => x,
-            Align::Right => x - line.width,
-            Align::Centre => x - line.width / 2.0,
+            Align::Right => x - width,
+            Align::Centre => x - width / 2.0,
         };
-        set_line(p, face, &line, x, top + if title { TITLE_BASE } else { BODY_BASE }, color);
-        line.width
+        let base = top + if title { TITLE_BASE } else { BODY_BASE };
+        crate::pad::set_hint(p, face, s, x, base, color, self.glyphs);
+        width
     }
 }
 
 /// Spawn the menu under `root`. `note`: the line under the menu.
 #[allow(clippy::too_many_arguments)]
-pub fn spawn(root: &mut ChildSpawnerCommands, m: &MenuModel, note: Option<&str>, info: Option<&Info>, kit: &mut Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool) {
-    let mut c = Ctx { kit, data, images, bc };
+pub fn spawn(root: &mut ChildSpawnerCommands, m: &MenuModel, note: Option<&str>, info: Option<&Info>, kit: &mut Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool, glyphs: &crate::pad::PadGlyphs) {
+    let mut c = Ctx { kit, data, images, bc, glyphs };
     let bright = amber(255.0);
     let main = Node {
         width: crate::interface::u(MAIN.x),
@@ -399,8 +401,8 @@ pub fn spawn(root: &mut ChildSpawnerCommands, m: &MenuModel, note: Option<&str>,
 
 /// [design: barter-menu.md section 9] Keep the model's own refusal note over the tiled
 /// barter view, whose file has no subtitle tile, at the existing hand-built place.
-pub fn spawn_note(root: &mut ChildSpawnerCommands, note: &str, kit: &mut Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool) {
-    let mut c = Ctx { kit, data, images, bc };
+pub fn spawn_note(root: &mut ChildSpawnerCommands, note: &str, kit: &mut Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool, glyphs: &crate::pad::PadGlyphs) {
+    let mut c = Ctx { kit, data, images, bc, glyphs };
     root.spawn(Node { width: crate::interface::u(MAIN.x), height: crate::interface::u(MAIN.y), ..default() }).with_children(|p| {
         c.text(p, false, note, MAIN.x / 2.0, NOTE_Y + (31.0 + 20.0) / 2.0 + 20.0, Align::Centre, amber(255.0));
     });
@@ -636,8 +638,9 @@ pub fn quantity_words(game: Option<&fnv_game::Game<'_>>) -> [String; 2] {
     })
 }
 
-pub fn spawn_quantity(root: &mut ChildSpawnerCommands, q: &Quantity, words: &[String; 2], kit: &mut Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool) {
-    let mut c = Ctx { kit, data, images, bc };
+#[allow(clippy::too_many_arguments)]
+pub fn spawn_quantity(root: &mut ChildSpawnerCommands, q: &Quantity, words: &[String; 2], kit: &mut Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool, glyphs: &crate::pad::PadGlyphs) {
+    let mut c = Ctx { kit, data, images, bc, glyphs };
     let bright = amber(255.0);
     let sheet = Node { position_type: PositionType::Absolute, width: Val::Percent(100.0), height: Val::Percent(100.0), ..default() };
     root.spawn((sheet, FocusPolicy::Block, PointerState::default()));

@@ -76,6 +76,8 @@ pub(crate) fn placed(id: u32, base: u32, cell: u32) -> PlacedRef {
         radius: None,
         encounter_zone: None,
         level_modifier: None,
+        map_marker: None,
+        radio: None,
     }
 }
 

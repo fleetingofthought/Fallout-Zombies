@@ -102,7 +102,8 @@ Start cannot be bound.
   [observed: the original], also in `pipboy/data.rs`.
 - The prompt under the crosshair names the Activate control's own key ("E)") or, with a
   controller, its button ("A)") (`Bindings::prompt`). The original shows the button's
-  picture there (`&xbuttona;`, `general_button_a.dds`); letters are the first step.
+  picture there (`&xbuttona;`, `general_button_a.dds`): NVForever draws its own for the
+  four face buttons under the PlayStation names (§3a), and letters stand in for the rest.
 - **Menu hints follow the device** (#1662). Every hint names the key its menu answers
   ("Take All R)", "Close [E]") or, with a controller, the button that presses that key
   there (`pad::hint`, looked up in the tables above through `pad::button_for`, the
@@ -121,8 +122,8 @@ Start cannot be bound.
   drawn with a view kept for change detection redraw when the device changes; the others
   (the container, barter and Pip-Boy pages) take the new names at their next redraw.
   Not followed: the hint words the tiled Wait/Sleep, tutorial and message menus take
-  from their files' `_PCButtonText` (opt-in `[UI] TileMenus`), and the button pictures
-  (letters stand in).
+  from their files' `_PCButtonText` (opt-in `[UI] TileMenus`), and the original's own
+  button pictures (NVForever draws its own glyphs in their place, §3a).
 
 ## 3a. PlayStation names (#1452)
 
@@ -147,9 +148,14 @@ NVForever's own [design, #1452]:
   the rebinding log names them so too.
 - **Glyphs**: NVForever draws its own Cross, Circle, Square and Triangle — a solid cross
   and three ring outlines — computed at start into small pictures (`pad::Glyph`, nothing
-  from the game's or Sony's art). The crosshair prompt shows the glyph and ")" in place of
-  "Cross)"; the menu hints, drawn with the game's fonts, which have no such symbols, write
-  the names. L1 … R3, Select and Start are text everywhere.
+  from the game's or Sony's art). The eight labelled buttons are drawn as an amber capsule
+  ring (L1/R1/L2/R2/Select/Start) or a circle knob (L3/R3) with the label written inside in
+  the game's font, rasterized from the font's bitmap texture (`pad::Glyph::labeled_image`).
+  Every menu hint draws them in place of the names — "Cross)" becomes a cross picture and
+  ")", "Take All Square)" its square (`pad::set_hint`; the crosshair prompt draws the four
+  face buttons the same way) — with a gap after the word and tucked against the following
+  ")" or "]" (#1829). The hints stay text with Xbox names or keys, and the stick and D-pad
+  directions and "LB"/"RB" have no glyph.
 
 ## 4. Rumble
 
@@ -216,7 +222,8 @@ those settings so a mod that changes them changes this too.
 
 ## 6. Not built yet
 
-- The button pictures from `Interface\Shared\Button\` in place of letters.
+- The original's own button pictures from `Interface\Shared\Button\` in place of letters
+  (NVForever draws its own glyphs instead, §3a).
 - The ITEMS page's RB Hotkey (§3's "not followed"); the tiled menus' file hints
   following the device (§3).
 - A pointer moved by a stick for the mouse-only parts of menus still left: the dialogue

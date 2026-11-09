@@ -87,6 +87,10 @@ pub(crate) fn call(g: &mut Game, name: &str, subject: Option<FormId>, args: &[XV
         // fontfile.2 "Textures\Fonts\Monofonto_Large.fnt", fontfile.9 ""].
         "getfontfile" => {
             let n = int(args, 0, 0);
+            // SetFontFile's file first (`crate::nvse_jip9`).
+            if let Some(f) = g.font_file(n) {
+                return Some(Ok(XVal::Str(f.to_string())));
+            }
             let from_ini = match crate::nvse_settings::call(g, "getstringinisetting", &[XVal::Str(format!("sFontFile_{n}:Fonts"))]) {
                 Some(Ok(XVal::Str(s))) if !s.is_empty() => Some(s),
                 _ => None,

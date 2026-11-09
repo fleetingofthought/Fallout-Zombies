@@ -1,0 +1,61 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "lu3",
+ "title": "lu3, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\narray_var aR\nstring_var sOld\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fE\nfloat fF\nBegin Function { }\nlet sOld := GetActivatorPrompt BlackjackTableGomorrah\nSetFunctionValue (sv_Construct \"[%z]\" sOld)\nEnd\n",
+   "label": "lu3.prompt",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\narray_var aR\nstring_var sOld\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fE\nfloat fF\nBegin Function { }\nlet rObj := GetAnimObjectIdle RepairWall01Wrench\nSetFunctionValue (GetFormIDString rObj)\nEnd\n",
+   "label": "lu3.anio",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\narray_var aR\nstring_var sOld\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fE\nfloat fF\nBegin Function { }\nlet aR := GetLoadScreenTypeTextRGB StandardLoadingTip\nlet fA := aR[\"r\"]\nlet fB := aR[\"g\"]\nlet fC := aR[\"b\"]\nSetLoadScreenTypeTextRGB StandardLoadingTip 59.3 181 300\nlet aR := GetLoadScreenTypeTextRGB StandardLoadingTip\nlet fD := aR[\"r\"]\nlet fE := aR[\"g\"]\nlet fF := aR[\"b\"]\nSetLoadScreenTypeTextRGB StandardLoadingTip fA fB fC\nSetFunctionValue (sv_Construct \"%g %g %g / %.1f %g %g\" fA fB fC fD fE fF)\nEnd\n",
+   "label": "lu3.lsct",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\narray_var aR\nstring_var sOld\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fE\nfloat fF\nBegin Function { }\nlet fA := PlayerREF.GetPerkRank Educated\nPlayerREF.SetPerkRank Educated 9\nlet fB := PlayerREF.GetPerkRank Educated\nPlayerREF.SetPerkRank Educated 0\nlet fC := PlayerREF.GetPerkRank Educated\nPlayerREF.SetPerkRank Educated fA\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fA fB fC (PlayerREF.GetPerkRank Educated))\nEnd\n",
+   "label": "lu3.perkrank",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\narray_var aR\nstring_var sOld\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fE\nfloat fF\nBegin Function { }\nlet fA := GetNthPerkEntryFunction FastShot 1\nSetNthPerkEntryFunction FastShot 1 7\nlet fB := GetNthPerkEntryFunction FastShot 1\nSetNthPerkEntryFunction FastShot 1 fA\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB (GetNthPerkEntryFunction FastShot 1))\nEnd\n",
+   "label": "lu3.perkentry",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\narray_var aR\nstring_var sOld\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fE\nfloat fF\nBegin Function { }\nlet aR := GetPlayerRegions\nSetFunctionValue (ar_Size aR)\nEnd\n",
+   "label": "lu3.regions",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\narray_var aR\nstring_var sOld\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fE\nfloat fF\nBegin Function { }\nlet rObj := PlayerREF.GetParentCell\nlet aR := GetCellRefs 0 0 0 rObj\nlet fA := ar_Size aR\nlet aR := GetRefs 0 0 0\nSetFunctionValue (sv_Construct \"%g\" (fA == (ar_Size aR)))\nEnd\n",
+   "label": "lu3.cellrefs",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\narray_var aR\nstring_var sOld\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fE\nfloat fF\nBegin Function { }\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"10A214\"\nlet fA := GetVariable \"nGeckosKilled\" rObj\nlet fB := SetVariableFloat \"nGeckosKilled\" 7 rObj\nlet fC := GetVariable \"nGeckosKilled\" rObj\nSetVariable \"nGeckosKilled\" fA rObj\nSetFunctionValue (sv_Construct \"%g %g\" fB fC)\nEnd\n",
+   "label": "lu3.setvar",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\narray_var aR\nstring_var sOld\nfloat fA\nfloat fB\nfloat fC\nfloat fD\nfloat fE\nfloat fF\nBegin Function { }\nSetFunctionValue (sv_Construct \"%g %g\" (OnCellEnter) (OnCellExit))\nEnd\n",
+   "label": "lu3.events",
+   "field": "value",
+   "text": true
+  }
+ ]
+}

@@ -42,6 +42,28 @@ pub struct ActorMaterials {
     searched: Vec<String>,
 }
 
+impl ActorMaterials {
+    /// The shapes the clips drive and the copy of its own each was given, if any (the
+    /// profile aid's `profile change sources:` line). Posing writes the material a shape
+    /// wears: its own copy, or, while it fades or is drawn faded, the see-through copy it
+    /// wears then (`Posing::pose`), so the profile reads each shape's worn material too.
+    pub fn shapes(&self) -> impl Iterator<Item = (Entity, Option<AssetId<NifMaterial>>)> + '_ {
+        self.slots.iter().map(|s| (s.entity, s.mine.as_ref().map(Handle::id)))
+    }
+
+    /// One driven shape, nothing written yet (tests).
+    #[cfg(test)]
+    pub(crate) fn with_shape(entity: Entity) -> Self {
+        ActorMaterials { slots: vec![Slot { shape: String::new(), entity, mine: None, last: None }], searched: Vec::new() }
+    }
+}
+
+/// The driven materials of the player's rigs (the body, the first-person arms with the
+/// weapon in hand), by rig root: `pose_player`'s, kept as a resource so the profile aid
+/// can see them.
+#[derive(Resource, Default)]
+pub struct PlayerRigMaterials(pub(crate) HashMap<Entity, ActorMaterials>);
+
 struct Slot {
     /// Lower case, as `ShapeName`.
     shape: String,
@@ -176,8 +198,9 @@ pub fn pose(mut actors: Query<(Entity, &BlendPlayer, Option<&mut ActorMaterials>
 
 /// The same for the player's rigs (the body, and the first-person arms with the weapon
 /// in hand), whose clips an `Animator` plays (`player_body.rs`).
-pub fn pose_player(body: Option<Res<crate::player_body::PlayerBody>>, mut posing: Posing, mut kept: Local<HashMap<Entity, ActorMaterials>>) {
+pub fn pose_player(body: Option<Res<crate::player_body::PlayerBody>>, mut posing: Posing, mut kept: ResMut<PlayerRigMaterials>) {
     let Some(body) = body else { return };
+    let kept = &mut kept.0;
     let look_again = posing.tick();
     let rigs = body.animators();
     kept.retain(|e, _| rigs.iter().any(|(r, _)| r == e));

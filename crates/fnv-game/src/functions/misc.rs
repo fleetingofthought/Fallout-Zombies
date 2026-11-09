@@ -349,6 +349,7 @@ pub fn get_player_name(g: &mut Game, _ctx: &Ctx, _a: &Args) -> Result<Value, Str
 /// ShowRaceMenu: the race menu.
 pub fn show_race_menu(g: &mut Game, _ctx: &Ctx, _a: &Args) -> Result<Value, String> {
     g.race_menu = crate::game::RaceMenu::Creator;
+    g.race_menu_studio = false;
     open(g, menus::RACE)
 }
 
@@ -356,6 +357,7 @@ pub fn show_race_menu(g: &mut Game, _ctx: &Ctx, _a: &Args) -> Result<Value, Stri
 /// 1036, `crate::game::RaceMenu::Surgeon`).
 pub fn show_plastic_surgeon_menu(g: &mut Game, _ctx: &Ctx, _a: &Args) -> Result<Value, String> {
     g.race_menu = crate::game::RaceMenu::Surgeon;
+    g.race_menu_studio = false;
     open(g, menus::RACE)
 }
 
@@ -363,6 +365,7 @@ pub fn show_plastic_surgeon_menu(g: &mut Game, _ctx: &Ctx, _a: &Args) -> Result<
 /// `crate::game::RaceMenu::Barber`).
 pub fn show_barber_menu(g: &mut Game, _ctx: &Ctx, _a: &Args) -> Result<Value, String> {
     g.race_menu = crate::game::RaceMenu::Barber;
+    g.race_menu_studio = false;
     open(g, menus::RACE)
 }
 

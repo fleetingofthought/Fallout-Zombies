@@ -204,7 +204,9 @@ fn travel_target(st: &DataState, script: Option<&ScriptState>, m: &read::Marker)
         let p = &rt.game.player;
         p.travel_markers.contains(&FormId(m.form)) || p.all_markers.is_some_and(|a| a.shown && a.travel)
     });
-    st.discovered.contains(&m.form) || m.flags & 2 != 0 || by_script
+    // LU's SetMapMarkerTravel over the record's flag (`fnv_game::nvse_lu2`).
+    let flags = script.and_then(|s| s.rt.as_ref()).and_then(|rt| rt.game.marker_flags(FormId(m.form))).unwrap_or(m.flags);
+    st.discovered.contains(&m.form) || flags & 2 != 0 || by_script
 }
 
 /// What the refusals look at: the player's body, where they are, the actors near, the

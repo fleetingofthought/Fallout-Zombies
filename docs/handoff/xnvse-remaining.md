@@ -142,6 +142,39 @@ probed, lab L5.ext.jg5 88 of 88).
 Census after it: 649 (JohnnyGuitar 216 → 184).
 With JIP batch 8 merged: 602 (JIP 201, JohnnyGuitar 184) [observed: the extender_census
 test, 2026-11-08].
+JIP batch 9: 23 (#1006, jip-ui-9.md: the HUD cursor, the mouse, vanity wheel and camera
+collision switches, CloseActiveMenu, the hotkeys' inventory references, the Pip-Boy radio,
+the game volumes, SetFontFile, SetSystemColor, the health bar's actor, immortal mode,
+interaction by type, GetPosEx, the NIF block material values and the Alt translation and
+rotation; engine side in `script_switches.rs` and `nif_mirror.rs`; not probed). Census
+after it: 579 (JIP 201 → 178).
+JohnnyGuitar batch 6: 37 (#1007, ext-jg6.md: actor values by code, UnsetAV, life states,
+temporary ingestible effects, available perks, hotkey slots, the owner's trespass alarm,
+visited and expired cells, lighting template cells, the moon phase, radios, talking
+activator actors, prompt overrides, primitives, effect shaders, armed mines, CallPerRef and
+CallPerMobileObject; probe set jg6 written, not run yet). JohnnyGuitar 184 → 147.
+JohnnyGuitar batch 7: 38 (#1007, ext-jg7.md: the combat music, level-up menu, menu arrow key,
+yield timer, viewmodel clip, NiLOD and save switches, UI update sounds, reputation and map
+marker icons, barter hiding, the queued cinematic and objective texts, TogglePipBoy, the
+engine requests, HSVtoRGB and RGBtoHSV into script variables, GetJohnnyPatch,
+GetDefaultHeapSize, IsMenuPaused; probe set jg7 written, not run yet). JohnnyGuitar 147 → 109.
+JohnnyGuitar batch 8: 31 (#1007, ext-jg8.md: the last 14 event handlers (failed quests, lost
+limbs, seen cells, processing levels, NPCs' actor values, reputations, NPC responses, sleep and
+wait, general subtitles, the crosshair, settings, keyboard selection, radio sounds, taking items
+back), the custom map marker, MD5File and SHA1File, IsBSALoaded, the DDS texture getters,
+GetPixelFromBMP, Ar_Shuffle and Ar_SortEditor, the system colours, the sleep/wait menu state,
+TuneRadioRef; probe set jg8 written, not run yet). JohnnyGuitar 109 → 78.
+ShowOff batch 5: the last 37 (#1010, ext-showoff.md §8: the level-up and pause menus on request, live
+explosions, the shot switches, fast travel, detection and combat counts, VATS and item values, the
+player's small states; from the pages, not probed). Census after it, beside batch 4: 565 (ShowOff 71 → 34;
+0 with batch 4).
+SUP batch 6: 22 (#1008, ext-sup6.md: the mouse, the cursor's traits, debug texts, the screen,
+fonts and plugin header texts, the HUD flags as JohnnyGuitar's override, the lockpick menu and
+the throw held, the engine's side in nvf_play::sup_screen and cursor.rs; GetPCTrait 0 by
+decision; not probed yet, set sup6). Census after it: 580 (SUP 93 → 71).
+Lutana batch 2: 29 (#1009, ext-lutana.md §9: map markers and radio data decoded on placed references,
+hotkey units, the INI writers, skill magazines, ingestible flags, the quest items switch, form counts and
+form plugins; from the pages and the records, not probed). Census after it: 573 (LU 53 → 24).
 ShowOff batch 4: 34 (#1010, ext-showoff.md §7: matrices and quaternions, SayTo topics, the INI cache,
 JSON files and folders through NVForever's layer, the pickpocket, quest-message and ammo-regen
 switches, the corner-message handler, ResetInteriorAlt, SetOwnershipTemp, the enable-parent
@@ -153,6 +186,32 @@ nothing values by the owner's decisions of 2026-11-08; not probed yet, set sup5)
 it: 560 (SUP 93 → 51).
 With both ShowOff batch 4 and SUP batch 5 merged: 526 (ShowOff 37, SUP 51) [hypothesis: 602 − 34 − 42;
 the extender_census test decides].
+Lutana batch 3: the last 24 (#1009, ext-lutana.md §10: the activator prompt, ANIO and LSCT fields and the
+loading screen's texture as session record edits, race, template and template flags, CopyFaceGenFrom
+through the appearance changes the engine draws, SetBaseForm, EquipItemData and SetEquippedData,
+SetPerkRank, the perk entry setters read by the perk effects, GetPlayerRegions, the cell enter and exit
+events, GetCellRefs, SetVariableFloat, BaseAddItemHealth; set lu3, not probed yet). LU 24 → 0.
+JIP batch 10: 36 (#1006, jip-scripts-10.md: quest objectives and their targets, the quest lists,
+SetStageAlt, perks and factions, script variables added at run time (saved), scripts and event
+blocks switched off, FakeScriptEvent, linked and enable children, the references' extra data
+(saved), script map markers, the text files through NVForever's layer; probed once, set jip10,
+6 of 21 before the fixes that follow it, jip-scripts-10.md §7). Census after it: JIP 178 → 142.
+SUP batch 7: 12 (#1008, ext-sup7.md: the NIF block interpolations run frame by frame through the
+scene mirror's edits, their finish events, the vertices told by the engine's `nif_mirror.rs`,
+the HUD bars' script-variable (a variable handed over by place, `Host::var_place`) and UDF
+sources; not probed yet, set sup7). Census after it: SUP 29 → 17 (the 17 of batch 4).
+With both JIP batch 10 and SUP batch 7 merged: JIP 142, SUP 17 [hypothesis: 378 − 36 − 12 = 330 in all; the extender_census test decides].
+JIP batch 11: 40 (#1006, jip-actors-11.md: combat allies and targets, detection values and
+ForceActorDetectionValue, packages, the actor's alpha, gravity, light, breath, movement,
+velocity, leveled list and unarmed effect, base values of a base form, kill XP, radiation at
+an NPC, ResetFallTime, active effects and effect lists, the equipped items, armour DR/DT by
+condition and GetArmourPenetrated, SetBaseFactionRank, ClearDeadActors, the hardcore stages'
+effects, SetConditionDamagePenalty; four nothing values by decision, §7; probed, set
+jip11, 22 of 28 after the fixes that follow it, jip-actors-11.md §6). Census after it: JIP 142 → 102.
+SUP batch 4: the last 17 (#1008, ext-sup4.md: random array keys, invalid references, Ar_SetFloatsFrom through
+the VM's output variables, CallFunctionNextFrame (kept across a load with removeOnLoad 0), the compass targets,
+the last save's and load's names and sizes told by the engine, the cells and map markers near the player,
+MarkScriptOnLoad, KillAll2, the caught-pickpocketing flag, TranslitText; set sup4, not probed yet). SUP 17 → 0.
 
 **The plugin libraries: 1,519 left** (recounted with #1022's census). JIP LN 349,
 JohnnyGuitar 313, SUP 184, LU 145, ShowOff 139, ITR 119, One111 51, CacheUI 45, PP 42,

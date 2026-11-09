@@ -109,10 +109,12 @@ fn matrices_follow_the_pages_examples() {
     assert_eq!(n(&mut g, "array_var a\nlet a := Mat_ApplyOpWithScal (ar_List (ar_List 3 4) (ar_List 5 6)) \"/\" 2\nSetFunctionValue a[1][0]"), 2.5);
     assert_eq!(n(&mut g, "array_var a\nlet a := Matrix_ApplyOperationWithScalar (ar_List (ar_List 3 4) (ar_List 5 6)) \"+\" 2\nSetFunctionValue a[0][1]"), 6.0);
     assert_eq!(n(&mut g, "array_var a\nlet a := Mat_T (ar_List (ar_List 3 4) (ar_List 5 6))\nSetFunctionValue a[0][1]"), 5.0);
-    // A quaternion of 90 degrees about Z and back.
+    // A quaternion of 90 degrees about Z: the game gives the transpose of the right-handed
+    // form [observed 2026-11-08: showoff4.quat.z90] and Mat_GetQuat reads the right-handed
+    // form, so the way back gives -z.
     let quat = "array_var m\narray_var b\nlet m := Quat_GetMat (ar_List 0.7071067811865476 0 0 0.7071067811865476)\nlet b := Mat_GetQuat m\n";
-    assert!((n(&mut g, &format!("{quat}SetFunctionValue m[1][0]")) - 1.0).abs() < 1e-9);
-    assert!((n(&mut g, &format!("{quat}SetFunctionValue b[3]")) - std::f64::consts::FRAC_1_SQRT_2).abs() < 1e-9);
+    assert!((n(&mut g, &format!("{quat}SetFunctionValue m[1][0]")) + 1.0).abs() < 1e-6);
+    assert!((n(&mut g, &format!("{quat}SetFunctionValue b[3]")) + std::f64::consts::FRAC_1_SQRT_2).abs() < 1e-6);
     let before = g.console_out.len();
     q(&mut g, "Mat_Dump (ar_List (ar_List 1 2) (ar_List 3 4))");
     let lines = &g.console_out[before..];
@@ -131,7 +133,8 @@ fn json_and_the_ini_cache_go_through_nvforevers_layer() {
     // A form is written as "@plugin:FormID" and read back as the form [documented].
     assert_eq!(n(&mut g, r#"WriteToJSON TestStatic "NVFTest\so4.json" "/form""#), 1.0);
     assert_eq!(n(&mut g, r#"ReadFromJSON "NVFTest\so4.json" "/form""#), f64::from(STAT));
-    assert_eq!(n(&mut g, r#"ReadFromJSON "NVFTest\missing.json""#), 0.0);
+    // A missing file gives no value [observed 2026-11-08: showoff4.readjson.missing].
+    assert_eq!(n(&mut g, r#"TestExpr (ReadFromJSON "NVFTest\missing.json")"#), 0.0);
     assert_eq!(n(&mut g, r#"CreateFolder "NVFTest\Sub""#), 1.0);
     assert_eq!(n(&mut g, r#"CreateFolder "..\Outside""#), 0.0, "a path out of the layer is refused");
     // The INI cache: a key created in the cache, then saved and read by LU's reader.

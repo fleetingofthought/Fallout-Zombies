@@ -576,6 +576,7 @@ pub fn read_controls(
     state: Res<State<PlayState>>,
     mut control: ResMut<PlayerControl>,
     hud: Option<ResMut<HudMessage>>,
+    switches: Option<Res<crate::script_switches::ScriptSwitches>>,
 ) {
     if *state.get() != PlayState::Playing {
         control.aiming = false;
@@ -658,7 +659,10 @@ pub fn read_controls(
             c.pov = Pov::Third;
         }
     }
-    if c.third_person_view() && scroll.delta.y != 0.0 && !input.suppressed() {
+    // Not while a script turned the vanity wheel off (ToggleVanityWheel,
+    // `crate::script_switches`).
+    let wheel = switches.is_none_or(|s| s.vanity_wheel);
+    if wheel && c.third_person_view() && scroll.delta.y != 0.0 && !input.suppressed() {
         c.distance = zoom(c.distance, scroll.delta.y);
     }
     if let Some(m) = message {
@@ -859,7 +863,9 @@ pub fn place_camera(
     for leg in 0..2 {
         let d = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
         let len = (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt();
-        if len > 1e-3 {
+        // ToggleCameraCollision 0: the camera goes through walls (`crate::script_switches`).
+        let collides = switches.as_deref().is_none_or(|s| s.camera_collision);
+        if len > 1e-3 && collides {
             let reach = match phys.ray(from, d, len + WALL_MARGIN, filter.clone()) {
                 Some(h) => (h.distance - WALL_MARGIN).max(0.0).min(len),
                 None => len,

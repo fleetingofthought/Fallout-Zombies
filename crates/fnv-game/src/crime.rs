@@ -483,6 +483,28 @@ impl Game<'_> {
         self.is_faction(o.owner) && faction_rank(self, witness, o.owner) >= 0
     }
 
+    /// SendTrespassAlarmAlt on `r`: the alarm goes to the owner of `r` (someone other
+    /// than the player) instead of an actor's base: each witness who stands for that
+    /// owner counts the trespass and turns on the player, as the trespass warnings' last
+    /// step does [documented: SendTrespassAlarmAlt, "uses the calling reference's owner";
+    /// hypothesis: the owner's people who see the player are the ones told]. How many
+    /// turned.
+    pub(crate) fn trespass_alarm_for(&mut self, r: FormId) -> usize {
+        let Some(o) = self.owned_by_other(r) else { return 0 };
+        let mut turned = 0;
+        for w in self.crime_witnesses() {
+            if !self.speaks_for(w, &o) {
+                continue;
+            }
+            self.count_crime(w, Kind::Trespass);
+            if self.player.crime_enemies.insert(w) {
+                turned += 1;
+                self.crimes.notes.push(Note::Crime { kind: Kind::Trespass, victim: Some(o.owner), seen_by: vec![w], hostile: vec![w] });
+            }
+        }
+        turned
+    }
+
     /// Whether stealing from this owner costs karma (module notes).
     pub(crate) fn karma_for_theft_from(&mut self, o: &Ownership) -> bool {
         self.karma_for_theft(o)

@@ -604,7 +604,8 @@ fn cues(
                 by = by.or(Some(id));
             }
         }
-        cues.combat = combat.is_some();
+        // ToggleCombatMusic 0 keeps the battle music off (`fnv_game::nvse_jg7`).
+        cues.combat = combat.is_some() && !fnv_game::nvse_jg7::combat_music_off();
         cues.alert = alert || combat.is_some();
         cues.by = combat.or(by);
         for f in factions {
@@ -725,6 +726,52 @@ fn stinger(sounds: &mut MessageWriter<PlaySound>, sound: Option<u32>, what: &str
     }
 }
 
+/// The grid over each space's audio markers ([`marker_grid`]) and a frame's candidates
+/// (reused).
+#[derive(Default)]
+struct MarkerGrids {
+    grids: HashMap<Space, crate::sound_grid::FixedGrid>,
+    near: Vec<u32>,
+    candidates: Vec<AudioMarker>,
+}
+
+/// The distance [`audio::marker_at`] measures from `at` to a marker at `position`.
+fn marker_distance(at: [f32; 3], position: [f32; 3]) -> f32 {
+    ((at[0] - position[0]).powi(2) + (at[1] - position[1]).powi(2) + (at[2] - position[2]).powi(2)).sqrt()
+}
+
+/// The grid over a space's audio markers (`crate::sound_grid`) [design]: each at its
+/// place, reaching its radius. A marker [`audio::marker_at`] never picks (no controller,
+/// a radius not above 0) is left out. The markers stay where the plugins put them
+/// (`AudioPlaces` is read once), so the grid is made once per space.
+fn marker_grid(markers: &[AudioMarker]) -> crate::sound_grid::FixedGrid {
+    let picked_ever = |m: &AudioMarker| {
+        // `audio::marker_at`'s own skip; a NaN radius is kept (the grid hands it out always).
+        let never = m.controller.is_none() || m.radius <= 0.0;
+        !never
+    };
+    crate::sound_grid::FixedGrid::build(markers.iter().enumerate().filter(|(_, m)| picked_ever(m)).map(|(i, m)| (i as u32, m.position, m.radius)))
+}
+
+/// The marker whose music is heard at `eye`: [`audio::marker_at`] asked of the markers the
+/// grid says can reach `eye`, in list order. A marker farther than its radius is never
+/// picked and the ties go to the first in the list, so the answer is the one over the
+/// whole list. The candidates are copied into `candidates` (a handful at most), which the
+/// answer borrows.
+fn marker_near<'c>(
+    grid: &crate::sound_grid::FixedGrid,
+    markers: &[AudioMarker],
+    eye: [f32; 3],
+    enabled: impl Fn(&AudioMarker) -> bool,
+    near: &mut Vec<u32>,
+    candidates: &'c mut Vec<AudioMarker>,
+) -> Option<(&'c AudioMarker, f32)> {
+    grid.near(eye, |c, r| marker_distance(eye, c) > r, near);
+    candidates.clear();
+    candidates.extend(near.iter().map(|&i| markers[i as usize].clone()));
+    audio::marker_at(candidates, eye, enabled)
+}
+
 /// The world the music reads: where the player is, the clock, the game files.
 type Where<'a> = (Res<'a, PlayWorld>, Res<'a, Location>, Res<'a, SimState>, Option<Res<'a, Player>>, Option<Res<'a, nvf_assets::GameData>>);
 
@@ -744,6 +791,7 @@ fn play(
     sfx: Option<Res<crate::sfx::Sfx>>,
     poker: Option<Res<crate::poker::PokerScreen>>,
     sinks: Query<&AudioSink, With<MusicSound>>,
+    mut grids: Local<MarkerGrids>,
 ) {
     let (Some(mut music), Some(places), Some(player), Some(data)) = (music, places, player, data) else { return };
     let music = &mut *music;
@@ -819,8 +867,14 @@ fn play(
 
     // The marker the player is in, and the set picked when it was entered (or when the
     // faction's standing changed).
-    let markers = places.audio.get(&Space::of(&loc)).map_or(&[][..], Vec::as_slice);
-    let at = audio::marker_at(markers, eye, |m| sim.world.is_enabled(fnv_sim::FormId(m.ref_id)).unwrap_or(!m.initially_disabled));
+    let space = Space::of(&loc);
+    let markers = places.audio.get(&space).map_or(&[][..], Vec::as_slice);
+    if places.is_changed() {
+        grids.grids.clear();
+    }
+    let grids = &mut *grids;
+    let grid = grids.grids.entry(space).or_insert_with(|| marker_grid(markers));
+    let at = marker_near(grid, markers, eye, |m| sim.world.is_enabled(fnv_sim::FormId(m.ref_id)).unwrap_or(!m.initially_disabled), &mut grids.near, &mut grids.candidates);
     let controller = at.and_then(|(m, _)| places.forms.controllers.get(&m.controller?));
     // A faction not yet measured counts as neutral.
     let relation = controller.and_then(|c| c.faction.map(|f| cues.relations.get(&f).copied().unwrap_or(0)));
@@ -1131,6 +1185,58 @@ impl Plugin for MusicPlugin {
 mod tests {
     use super::*;
     use fnv_world::audio::{MediaSet, MusicType};
+
+    /// The marker picked through the grid is the one `audio::marker_at` picks over the
+    /// whole list: markers across cell borders, on the edge of their radius, without a
+    /// controller or radius, disabled ones, and ties (the same place and radius twice).
+    #[test]
+    fn marker_through_the_grid_is_the_whole_lists() {
+        use crate::sound_grid::tests::Lcg;
+        let mut rng = Lcg(9);
+        let mut markers: Vec<AudioMarker> = (0..600u32)
+            .map(|i| {
+                let mut position = [rng.range(-30000.0, 30000.0), rng.range(-30000.0, 30000.0), rng.range(-500.0, 2500.0)];
+                if i % 4 == 0 {
+                    position[1] = 4096.0 * (rng.next_u32() % 9) as f32 - 16384.0;
+                }
+                let radius = match i % 6 {
+                    0 => rng.range(500.0, 2000.0),
+                    1 => 4096.0,
+                    2 => rng.range(3000.0, 9000.0),
+                    3 => 0.0,
+                    4 => rng.range(100.0, 600.0),
+                    _ => -10.0,
+                };
+                AudioMarker { ref_id: 0x3000 + i, position, radius, controller: (i % 10 != 7).then_some(2), initially_disabled: i % 11 == 0, ..marker(0.0) }
+            })
+            .collect();
+        // A tie: the same place and radius as the first, later in the list. Both enabled
+        // (the first would be disabled by the `i % 11` rule above), so the tie is decided
+        // by list order and checked below.
+        markers[0].initially_disabled = false;
+        let twin = AudioMarker { ref_id: 0x4000, ..markers[0].clone() };
+        markers.push(twin);
+        let grid = marker_grid(&markers);
+        let mut eyes: Vec<[f32; 3]> = (0..200).map(|_| [rng.range(-32000.0, 32000.0), rng.range(-32000.0, 32000.0), rng.range(0.0, 2000.0)]).collect();
+        eyes.extend([[0.0; 3], [0.0, 4096.0, 0.0], [f32::NAN, 0.0, 0.0], markers[0].position]);
+        for m in markers.iter().filter(|m| m.radius > 0.0).take(40) {
+            eyes.push([m.position[0] + m.radius, m.position[1], m.position[2]]);
+        }
+        let enabled = |m: &AudioMarker| !m.initially_disabled;
+        let (mut near, mut candidates) = (Vec::new(), Vec::new());
+        // At the twins' own place both are at distance 0: the earlier one wins, both ways.
+        let at_twins = markers[0].position;
+        assert_eq!(audio::marker_at(&markers, at_twins, enabled).map(|(m, _)| m.ref_id), Some(0x3000));
+        assert_eq!(marker_near(&grid, &markers, at_twins, enabled, &mut near, &mut candidates).map(|(m, _)| m.ref_id), Some(0x3000));
+        let mut picked = 0;
+        for eye in eyes {
+            let whole = audio::marker_at(&markers, eye, enabled).map(|(m, d)| (m.ref_id, d.to_bits()));
+            let through = marker_near(&grid, &markers, eye, enabled, &mut near, &mut candidates).map(|(m, d)| (m.ref_id, d.to_bits()));
+            assert_eq!(through, whole, "listener at {eye:?}");
+            picked += whole.is_some() as u32;
+        }
+        assert!(picked > 0);
+    }
 
     fn marker(radius: f32) -> AudioMarker {
         AudioMarker { ref_id: 1, cell: 1, position: [0.0; 3], radius, name: None, controller: Some(2), use_controller_values: true, layer2_percent: 0.33, layer3_percent: 0.67, initially_disabled: false }

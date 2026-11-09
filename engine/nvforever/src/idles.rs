@@ -103,7 +103,7 @@ use fnv_actor::idle_play::{IdleKeys, IdlePlay};
 use fnv_actor::weapon::Stage;
 use fnv_game::game::Game;
 use fnv_game::idles::{FidgetKind, IdlePicker, IdleRequest, IdleSource, Loops};
-use fnv_game::package::flags;
+use fnv_game::package::{flags, PackageType};
 use fnv_sim::FormId;
 use nvf_assets::actor::{bind_clip, ActorCtx, ActorParts};
 use nvf_assets::anim_play::{BlendPlayer, BoundClip, Clip, Layer};
@@ -645,6 +645,17 @@ pub fn drive(
     };
     let player_ref = FormId::PLAYER_REF.0;
     let package_of = |game: &Game, actor: u32| game.extra.get(&FormId(actor)).and_then(|e| e.current_package);
+    // Seated by a Find or Use Item At package: its idles play on the seat ("Find: Idles
+    // play when 'activating' the target of the find"; Use Item At "at its location"
+    // [documented: Category:Packages, actor-behaviour.md §1.5]), laid over the sitting
+    // clip as a seated speaker's gestures are. The G.O.A.T. students (CG03, TTW) write
+    // their tests so (`LooseSitTakingTest*`); before, only standing actors played a
+    // package's idles and they fidgeted in their chairs.
+    let seated_idlers: HashSet<u32> = actors
+        .iter()
+        .map(|(_, v, ..)| v.0)
+        .filter(|a| on_furniture(game, *a) && package_of(game, *a).and_then(|p| game.package_def(&p)).is_some_and(|d| matches!(d.ty, PackageType::Find | PackageType::UseItemAt)))
+        .collect();
 
     // Idles that belong to a package or a marker that is no longer the actor's.
     let owner_now = |game: &Game, actor: u32, source: IdleSource| match source {
@@ -682,7 +693,7 @@ pub fn drive(
         }
         // A collection's idle ends when its actor walks off or is drawn into a
         // conversation, so it can turn to the other and gesture (idles.md §12) [design].
-        let walking = lo.is_some_and(|l| l.velocity != [0.0; 2]) || !standing.contains_key(&v.0);
+        let walking = lo.is_some_and(|l| l.velocity != [0.0; 2]) || (!standing.contains_key(&v.0) && !seated_idlers.contains(&v.0));
         let talking = talk_parts.iter().any(|p| p.actor == FormId(v.0));
         if let Some(c) = idle.0.cur.as_mut().filter(|c| (walking || talking) && matches!(c.source, IdleSource::PackageIdles | IdleSource::MarkerIdles)) {
             c.play.stop();
@@ -700,6 +711,13 @@ pub fn drive(
         // the start of the getting-off clip, which starts where the body sits
         // (furniture.md §4) [design].
         if let Some(c) = idle.0.cur.as_mut().filter(|c| c.source == IdleSource::FurnitureFidget && !on_furniture(game, v.0)) {
+            c.play.stop();
+        }
+        // So does one under a seated Find or Use Item At package with idles of its own:
+        // they take its place (a fidget that loops for ever would hold them off; Susie
+        // Mack and Christine Kendall in the G.O.A.T. sat down before their package began).
+        let own_idles = seated_idlers.contains(&v.0) && game.package_idles(FormId(v.0)).is_some();
+        if let Some(c) = idle.0.cur.as_mut().filter(|c| c.source == IdleSource::FurnitureFidget && own_idles) {
             c.play.stop();
         }
         // A cower goes on while its actor runs and ends when it no longer flees
@@ -770,8 +788,13 @@ pub fn drive(
         busy.insert(r.actor.0, true);
     }
 
-    // Collections: the standing residents', and the player's under a script package.
-    let candidates = standing.iter().map(|(a, m)| (*a, *m)).chain(package_of(game, player_ref).map(|_| (player_ref, None)));
+    // Collections: the standing residents', the seated ones of Find and Use Item At packages
+    // (`seated_idlers`), and the player's under a script package.
+    let candidates = standing
+        .iter()
+        .map(|(a, m)| (*a, *m))
+        .chain(seated_idlers.iter().filter(|a| !standing.contains_key(a)).map(|a| (*a, None)))
+        .chain(package_of(game, player_ref).map(|_| (player_ref, None)));
     let mut live: Vec<u32> = Vec::new();
     let mut ask: Vec<(u32, FormId, IdleSource)> = Vec::new();
     for (actor, marker) in candidates {

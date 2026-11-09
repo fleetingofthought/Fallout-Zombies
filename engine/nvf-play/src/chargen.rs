@@ -647,6 +647,7 @@ fn draw_menus(
     data: Option<Res<GameData>>,
     mut images: ResMut<Assets<Image>>,
     formats: Option<Res<CompressedImageFormatSupport>>,
+    glyphs: Res<crate::pad::PadGlyphs>,
     traits: Option<Res<crate::tiles::trait_menu::TraitTiles>>,
     tags: Option<Res<crate::tiles::tag_menu::TagTiles>>,
 ) {
@@ -688,7 +689,7 @@ fn draw_menus(
     let bc = crate::interface::bc_supported(formats.as_deref());
     let st = st.into_inner();
     let kit = st.kit.get_or_insert_with(|| draw::Kit::load(data.as_deref(), &mut images, bc));
-    let mut c = draw::Ctx { kit, data: data.as_deref(), images: &mut images, bc };
+    let mut c = draw::Ctx { kit, data: data.as_deref(), images: &mut images, bc, glyphs: &glyphs };
     let root = Node {
         position_type: PositionType::Absolute,
         width: Val::Percent(100.0),

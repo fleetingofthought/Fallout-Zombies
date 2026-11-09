@@ -330,7 +330,7 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         "getnthperkentryvalue1" | "setnthperkentryvalue1" => {
             let Some(p) = form(args, 0) else { return Some(Ok(XVal::Num(-1.0))) };
             let Ok(i) = usize::try_from(num(args, 1, -1.0) as i64) else { return Some(Ok(XVal::Num(-1.0))) };
-            let rec = g.data.perks.get(&p).and_then(|d| d.entries.get(i)).map(|e| match &e.effect {
+            let rec = crate::nvse_lu3::nth_entry_of(g, p, i as f64).map(|e| match &e.effect {
                 crate::data::PerkEffect::EntryPoint(ep) => ep.value,
                 _ => None,
             });

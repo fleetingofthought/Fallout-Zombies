@@ -495,9 +495,16 @@ fn cacheui_anh_and_the_small_plugins() {
     assert_eq!(q(&mut g, "SetFunctionValue (StewieGetValue \"sSoundName:Cookable Grenades\")"), s("WPNGrenadeBeep"));
     assert_eq!(q(&mut g, "SetFunctionValue (TTW_CRC32 \"Small.esm\")"), n(f64::from(0xCBF4_3926u32)));
     assert_eq!(q(&mut g, "array_var a\narray_var r\nlet a := TTW_GetPlugins\nlet r := a[0]\nSetFunctionValue r[0]"), s("Small.esm"));
+    // The plugin's header version (1.34 here): TTW calls a plugin below 1.3 an
+    // unconverted Fallout 3 mod.
+    assert_eq!(q(&mut g, "array_var a\narray_var r\nlet a := TTW_GetPlugins\nlet r := a[0]\nSetFunctionValue r[1]"), n(f64::from(1.34f32)));
     // TTW's gene projector is the race menu, NVForever's character creator.
     q(&mut g, "TTW_ShowGeneProjector");
     assert_eq!(g.open_menu_code(), Some(fnv_game::game::menus::RACE));
+    assert!(g.race_menu_studio, "drawn in the creator's studio");
+    g.close_menu();
+    q(&mut g, "ShowRaceMenu");
+    assert!(!g.race_menu_studio, "New Vegas's race menu stays in the room");
     g.close_menu();
     q(&mut g, "SetWorldspaceMapBounds TestWorld -10 20 30 -40");
     assert_eq!(g.world_map_bounds(FormId(WORLD)), Some([-10, 20, 30, -40]));

@@ -3502,7 +3502,7 @@ fn compile_script_reads_a_udf_file_and_print_var_names_variables() {
     let reader: fnv_game::mod_files::Reader = std::sync::Arc::new(|p: &str| {
         (p.eq_ignore_ascii_case("nvse\\user_defined_functions\\sub\\add.txt")).then(|| b"begin Function { int iA, int iB }\nSetFunctionValue iA + iB\nend\n".to_vec())
     });
-    fnv_game::mod_files::set_roots(fnv_game::mod_files::Roots { read: Vec::new(), config: None, write: None, lookup: None, reader: Some(reader) });
+    fnv_game::mod_files::set_roots(fnv_game::mod_files::Roots { read: Vec::new(), config: None, write: None, lookup: None, reader: Some(reader), archives: Vec::new() });
     let f = udf_fixture();
     let mut g = game(&f);
     let ctx = fnv_game::game::RunCtx::default;
@@ -3510,7 +3510,7 @@ fn compile_script_reads_a_udf_file_and_print_var_names_variables() {
     assert_eq!(q(&mut g, "let rF := CompileScript \"Sub/Add.txt\"\nSetFunctionValue (Call rF 2 3)"), Ok(XVal::Num(5.0)));
     assert_eq!(q(&mut g, "let rF := CompileScript \"sub\\add.txt\"\nlet rG := GetUDFFromFile \"Sub/Add.txt\"\nSetFunctionValue (rF == rG)"), Ok(XVal::Num(1.0)), "cached by path");
     assert_eq!(q(&mut g, "SetFunctionValue (CompileScript \"Sub/None.txt\")"), Ok(XVal::Ref(0)), "no file");
-    fnv_game::mod_files::set_roots(fnv_game::mod_files::Roots { read: Vec::new(), config: None, write: None, lookup: None, reader: None });
+    fnv_game::mod_files::set_roots(fnv_game::mod_files::Roots { read: Vec::new(), config: None, write: None, lookup: None, reader: None, archives: Vec::new() });
 
     g.console_out.clear();
     q(&mut g, "let fRes := 2.5\nlet aA := ar_List 2, 4\nPrintVar fRes, aA").unwrap();
@@ -3604,8 +3604,19 @@ fn extender_census() {
     let mut unbuilt: std::collections::BTreeMap<String, Vec<String>> = Default::default();
     let mut unknown = Vec::new();
     let mut seen = std::collections::HashSet::new();
+    // The catalogue's names the installed extenders do not register, read as text by
+    // the compiler (`fnv-script` encodings.json `compiler.not_commands`) [observed:
+    // nvse-fourth fose.*, `SetFunctionValue (GetFOSEVersion)` gives the text; lutana1
+    // misc.messagedisplaytime]: nothing to build, left out of the count (#1924).
+    let enc: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(format!("{root}/crates/fnv-script/data/encodings.json")).unwrap()).unwrap();
+    let not_commands: Vec<String> = enc["compiler"]["not_commands"].as_array().into_iter().flatten().filter_map(|v| v.as_str()).map(str::to_ascii_lowercase).collect();
+    let mut not_registered = Vec::new();
     for x in fs.iter().filter(|x| x["family"] == "extender") {
         let n = x["name"].as_str().unwrap_or_default();
+        if not_commands.contains(&n.to_ascii_lowercase()) {
+            not_registered.push(n.to_string());
+            continue;
+        }
         if n.is_empty() || !n.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') || STATEMENTS.contains(&n.to_ascii_lowercase().as_str()) || !seen.insert(n.to_ascii_lowercase()) {
             continue;
         }
@@ -3644,6 +3655,7 @@ fn extender_census() {
         out += &format!("{o} {}: {}\n", v.len(), v.join(", "));
     }
     out += &format!("not compiled with any argument count {}: {}\n", unknown.len(), unknown.join(", "));
+    out += &format!("not registered by the original, left out {}: {}\n", not_registered.len(), not_registered.join(", "));
     let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../target/tmp");
     std::fs::create_dir_all(dir).unwrap();
     std::fs::write(format!("{dir}/extender-census.txt"), &out).unwrap();

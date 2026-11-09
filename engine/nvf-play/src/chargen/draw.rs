@@ -73,6 +73,7 @@ pub struct Ctx<'a> {
     pub data: Option<&'a GameData>,
     pub images: &'a mut Assets<Image>,
     pub bc: bool,
+    pub glyphs: &'a crate::pad::PadGlyphs,
 }
 
 impl Ctx<'_> {
@@ -151,14 +152,14 @@ impl Ctx<'_> {
     #[allow(clippy::too_many_arguments)]
     pub fn text(&mut self, p: &mut ChildSpawnerCommands, which: Which, s: &str, x: f32, top: f32, align: Align, color: Color) -> f32 {
         let face = self.face(which);
-        let line = first_line(&face.font, s);
+        let width = crate::pad::hint_width(face, s, self.glyphs);
         let x = match align {
             Align::Left => x,
-            Align::Right => x - line.width,
-            Align::Centre => x - line.width / 2.0,
+            Align::Right => x - width,
+            Align::Centre => x - width / 2.0,
         };
-        set_line(p, face, &line, x, top + if which == Which::Title { TITLE_BASE } else { BODY_BASE }, color);
-        line.width
+        crate::pad::set_hint(p, face, s, x, top + if which == Which::Title { TITLE_BASE } else { BODY_BASE }, color, self.glyphs);
+        width
     }
 
     /// A body text wrapped at `wrap` (and at its own line breaks), its first line's top at

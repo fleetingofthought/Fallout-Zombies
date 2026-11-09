@@ -1,0 +1,686 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jg4",
+ "title": "jg4, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17179B\"\nlet sText := sv_Construct \"a\"\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.anims.tops",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet sText := sv_Construct \"a\"\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.anims.hunter",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"63301\"\nlet sText := sv_Construct \"a\"\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.anims.grab",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16A940\"\nlet sText := sv_Construct \"a\"\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.anims.nodata",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"162CAB\"\nlet sText := sv_Construct \"a\"\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.anims.ringo",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17179B\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg4.idlm.trait.tops.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17179B\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 1)\nEnd\n",
+   "label": "jg4.idlm.trait.tops.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17179B\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 2)\nEnd\n",
+   "label": "jg4.idlm.trait.tops.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17179B\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 3)\nEnd\n",
+   "label": "jg4.idlm.trait.tops.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17179B\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 4)\nEnd\n",
+   "label": "jg4.idlm.trait.tops.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg4.idlm.trait.hunter.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 1)\nEnd\n",
+   "label": "jg4.idlm.trait.hunter.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 2)\nEnd\n",
+   "label": "jg4.idlm.trait.hunter.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 3)\nEnd\n",
+   "label": "jg4.idlm.trait.hunter.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 4)\nEnd\n",
+   "label": "jg4.idlm.trait.hunter.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"63301\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg4.idlm.trait.grab.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"63301\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 1)\nEnd\n",
+   "label": "jg4.idlm.trait.grab.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"63301\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 2)\nEnd\n",
+   "label": "jg4.idlm.trait.grab.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"63301\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 3)\nEnd\n",
+   "label": "jg4.idlm.trait.grab.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"63301\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 4)\nEnd\n",
+   "label": "jg4.idlm.trait.grab.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16A940\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg4.idlm.trait.nodata.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16A940\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 1)\nEnd\n",
+   "label": "jg4.idlm.trait.nodata.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16A940\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 2)\nEnd\n",
+   "label": "jg4.idlm.trait.nodata.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16A940\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 3)\nEnd\n",
+   "label": "jg4.idlm.trait.nodata.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16A940\"\nSetFunctionValue (GetIdleMarkerTraitNumeric rObj 4)\nEnd\n",
+   "label": "jg4.idlm.trait.nodata.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet fSave := GetIdleMarkerTraitNumeric rObj 2\nSetIdleMarkerTraitNumeric rObj 2 7.5\nlet fA := GetIdleMarkerTraitNumeric rObj 2\nSetIdleMarkerTraitNumeric rObj 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetIdleMarkerTraitNumeric rObj 2))\nEnd\n",
+   "label": "jg4.idlm.settrait.hunter.2.7.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet fSave := GetIdleMarkerTraitNumeric rObj 2\nSetIdleMarkerTraitNumeric rObj 2 -1\nlet fA := GetIdleMarkerTraitNumeric rObj 2\nSetIdleMarkerTraitNumeric rObj 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetIdleMarkerTraitNumeric rObj 2))\nEnd\n",
+   "label": "jg4.idlm.settrait.hunter.2.neg",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet fSave := GetIdleMarkerTraitNumeric rObj 1\nSetIdleMarkerTraitNumeric rObj 1 5\nlet fA := GetIdleMarkerTraitNumeric rObj 1\nSetIdleMarkerTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetIdleMarkerTraitNumeric rObj 1))\nEnd\n",
+   "label": "jg4.idlm.settrait.hunter.1.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet fSave := GetIdleMarkerTraitNumeric rObj 1\nSetIdleMarkerTraitNumeric rObj 1 2\nlet fA := GetIdleMarkerTraitNumeric rObj 1\nSetIdleMarkerTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetIdleMarkerTraitNumeric rObj 1))\nEnd\n",
+   "label": "jg4.idlm.settrait.hunter.1.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet fSave := GetIdleMarkerTraitNumeric rObj 1\nSetIdleMarkerTraitNumeric rObj 1 0\nlet fA := GetIdleMarkerTraitNumeric rObj 1\nSetIdleMarkerTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetIdleMarkerTraitNumeric rObj 1))\nEnd\n",
+   "label": "jg4.idlm.settrait.hunter.1.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet fSave := GetIdleMarkerTraitNumeric rObj 3\nSetIdleMarkerTraitNumeric rObj 3 1\nlet fA := GetIdleMarkerTraitNumeric rObj 3\nSetIdleMarkerTraitNumeric rObj 3 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetIdleMarkerTraitNumeric rObj 3))\nEnd\n",
+   "label": "jg4.idlm.settrait.hunter.3.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet fSave := GetIdleMarkerTraitNumeric rObj 0\nSetIdleMarkerTraitNumeric rObj 0 9\nlet fA := GetIdleMarkerTraitNumeric rObj 0\nSetIdleMarkerTraitNumeric rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetIdleMarkerTraitNumeric rObj 0))\nEnd\n",
+   "label": "jg4.idlm.settrait.hunter.0.9",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"5DB21\"\nlet aSave := GetIdleMarkerAnimations rObj\nlet rThird := aSave[0]\nSetIdleMarkerAnimation rObj 0 rOther\nlet aList := GetIdleMarkerAnimations rObj\nlet sText := sv_Construct \"a\"\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetIdleMarkerAnimation rObj 0 rThird\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.setanim.hunter.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"5DB21\"\nlet aSave := GetIdleMarkerAnimations rObj\nlet rThird := aSave[3]\nSetIdleMarkerAnimation rObj 3 rOther\nlet aList := GetIdleMarkerAnimations rObj\nlet sText := sv_Construct \"a\"\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetIdleMarkerAnimation rObj 3 rThird\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.setanim.hunter.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"5DB21\"\nlet aSave := GetIdleMarkerAnimations rObj\nSetIdleMarkerAnimation rObj 9 rOther\nlet aList := GetIdleMarkerAnimations rObj\nlet sText := sv_Construct \"a\"\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet iA := aSave\nSetIdleMarkerAnimations rObj iA\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.setanim.hunter.9",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"5DB21\"\nlet aSave := GetIdleMarkerAnimations rObj\nSetIdleMarkerAnimation rObj -1 rOther\nlet aList := GetIdleMarkerAnimations rObj\nlet sText := sv_Construct \"a\"\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet iA := aSave\nSetIdleMarkerAnimations rObj iA\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.setanim.hunter.neg",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15AD22\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nlet aSave := GetIdleMarkerAnimations rObj\nlet rThird := aSave[0]\nSetIdleMarkerAnimation rObj 0 rOther\nlet aList := GetIdleMarkerAnimations rObj\nlet sText := sv_Construct \"a\"\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetIdleMarkerAnimation rObj 0 rThird\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.idlm.setanim.hunter.notidle",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17179B\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"5DB21\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"269B8\"\nlet aSave := GetIdleMarkerAnimations rObj\nlet aList := ar_List rOther rThird rOther\nlet iA := aList\nSetIdleMarkerAnimations rObj iA\nlet fRes := GetIdleMarkerTraitNumeric rObj 3\nlet aList := GetIdleMarkerAnimations rObj\nlet sText := sv_Construct \"n%g\" fRes\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet iA := aSave\nSetIdleMarkerAnimations rObj iA\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue (sv_Construct \"%z n%g\" sText (GetIdleMarkerTraitNumeric rObj 3))\nEnd\n",
+   "label": "jg4.idlm.setanims.tops.idles",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17179B\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"5DB21\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nlet aSave := GetIdleMarkerAnimations rObj\nlet aList := ar_List rOther rThird rOther\nlet iA := aList\nSetIdleMarkerAnimations rObj iA\nlet fRes := GetIdleMarkerTraitNumeric rObj 3\nlet aList := GetIdleMarkerAnimations rObj\nlet sText := sv_Construct \"n%g\" fRes\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet iA := aSave\nSetIdleMarkerAnimations rObj iA\nlet aList := GetIdleMarkerAnimations rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue (sv_Construct \"%z n%g\" sText (GetIdleMarkerTraitNumeric rObj 3))\nEnd\n",
+   "label": "jg4.idlm.setanims.tops.notidle",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nlet sText := sv_Construct \"a\"\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.weathers.nv",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet sText := sv_Construct \"a\"\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.weathers.gs",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nlet sText := sv_Construct \"a\"\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.weathers.megaton",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"173566\"\nlet sText := sv_Construct \"a\"\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.weathers.urban",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5E\"\nlet sText := sv_Construct \"a\"\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.weathers.gsmap",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17179B\"\nlet sText := sv_Construct \"a\"\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.weathers.tops",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherType rObj 0))\nEnd\n",
+   "label": "jg4.regn.nth.nv.0.type",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetNthRegionWeatherChance rObj 0)\nEnd\n",
+   "label": "jg4.regn.nth.nv.0.chance",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherGlobal rObj 0))\nEnd\n",
+   "label": "jg4.regn.nth.nv.0.global",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherType rObj 1))\nEnd\n",
+   "label": "jg4.regn.nth.nv.1.type",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetNthRegionWeatherChance rObj 1)\nEnd\n",
+   "label": "jg4.regn.nth.nv.1.chance",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherGlobal rObj 1))\nEnd\n",
+   "label": "jg4.regn.nth.nv.1.global",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherType rObj 2))\nEnd\n",
+   "label": "jg4.regn.nth.nv.2.type",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetNthRegionWeatherChance rObj 2)\nEnd\n",
+   "label": "jg4.regn.nth.nv.2.chance",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherGlobal rObj 2))\nEnd\n",
+   "label": "jg4.regn.nth.nv.2.global",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherType rObj -1))\nEnd\n",
+   "label": "jg4.regn.nth.nv.-1.type",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetNthRegionWeatherChance rObj -1)\nEnd\n",
+   "label": "jg4.regn.nth.nv.-1.chance",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherGlobal rObj -1))\nEnd\n",
+   "label": "jg4.regn.nth.nv.-1.global",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherType rObj 0))\nEnd\n",
+   "label": "jg4.regn.nth.megaton.0.type",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nSetFunctionValue (GetNthRegionWeatherChance rObj 0)\nEnd\n",
+   "label": "jg4.regn.nth.megaton.0.chance",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherGlobal rObj 0))\nEnd\n",
+   "label": "jg4.regn.nth.megaton.0.global",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherType rObj 1))\nEnd\n",
+   "label": "jg4.regn.nth.megaton.1.type",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nSetFunctionValue (GetNthRegionWeatherChance rObj 1)\nEnd\n",
+   "label": "jg4.regn.nth.megaton.1.chance",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherGlobal rObj 1))\nEnd\n",
+   "label": "jg4.regn.nth.megaton.1.global",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"173566\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherType rObj 1))\nEnd\n",
+   "label": "jg4.regn.nth.urban.1.type",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"173566\"\nSetFunctionValue (GetNthRegionWeatherChance rObj 1)\nEnd\n",
+   "label": "jg4.regn.nth.urban.1.chance",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5E\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherType rObj 0))\nEnd\n",
+   "label": "jg4.regn.nth.gsmap.0.type",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5E\"\nSetFunctionValue (GetNthRegionWeatherChance rObj 0)\nEnd\n",
+   "label": "jg4.regn.nth.gsmap.0.chance",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5E\"\nSetFunctionValue (GetFormIDString (GetNthRegionWeatherGlobal rObj 0))\nEnd\n",
+   "label": "jg4.regn.nth.gsmap.0.global",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"176574\"\nSetFunctionValue (IsWeatherInRegion rObj rOther)\nEnd\n",
+   "label": "jg4.regn.in.nv.clearnight",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"1237D7\"\nSetFunctionValue (IsWeatherInRegion rObj rOther)\nEnd\n",
+   "label": "jg4.regn.in.nv.gsweather",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"1237D7\"\nSetFunctionValue (IsWeatherInRegion rObj rOther)\nEnd\n",
+   "label": "jg4.regn.in.gs.gsweather",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5E\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"1237D7\"\nSetFunctionValue (IsWeatherInRegion rObj rOther)\nEnd\n",
+   "label": "jg4.regn.in.gsmap.gsweather",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetRegionWeatherOverride rObj)\nEnd\n",
+   "label": "jg4.regn.override.nv",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nSetFunctionValue (GetRegionWeatherOverride rObj)\nEnd\n",
+   "label": "jg4.regn.override.gs",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nSetFunctionValue (GetRegionWeatherOverride rObj)\nEnd\n",
+   "label": "jg4.regn.override.megaton",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5E\"\nSetFunctionValue (GetRegionWeatherOverride rObj)\nEnd\n",
+   "label": "jg4.regn.override.gsmap",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nSetFunctionValue (GetRegionWeatherPriority rObj)\nEnd\n",
+   "label": "jg4.regn.priority.nv",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nSetFunctionValue (GetRegionWeatherPriority rObj)\nEnd\n",
+   "label": "jg4.regn.priority.gs",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nSetFunctionValue (GetRegionWeatherPriority rObj)\nEnd\n",
+   "label": "jg4.regn.priority.megaton",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"173566\"\nSetFunctionValue (GetRegionWeatherPriority rObj)\nEnd\n",
+   "label": "jg4.regn.priority.urban",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5E\"\nSetFunctionValue (GetRegionWeatherPriority rObj)\nEnd\n",
+   "label": "jg4.regn.priority.gsmap",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet fSave := GetRegionWeatherOverride rObj\nSetRegionWeatherOverride rObj 1\nlet fA := GetRegionWeatherOverride rObj\nSetRegionWeatherOverride rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRegionWeatherOverride rObj))\nEnd\n",
+   "label": "jg4.regn.setoverride.gs.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet fSave := GetRegionWeatherOverride rObj\nSetRegionWeatherOverride rObj 2\nlet fA := GetRegionWeatherOverride rObj\nSetRegionWeatherOverride rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRegionWeatherOverride rObj))\nEnd\n",
+   "label": "jg4.regn.setoverride.gs.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104160\"\nlet fSave := GetRegionWeatherOverride rObj\nSetRegionWeatherOverride rObj 0\nlet fA := GetRegionWeatherOverride rObj\nSetRegionWeatherOverride rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRegionWeatherOverride rObj))\nEnd\n",
+   "label": "jg4.regn.setoverride.nv.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet fSave := GetRegionWeatherPriority rObj\nSetRegionWeatherPriority rObj 50\nlet fA := GetRegionWeatherPriority rObj\nSetRegionWeatherPriority rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRegionWeatherPriority rObj))\nEnd\n",
+   "label": "jg4.regn.setpriority.gs.50",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet fSave := GetRegionWeatherPriority rObj\nSetRegionWeatherPriority rObj 300\nlet fA := GetRegionWeatherPriority rObj\nSetRegionWeatherPriority rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRegionWeatherPriority rObj))\nEnd\n",
+   "label": "jg4.regn.setpriority.gs.300",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet fSave := GetRegionWeatherPriority rObj\nSetRegionWeatherPriority rObj -5\nlet fA := GetRegionWeatherPriority rObj\nSetRegionWeatherPriority rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRegionWeatherPriority rObj))\nEnd\n",
+   "label": "jg4.regn.setpriority.gs.neg",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet fSave := GetRegionWeatherPriority rObj\nSetRegionWeatherPriority rObj 20.6\nlet fA := GetRegionWeatherPriority rObj\nSetRegionWeatherPriority rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRegionWeatherPriority rObj))\nEnd\n",
+   "label": "jg4.regn.setpriority.gs.frac",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"176537\"\nlet sText := sv_Construct \"a\"\nAddRegionWeather rObj rOther 40\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet sText := sv_Construct \"%z c%g\" sText (GetNthRegionWeatherChance rObj 1)\nRemoveRegionWeather rObj rOther\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.add.gs",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"176537\"\nlet sText := sv_Construct \"a\"\nAddRegionWeather rObj rOther 30 rThird\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet sText := sv_Construct \"%z c%g\" sText (GetNthRegionWeatherChance rObj 1)\nRemoveRegionWeather rObj rOther\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.add.gs.global",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"176537\"\nlet sText := sv_Construct \"a\"\nAddRegionWeather rObj rOther 150\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet sText := sv_Construct \"%z c%g\" sText (GetNthRegionWeatherChance rObj 1)\nRemoveRegionWeather rObj rOther\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.add.gs.150",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"176537\"\nlet sText := sv_Construct \"a\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"1237D7\"\nAddRegionWeather rObj rOther 50\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet sText := sv_Construct \"%z c%g\" sText (GetNthRegionWeatherChance rObj 0)\nClearRegionWeathers rObj\nAddRegionWeather rObj rOther 100\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.add.gs.dup",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"123CE3\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"176537\"\nlet sText := sv_Construct \"a\"\nRemoveRegionWeather rObj rOther\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.remove.gs.notlisted",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"A0B\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"176537\"\nlet sText := sv_Construct \"a\"\nAddRegionWeather rObj rOther 60\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet sText := sv_Construct \"%z o%g p%g\" sText (GetRegionWeatherOverride rObj) (GetRegionWeatherPriority rObj)\nClearRegionWeathers rObj\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.add.dc01",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"73EB4\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"FFC88\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"176537\"\nlet sText := sv_Construct \"a\"\nClearRegionWeathers rObj\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nlet sText := sv_Construct \"%z o%g p%g\" sText (GetRegionWeatherOverride rObj) (GetRegionWeatherPriority rObj)\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"64609\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"73A79\"\nAddRegionWeather rObj rOther 0 rThird\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"6A076\"\nlet rThird := GetFormFromMod \"FalloutNV.esm\" \"73A78\"\nAddRegionWeather rObj rOther 0 rThird\nlet aList := GetRegionWeathers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.regn.clear.megaton",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"19\"\nSetFunctionValue (GetRaceFlag rObj 0)\nEnd\n",
+   "label": "jg4.race.get.caucasian.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"19\"\nSetFunctionValue (GetRaceFlag rObj 1)\nEnd\n",
+   "label": "jg4.race.get.caucasian.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"19\"\nSetFunctionValue (GetRaceFlag rObj 2)\nEnd\n",
+   "label": "jg4.race.get.caucasian.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"42C2\"\nSetFunctionValue (GetRaceFlag rObj 0)\nEnd\n",
+   "label": "jg4.race.get.child.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"42C2\"\nSetFunctionValue (GetRaceFlag rObj 1)\nEnd\n",
+   "label": "jg4.race.get.child.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"42C2\"\nSetFunctionValue (GetRaceFlag rObj 2)\nEnd\n",
+   "label": "jg4.race.get.child.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"3B3E\"\nSetFunctionValue (GetRaceFlag rObj 0)\nEnd\n",
+   "label": "jg4.race.get.ghoul.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"3B3E\"\nSetFunctionValue (GetRaceFlag rObj 1)\nEnd\n",
+   "label": "jg4.race.get.ghoul.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"3B3E\"\nSetFunctionValue (GetRaceFlag rObj 2)\nEnd\n",
+   "label": "jg4.race.get.ghoul.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nSetFunctionValue (GetRaceFlag rObj 0)\nEnd\n",
+   "label": "jg4.race.get.testqa.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nSetFunctionValue (GetRaceFlag rObj 1)\nEnd\n",
+   "label": "jg4.race.get.testqa.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nSetFunctionValue (GetRaceFlag rObj 2)\nEnd\n",
+   "label": "jg4.race.get.testqa.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nlet fSave := GetRaceFlag rObj 0\nSetRaceFlag rObj 0 1\nlet fA := GetRaceFlag rObj 0\nSetRaceFlag rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRaceFlag rObj 0))\nEnd\n",
+   "label": "jg4.race.set.testqa.0.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nlet fSave := GetRaceFlag rObj 2\nSetRaceFlag rObj 2 1\nlet fA := GetRaceFlag rObj 2\nSetRaceFlag rObj 2 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRaceFlag rObj 2))\nEnd\n",
+   "label": "jg4.race.set.testqa.2.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nlet fSave := GetRaceFlag rObj 1\nSetRaceFlag rObj 1 1\nlet fA := GetRaceFlag rObj 1\nSetRaceFlag rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRaceFlag rObj 1))\nEnd\n",
+   "label": "jg4.race.set.testqa.1.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nlet fSave := GetRaceFlag rObj 3\nSetRaceFlag rObj 3 1\nlet fA := GetRaceFlag rObj 3\nSetRaceFlag rObj 3 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRaceFlag rObj 3))\nEnd\n",
+   "label": "jg4.race.set.testqa.3.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nlet fSave := GetRaceFlag rObj 0\nSetRaceFlag rObj 0 5\nlet fA := GetRaceFlag rObj 0\nSetRaceFlag rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetRaceFlag rObj 0))\nEnd\n",
+   "label": "jg4.race.set.testqa.0.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"162CAB\"\nlet sText := sv_Construct \"a\"\nlet aList := GetFactionMembers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.fact.members.ringo",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15EC58\"\nlet sText := sv_Construct \"a\"\nlet aList := GetFactionMembers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.fact.members.militia",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"152978\"\nlet sText := sv_Construct \"a\"\nlet aList := GetFactionMembers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.fact.members.boonerogue",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"173EEF\"\nlet sText := sv_Construct \"a\"\nlet aList := GetFactionMembers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.fact.members.mercfac",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"33184\"\nlet sText := sv_Construct \"a\"\nlet aList := GetFactionMembers rObj\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.fact.members.testqa",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15EC58\"\nlet sText := sv_Construct \"a\"\nlet aList := GetFactionMembers rObj 0\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.fact.members.militia.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15EC58\"\nlet sText := sv_Construct \"a\"\nlet aList := GetFactionMembers rObj 1\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.fact.members.militia.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15EC58\"\nlet sText := sv_Construct \"a\"\nlet aList := GetFactionMembers rObj 2\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.fact.members.militia.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15EC58\"\nlet sText := sv_Construct \"a\"\nlet aList := GetFactionMembers rObj -1\nlet aKeys := ar_Keys aList\nlet fA := ar_Size aKeys\nlet sText := sv_Construct \"%z %g:\" sText fA\nlet fB := 0\nwhile fB < fA\nlet fC := aKeys[fB]\nlet rItem := aList[fC]\nlet sText := sv_Construct \"%z %g=%z\" sText fC (GetFormIDString rItem)\nlet fB += 1\nloop\nSetFunctionValue sText\nEnd\n",
+   "label": "jg4.fact.members.militia.-1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rThird\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nint iA\nstring_var sText\nstring_var sSave\narray_var aList\narray_var aKeys\narray_var aSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"A46E7\"\nSetFunctionValue (ar_Size (GetFactionMembers rObj))\nEnd\n",
+   "label": "jg4.fact.members.ncr.size",
+   "field": "value"
+  }
+ ]
+}

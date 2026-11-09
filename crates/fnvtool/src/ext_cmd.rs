@@ -197,13 +197,14 @@ pub fn run(cmd: ExtCmd) -> anyhow::Result<Value> {
             // read-only, `--config` for Data\Config; nothing is written to disk.
             let vfs = std::sync::Arc::new(fnv_vfs::Vfs::open_for_plugins(&lo.data_dir, &lo.plugins).ok());
             let v2 = vfs.clone();
+            let archives: Vec<String> = vfs.as_ref().as_ref().map(|v| v.archives().map(str::to_string).collect()).unwrap_or_default();
             let lookup: fnv_game::mod_files::Lookup = std::sync::Arc::new(move |p: &str| match vfs.as_ref() {
                 Some(v) if v.loose_path(p).is_some() => 1,
                 Some(v) if v.exists(p) => 2,
                 _ => 0,
             });
             let reader: fnv_game::mod_files::Reader = std::sync::Arc::new(move |p: &str| v2.as_ref().as_ref().and_then(|v| v.read(p)).and_then(Result::ok));
-            fnv_game::mod_files::set_roots(fnv_game::mod_files::Roots { read: vec![lo.data_dir.clone()], config, write: None, lookup: Some(lookup), reader: Some(reader) });
+            fnv_game::mod_files::set_roots(fnv_game::mod_files::Roots { read: vec![lo.data_dir.clone()], config, write: None, lookup: Some(lookup), reader: Some(reader), archives });
             // The menus' tile tree, as the engine loads it at its start, so the UI
             // functions read the HUD's traits (ui_loading::load).
             if let Ok(v) = fnv_vfs::Vfs::open_for_plugins(&lo.data_dir, &lo.plugins) {
@@ -329,7 +330,7 @@ fn script_runner(lo: &LoadOrderArgs, schema: &Path, functions: Option<PathBuf>, 
     let vfs = std::sync::Arc::new(fnv_vfs::Vfs::open_for_plugins(&lo.data_dir, &lo.plugins).ok());
     let reader: fnv_game::mod_files::Reader = std::sync::Arc::new(move |p: &str| vfs.as_ref().as_ref().and_then(|v| v.read(p)).and_then(Result::ok));
     roots.push(lo.data_dir.clone());
-    fnv_game::mod_files::set_roots(fnv_game::mod_files::Roots { read: roots, config: None, write: None, lookup: None, reader: Some(reader) });
+    fnv_game::mod_files::set_roots(fnv_game::mod_files::Roots { read: roots, config: None, write: None, lookup: None, reader: Some(reader), archives: Vec::new() });
     let ftext = std::fs::read_to_string(&fp).with_context(|| fp.display().to_string())?;
     let fjson: Value = serde_json::from_str(&ftext).with_context(|| fp.display().to_string())?;
     let table = FunctionTable::load(&fp).with_context(|| fp.display().to_string())?;

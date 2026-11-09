@@ -728,6 +728,7 @@ pub fn persistent_ref_count(g: &mut Game, _ctx: &ConsoleCtx, _a: &[String]) -> R
 /// [documented: the catalogue's summary, "equivalent to ShowRaceMenu"].
 pub fn test_race_sex_terminal(g: &mut Game, _ctx: &ConsoleCtx, _a: &[String]) -> Result<Vec<String>, String> {
     g.race_menu = crate::game::RaceMenu::Creator;
+    g.race_menu_studio = false;
     g.open_menu(crate::game::menus::RACE);
     Ok(vec!["The race menu opens".into()])
 }

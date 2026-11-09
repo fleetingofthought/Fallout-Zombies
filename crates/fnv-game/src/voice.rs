@@ -14,6 +14,12 @@ pub trait VoiceLengths: Send + Sync {
     /// `InfoDef::response_chars`) of line `info`, said by an actor or talking activator
     /// whose base form is `speaker_base`. `None`: no sound is known for it.
     fn response_seconds(&self, info: FormId, response: usize, speaker_base: Option<FormId>) -> Option<f64>;
+
+    /// The Data path of that response's voice file, when known (the voice path of
+    /// SetOnNPCResponseEventHandler, `nvse_jg8`).
+    fn response_path(&self, _info: FormId, _response: usize, _speaker_base: Option<FormId>) -> Option<String> {
+        None
+    }
 }
 
 impl Game<'_> {

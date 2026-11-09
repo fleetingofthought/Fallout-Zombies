@@ -296,7 +296,8 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // ---- magic items and effects ----
         // The item's effects in record order [observed: gaps2, the stimpak 4, the first
         // RestoreHealth, past the end 0].
-        "getnumeffects" => XVal::Num(form(args, 0).and_then(|f| g.data.effect_items.get(&f)).map_or(0, Vec::len) as f64),
+        // Less RemoveNthEffect's (`crate::nvse_jip11`).
+        "getnumeffects" => XVal::Num(form(args, 0).map_or(0, |f| g.effect_indices(f).len()) as f64),
         "getntheffectbase" => {
             let i = num(args, 1, 0.0);
             let f = form(args, 0).unwrap_or(FormId(0));
@@ -420,7 +421,7 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // gaps5, Toughness/Lead Belly/Educated/Commando 1, Rad Resistance and Small Frame 5,
         // Intense Training 6].
         "getnthperkentrytype" => {
-            let e = form(args, 0).and_then(|f| g.data.perks.get(&f)).and_then(|p| p.entries.get(num(args, 1, 0.0).max(0.0) as usize));
+            let e = form(args, 0).and_then(|f| crate::nvse_lu3::nth_entry_of(g, f, num(args, 1, -1.0)));
             XVal::Num(match e.map(|e| &e.effect) {
                 Some(crate::data::PerkEffect::EntryPoint(_)) => 1.0,
                 Some(crate::data::PerkEffect::Ability(_)) => 5.0,
@@ -432,7 +433,7 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         // GetNthPerkEntryString, "Activate Prompt" for type 4]; "" for an entry without
         // one [observed: jip-forms perkentry.0, ""].
         "getnthperkentrystring" => {
-            let e = form(args, 0).and_then(|f| g.data.perks.get(&f)).and_then(|p| p.entries.get(num(args, 1, 0.0).max(0.0) as usize));
+            let e = form(args, 0).and_then(|f| crate::nvse_lu3::nth_entry_of(g, f, num(args, 1, -1.0)));
             XVal::Str(match e.map(|e| &e.effect) {
                 Some(crate::data::PerkEffect::EntryPoint(d)) => d.button.clone().unwrap_or_default(),
                 _ => String::new(),
@@ -440,7 +441,7 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         }
         // The entry point's code [observed: gaps4, Toughness's first 56].
         "getnthperkentryfunction" => {
-            let e = form(args, 0).and_then(|f| g.data.perks.get(&f)).and_then(|p| p.entries.get(num(args, 1, 0.0).max(0.0) as usize));
+            let e = form(args, 0).and_then(|f| crate::nvse_lu3::nth_entry_of(g, f, num(args, 1, -1.0)));
             XVal::Num(match e.map(|e| &e.effect) {
                 Some(crate::data::PerkEffect::EntryPoint(d)) => f64::from(d.point),
                 _ => -1.0,
@@ -1388,8 +1389,11 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, subject: Option<FormI
         "ispcincombat" => yes(g.awareness.hunted(FormId::PLAYER_REF)),
         // Nothing to reload: the engine draws the equipped models as they are.
         "reloadequippedmodels" => zero,
-        // NVForever is no 32-bit program [observed: gaps4, 0].
-        "getislaa" => zero,
+        // Whether the program may use more than 2 GB (the 4 GB patch). The original
+        // without the patch answers 0 [observed: gaps4]; NVForever is a 64-bit program with
+        // no such limit, so it answers 1 [design, owner 2026-11-08: TTW's start-up check
+        // `GetIsLAA == 0` showed "4GB patch missing" (TTW4GBMissingMessage)].
+        "getislaa" => XVal::Num(1.0),
         // The open menu's code, 0 in game mode [observed: gaps3, 0].
         "getactivemenumode" => XVal::Num(g.menu.map_or(0.0, f64::from)),
         // [observed: gaps3, 1]

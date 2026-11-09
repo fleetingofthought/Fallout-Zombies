@@ -342,15 +342,15 @@ fn hint_at_side(words: f32, width: f32, band_x: f32) -> bool {
 /// [`hint_room`] makes tall enough, [`HINT_IN`] from the band's left edge (kept inside the
 /// safe zone), the ink centred in the strip: [`HINT_CLEAR`] clear of the bracket's line and
 /// corner, under the choices and the scroll bar [design].
-fn hint_place(line: Line, ink: (f32, f32), width: f32, band_x: f32, bottom_line: f32) -> (Placed, Option<Area>) {
+fn hint_place(line: Line, words: f32, ink: (f32, f32), width: f32, band_x: f32, bottom_line: f32) -> (Placed, Option<Area>) {
     let (up, down) = ink;
-    if hint_at_side(line.width, width, band_x) {
-        let x = band_x - HINT_PAD_X - line.width;
+    if hint_at_side(words, width, band_x) {
+        let x = band_x - HINT_PAD_X - words;
         let base = bottom_line + THICK / 2.0 + (up - down) / 2.0;
-        let back = [x - HINT_PAD_X, base - up - HINT_PAD_Y, line.width + 2.0 * HINT_PAD_X, up + down + 2.0 * HINT_PAD_Y];
+        let back = [x - HINT_PAD_X, base - up - HINT_PAD_Y, words + 2.0 * HINT_PAD_X, up + down + 2.0 * HINT_PAD_Y];
         return (Placed { x, base, line }, Some(back));
     }
-    let right = band_x + BAND_WIDTH - HINT_IN - line.width;
+    let right = band_x + BAND_WIDTH - HINT_IN - words;
     let x = (band_x + HINT_IN).min(right).max(crop_x(width));
     let strip = LIST_BAND_DOWN - THICK + hint_room(ink);
     let base = bottom_line + THICK + (strip - up - down) / 2.0 + up;
@@ -358,7 +358,8 @@ fn hint_place(line: Line, ink: (f32, f32), width: f32, band_x: f32, bottom_line:
 }
 
 /// `hint`: whether the "Goodbye hint" switch is on.
-pub fn layout(view: &MenuView, first: usize, selected: usize, width: f32, hint: bool, body: &Font, name_font: &Font) -> Layout {
+#[allow(clippy::too_many_arguments)]
+pub fn layout(view: &MenuView, first: usize, selected: usize, width: f32, hint: bool, body: &Font, name_font: &Font, glyphs: &crate::pad::PadGlyphs) -> Layout {
     let band_x = (width - BAND_WIDTH) / 2.0;
     let name = Some(view.speaker.trim()).filter(|s| !s.is_empty()).map(|s| {
         let line = name_font.lines(s, None).remove(0);
@@ -383,9 +384,11 @@ pub fn layout(view: &MenuView, first: usize, selected: usize, width: f32, hint: 
     let (first, end) = window(first, selected, &heights);
     let height = list_room(&heights).max(MIN_LIST);
     // The hint's own words, and the room under the band they need where they stand in it.
-    let hint_line = hint_shown(view, hint).then(|| body.lines(&goodbye_hint(), None).remove(0));
+    let hint_text = hint_shown(view, hint).then(goodbye_hint);
+    let hint_line = hint_text.as_deref().map(|t| body.lines(t, None).remove(0));
     let ink = hint_line.as_ref().map_or(STAND_IN_INK, |l| glyph_ink(l, body));
-    let room = hint_line.as_ref().map_or(0.0, |l| if hint_at_side(l.width, width, band_x) { 0.0 } else { hint_room(ink) });
+    let words = hint_text.as_deref().map_or(0.0, |t| crate::pad::hint_width_font(body, t, glyphs));
+    let room = hint_text.as_deref().map_or(0.0, |_| if hint_at_side(words, width, band_x) { 0.0 } else { hint_room(ink) });
     let top = centred(height, room);
     let mut y = top - LIFT;
     let mut choices = Vec::new();
@@ -415,7 +418,7 @@ pub fn layout(view: &MenuView, first: usize, selected: usize, width: f32, hint: 
     out.list = Some(ListPlace { area: [list_x, top, LIST_WIDTH, height], top_line, bottom_line, bracket_x: list_x + BRACKET_IN, bracket_width: LIST_WIDTH, choices, scroll });
     out.first = first;
     if let Some(line) = hint_line {
-        let (placed, back) = hint_place(line, ink, width, band_x, bottom_line);
+        let (placed, back) = hint_place(line, words, ink, width, band_x, bottom_line);
         (out.hint, out.hint_back) = (Some(placed), back);
     }
     out
@@ -502,7 +505,7 @@ fn image(p: Option<&Picture>, color: Color) -> Option<ImageNode> {
     p.map(|(image, rect)| ImageNode { rect: *rect, color, image_mode: NodeImageMode::Stretch, ..ImageNode::new(image.clone()) })
 }
 
-fn spawn_menu(commands: &mut Commands, view: &MenuView, l: &Layout, kit: &Kit, selected: usize, on_screen: Option<&ListId>) {
+fn spawn_menu(commands: &mut Commands, view: &MenuView, l: &Layout, kit: &Kit, selected: usize, on_screen: Option<&ListId>, glyphs: &crate::pad::PadGlyphs) {
     let screen = Node { position_type: PositionType::Absolute, width: Val::Percent(100.0), height: Val::Percent(100.0), ..default() };
     // At the UI scale the menu keeps to the view's bottom, in its middle (#1631).
     let screen = crate::interface::framed_root(screen, crate::interface::BOTTOM_MIDDLE);
@@ -526,7 +529,7 @@ fn spawn_menu(commands: &mut Commands, view: &MenuView, l: &Layout, kit: &Kit, s
             };
         }
         if let Some(hint) = &l.hint {
-            set_line(s, &kit.body, &hint.line, hint.x, hint.base, bright);
+            crate::pad::set_hint(s, &kit.body, &goodbye_hint(), hint.x, hint.base, bright, glyphs);
         }
         for t in &l.text {
             set_line(s, &kit.body, &t.line, t.x, t.base, bright);
@@ -611,6 +614,7 @@ fn draw(
     tiles: Option<Res<crate::tiles::dialog_menu::DialogTiles>>,
     mut buttons: Query<&mut ChoiceButton>,
     hint: Res<GoodbyeHint>,
+    glyphs: Res<crate::pad::PadGlyphs>,
 ) {
     // Drawn from its file: all of the menu, none of it here (`crate::tiles::dialog_menu`).
     if tiles.is_some_and(|t| t.by_tiles()) {
@@ -640,7 +644,7 @@ fn draw(
             commands.entity(e).despawn();
         }
         if let Some((view, first, _, hint_on, _)) = &key {
-            let l = layout(view, *first, selected, width, *hint_on, &kit.body.font, &kit.name.font);
+            let l = layout(view, *first, selected, width, *hint_on, &kit.body.font, &kit.name.font, &glyphs);
             // One line when the hint appears, or when the switch holds it back.
             let was = shown.as_ref().and_then(|s| s.0.goodbye.then_some(s.3));
             match (view.goodbye.then_some(*hint_on), was) {
@@ -648,7 +652,7 @@ fn draw(
                 (Some(false), was) if was != Some(false) => info!("dialogue menu: {} hidden by the Goodbye hint setting", goodbye_hint()),
                 _ => {}
             }
-            spawn_menu(&mut commands, view, &l, kit, selected, menu.list.as_ref());
+            spawn_menu(&mut commands, view, &l, kit, selected, menu.list.as_ref(), &glyphs);
         }
         *shown = key;
         return;
@@ -680,7 +684,13 @@ mod tests {
     }
 
     fn lay(v: &MenuView, width: f32, hint: bool) -> Layout {
-        layout(v, 0, 0, width, hint, &font(34.0), &font(36.0))
+        layout(v, 0, 0, width, hint, &font(34.0), &font(36.0), &no_glyphs())
+    }
+
+    /// No glyph pictures: the test's hints name no PlayStation button, so the width is the
+    /// text's.
+    fn no_glyphs() -> crate::pad::PadGlyphs {
+        crate::pad::PadGlyphs::default()
     }
 
     /// A font of the test's own numbers: the letters of the hint are pictures 10 wide (as
@@ -700,7 +710,7 @@ mod tests {
     }
 
     fn lay_with(v: &MenuView, width: f32, hint: bool, body: &Font) -> Layout {
-        layout(v, 0, 0, width, hint, body, &font(36.0))
+        layout(v, 0, 0, width, hint, body, &font(36.0), &no_glyphs())
     }
 
     /// The hint's ink: left, top, right, bottom, from the numbers `up` above and `down`
@@ -794,7 +804,7 @@ mod tests {
         for (body, up, down) in [(pictured(), 40.0, 12.0), (font(34.0), 17.0, 0.0)] {
             for width in [1200.0, 1280.0, 1440.0, 1707.0, 2560.0] {
                 for selected in [0, 5] {
-                    let l = layout(&v, 0, selected, width, true, &body, &font(36.0));
+                    let l = layout(&v, 0, selected, width, true, &body, &font(36.0), &no_glyphs());
                     let hint = l.hint.expect("the hint");
                     let ink = ink_box(&hint, up, down);
                     let (band, list) = (l.band.unwrap(), l.list.unwrap());
@@ -868,7 +878,7 @@ mod tests {
         let text = format!("{} {}", "a".repeat(55), "b".repeat(5));
         let v = MenuView { speaker: "Bruce Isaac".into(), line: Some(text), choices: Vec::new(), goodbye: false };
         let width = 960.0 * 16.0 / 9.0;
-        let l = layout(&v, 0, 0, width, true, &font(34.0), &font(36.0));
+        let l = layout(&v, 0, 0, width, true, &font(34.0), &font(36.0), &no_glyphs());
         assert_eq!(l.text.len(), 2);
         // The text's top at 706, its first line standing 23.3 under it, the next 38 lower.
         assert!((l.text[0].base - 729.3).abs() < 1e-3);
@@ -891,7 +901,7 @@ mod tests {
         // screenshot of Trudy; a fourth that does not fit.
         let long = "abcde ".repeat(12);
         let v = choices(&[&long, &long, "Do you know the robot?", &long]);
-        let l = layout(&v, 0, 1, 1280.0, true, &font(34.0), &font(36.0));
+        let l = layout(&v, 0, 1, 1280.0, true, &font(34.0), &font(36.0), &no_glyphs());
         let list = l.list.unwrap();
         assert_eq!(list.choices.len(), 3);
         // The list is 250 high, its top at 619 and the brackets' lines 20 above and 10
@@ -917,7 +927,7 @@ mod tests {
 
     #[test]
     fn a_short_list_keeps_its_least_height() {
-        let l = layout(&choices(&["Goodbye."]), 0, 0, 1280.0, true, &font(34.0), &font(36.0));
+        let l = layout(&choices(&["Goodbye."]), 0, 0, 1280.0, true, &font(34.0), &font(36.0), &no_glyphs());
         let list = l.list.unwrap();
         assert_eq!(list.area[3], 110.0);
         assert!(list.scroll.is_none());
@@ -958,8 +968,8 @@ mod tests {
         // In the layout the list and the band are the same at both scrolls.
         let two = "abcde ".repeat(12);
         let v = choices(&[&two, "Do you know the robot?", &two, "Short.", "Short.", "Goodbye."]);
-        let a = layout(&v, 0, 1, 1280.0, true, &font(34.0), &font(36.0));
-        let b = layout(&v, 0, 3, 1280.0, true, &font(34.0), &font(36.0));
+        let a = layout(&v, 0, 1, 1280.0, true, &font(34.0), &font(36.0), &no_glyphs());
+        let b = layout(&v, 0, 3, 1280.0, true, &font(34.0), &font(36.0), &no_glyphs());
         let (la, lb) = (a.list.unwrap(), b.list.unwrap());
         assert_eq!(la.area, lb.area);
         assert_eq!(a.band, b.band);

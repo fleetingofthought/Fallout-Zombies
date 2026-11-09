@@ -145,16 +145,26 @@ fn idle_marker_animations_and_traits() {
     q(&mut g, "SetIdleMarkerTraitNumeric TestMarker 3 9");
     assert_eq!(n(&mut g, "GetIdleMarkerTraitNumeric TestMarker 1"), 4.0, "do once only");
     assert_eq!(n(&mut g, "GetIdleMarkerTraitNumeric TestMarker 2"), 12.5);
-    // A timer past a float's range or below 0 is refused (#1333 review).
+    // A timer past a float's range is refused (#1333 review); a negative one is kept
+    // [observed: jg4].
     q(&mut g, "float f
 let f := 10000000000.0 * 10000000000.0 * 10000000000.0 * 10000000000.0
 SetIdleMarkerTraitNumeric TestMarker 2 f");
-    q(&mut g, "SetIdleMarkerTraitNumeric TestMarker 2 -3");
     assert_eq!(n(&mut g, "GetIdleMarkerTraitNumeric TestMarker 2"), 12.5);
+    q(&mut g, "SetIdleMarkerTraitNumeric TestMarker 2 -3");
+    assert_eq!(n(&mut g, "GetIdleMarkerTraitNumeric TestMarker 2"), -3.0);
+    q(&mut g, "SetIdleMarkerTraitNumeric TestMarker 2 12.5");
+    // The flags read back whole; the marker plays by bits 0 and 2 [observed: jg4].
+    q(&mut g, "SetIdleMarkerTraitNumeric TestMarker 1 6");
+    assert_eq!(n(&mut g, "GetIdleMarkerTraitNumeric TestMarker 1"), 6.0);
+    q(&mut g, "SetIdleMarkerTraitNumeric TestMarker 1 4");
     assert_eq!(n(&mut g, "GetIdleMarkerTraitNumeric TestMarker 3"), 2.0, "the count is not set");
     q(&mut g, "SetIdleMarkerAnimation TestMarker 1 TestIdle3");
     q(&mut g, "SetIdleMarkerAnimation TestMarker 5 TestIdle3");
     assert_eq!(forms(&mut g, "GetIdleMarkerAnimations TestMarker"), vec![IDLE1, IDLE3]);
+    // Any form is listed, an idle or not [observed: jg4].
+    q(&mut g, "SetIdleMarkerAnimation TestMarker 0 TestRace");
+    assert_eq!(forms(&mut g, "GetIdleMarkerAnimations TestMarker"), vec![RACE, IDLE3]);
     q(&mut g, "array_var a\nlet a := ar_List TestIdle2 TestIdle3 TestIdle1\nSetIdleMarkerAnimations TestMarker a");
     assert_eq!(forms(&mut g, "GetIdleMarkerAnimations TestMarker"), vec![IDLE2, IDLE3, IDLE1]);
     assert_eq!(n(&mut g, "GetIdleMarkerTraitNumeric TestMarker 3"), 3.0, "the count follows");
@@ -169,7 +179,9 @@ fn region_weather_lists() {
     let mut g = game(&f);
     assert_eq!(forms(&mut g, "GetRegionWeathers TestRegion"), vec![WTHR1, WTHR2]);
     assert_eq!(n(&mut g, "GetNthRegionWeatherType TestRegion 1"), f64::from(WTHR2));
-    assert_eq!(n(&mut g, "GetNthRegionWeatherChance TestRegion 0"), 70.0);
+    // Index 0 reads none and 0 [observed: jg4].
+    assert_eq!(n(&mut g, "GetNthRegionWeatherChance TestRegion 0"), 0.0);
+    assert_eq!(n(&mut g, "GetNthRegionWeatherType TestRegion 0"), 0.0);
     assert_eq!(n(&mut g, "GetNthRegionWeatherGlobal TestRegion 1"), f64::from(GLOB));
     assert_eq!(n(&mut g, "GetNthRegionWeatherGlobal TestRegion 0"), 0.0);
     assert_eq!(n(&mut g, "GetNthRegionWeatherType TestRegion 2"), 0.0);
@@ -180,19 +192,23 @@ fn region_weather_lists() {
     assert_eq!(n(&mut g, "GetRegionWeatherPriority TestRegion"), 40.0);
     q(&mut g, "AddRegionWeather TestRegion TestWeather3 25 TestGlobal");
     q(&mut g, "AddRegionWeather TestRegion TestWeather3 99");
-    assert_eq!(forms(&mut g, "GetRegionWeathers TestRegion"), vec![WTHR1, WTHR2, WTHR3]);
-    assert_eq!(n(&mut g, "GetNthRegionWeatherChance TestRegion 2"), 25.0, "listed once");
+    // Listed first, once [observed: jg4].
+    assert_eq!(forms(&mut g, "GetRegionWeathers TestRegion"), vec![WTHR3, WTHR1, WTHR2]);
+    assert_eq!(n(&mut g, "GetNthRegionWeatherChance TestRegion 1"), 70.0);
     q(&mut g, "RemoveRegionWeather TestRegion TestWeather1");
-    assert_eq!(forms(&mut g, "GetRegionWeathers TestRegion"), vec![WTHR2, WTHR3]);
+    assert_eq!(forms(&mut g, "GetRegionWeathers TestRegion"), vec![WTHR3, WTHR2]);
     q(&mut g, "SetRegionWeatherOverride TestRegion 0");
     q(&mut g, "SetRegionWeatherPriority TestRegion 7");
+    // Outside 0-255: nothing changes [observed: jg4].
+    q(&mut g, "SetRegionWeatherPriority TestRegion 300");
     assert_eq!((n(&mut g, "GetRegionWeatherOverride TestRegion"), n(&mut g, "GetRegionWeatherPriority TestRegion")), (0.0, 7.0));
+    // Every entry but the first goes [observed: jg4].
     q(&mut g, "ClearRegionWeathers TestRegion");
-    assert!(forms(&mut g, "GetRegionWeathers TestRegion").is_empty());
-    // A region without a weather block gains one.
+    assert_eq!(forms(&mut g, "GetRegionWeathers TestRegion"), vec![WTHR3]);
+    // A region without a weather block gains none [observed: jg4].
     assert!(forms(&mut g, "GetRegionWeathers TestRegionBare").is_empty());
     q(&mut g, "AddRegionWeather TestRegionBare TestWeather1 100");
-    assert_eq!(forms(&mut g, "GetRegionWeathers TestRegionBare"), vec![WTHR1]);
+    assert!(forms(&mut g, "GetRegionWeathers TestRegionBare").is_empty());
 }
 
 #[test]
@@ -203,7 +219,8 @@ fn race_flags_and_faction_members() {
     q(&mut g, "SetRaceFlag TestRace 2 1");
     q(&mut g, "SetRaceFlag TestRace 0 0");
     q(&mut g, "SetRaceFlag TestRace 1 1");
-    assert_eq!((n(&mut g, "GetRaceFlag TestRace 0"), n(&mut g, "GetRaceFlag TestRace 1"), n(&mut g, "GetRaceFlag TestRace 2")), (0.0, 0.0, 1.0));
+    // Each bit as its value; the other bits are set too [observed: jg4].
+    assert_eq!((n(&mut g, "GetRaceFlag TestRace 0"), n(&mut g, "GetRaceFlag TestRace 1"), n(&mut g, "GetRaceFlag TestRace 2")), (0.0, 2.0, 4.0));
     assert_eq!(forms(&mut g, "GetFactionMembers TestFaction"), vec![NPC_A, NPC_B]);
     assert_eq!(forms(&mut g, "GetFactionMembers TestFaction 1"), vec![NPC_B]);
 }

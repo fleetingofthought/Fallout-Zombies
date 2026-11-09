@@ -1,0 +1,61 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jg8",
+ "title": "jg8, runtime-compiled (read-only)",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rA\nref rB\nref rC\nfloat fA\nfloat fB\nfloat fC\nint iR\nint iG\nint iB\nstring_var sText\narray_var aList\narray_var aOut\nBegin Function { }\nSetFunctionValue (sv_Construct \"%z|%z\" (MD5File \"Data\\Credits.txt\") (MD5File \"Data\\NoSuchFile.txt\"))\nEnd\n",
+   "label": "jg8.md5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rA\nref rB\nref rC\nfloat fA\nfloat fB\nfloat fC\nint iR\nint iG\nint iB\nstring_var sText\narray_var aList\narray_var aOut\nBegin Function { }\nSetFunctionValue (SHA1File \"Data\\Credits.txt\")\nEnd\n",
+   "label": "jg8.sha1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rA\nref rB\nref rC\nfloat fA\nfloat fB\nfloat fC\nint iR\nint iG\nint iB\nstring_var sText\narray_var aList\narray_var aOut\nBegin Function { }\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (IsBSALoaded \"Fallout - Meshes.bsa\") (IsBSALoaded \"fallout - meshes.bsa\") (IsBSALoaded \"Data\\Fallout - Meshes.bsa\") (IsBSALoaded \"NoSuch.bsa\"))\nEnd\n",
+   "label": "jg8.bsa",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rA\nref rB\nref rC\nfloat fA\nfloat fB\nfloat fC\nint iR\nint iG\nint iB\nstring_var sText\narray_var aList\narray_var aOut\nBegin Function { }\nSetFunctionValue (sv_Construct \"%g %g %g %g\" (GetTextureWidth \"interface\\icons\\world map\\icon_map_encampment.dds\") (GetTextureHeight \"interface\\icons\\world map\\icon_map_encampment.dds\") (GetTextureMipMapCount \"interface\\icons\\world map\\icon_map_encampment.dds\") (GetTextureFormat \"interface\\icons\\world map\\icon_map_encampment.dds\"))\nEnd\n",
+   "label": "jg8.texture",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rA\nref rB\nref rC\nfloat fA\nfloat fB\nfloat fC\nint iR\nint iG\nint iB\nstring_var sText\narray_var aList\narray_var aOut\nBegin Function { }\nSetFunctionValue (sv_Construct \"%.0f %.0f %.0f %.0f %.0f %.0f\" (GetSystemColor 1) (GetSystemColor 2) (GetSystemColor 3) (GetSystemColor 4) (GetSystemColor 5) (GetSystemColor 6))\nEnd\n",
+   "label": "jg8.colour",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rA\nref rB\nref rC\nfloat fA\nfloat fB\nfloat fC\nint iR\nint iG\nint iB\nstring_var sText\narray_var aList\narray_var aOut\nBegin Function { }\nlet fA := GetSystemColorAlt 1 iR iG iB\nSetFunctionValue (sv_Construct \"%g %g %g\" iR iG iB)\nEnd\n",
+   "label": "jg8.colour.alt",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rA\nref rB\nref rC\nfloat fA\nfloat fB\nfloat fC\nint iR\nint iG\nint iB\nstring_var sText\narray_var aList\narray_var aOut\nBegin Function { }\nSetFunctionValue (GetSleepWaitMenuState)\nEnd\n",
+   "label": "jg8.sleepwait",
+   "field": "value"
+  },
+  {
+   "query": "ref rA\nref rB\nref rC\nfloat fA\nfloat fB\nfloat fC\nint iR\nint iG\nint iB\nstring_var sText\narray_var aList\narray_var aOut\nBegin Function { }\nlet rA := GetFormFromMod \"FalloutNV.esm\" \"15169\"\nlet rB := GetFormFromMod \"FalloutNV.esm\" \"F\"\nlet rC := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet aList := Ar_List rA, rB, rC\nlet aOut := Ar_SortEditor aList\nlet rA := aOut[0]\nlet rB := aOut[1]\nlet rC := aOut[2]\nlet sText := sv_Construct \"%z %z %z\" (GetFormIDString rA) (GetFormIDString rB) (GetFormIDString rC)\nlet aOut := Ar_SortEditor aList 1\nlet rA := aOut[0]\nlet rB := aOut[1]\nlet rC := aOut[2]\nSetFunctionValue (sv_Construct \"%z | %z %z %z\" sText (GetFormIDString rA) (GetFormIDString rB) (GetFormIDString rC))\nEnd\n",
+   "label": "jg8.sorteditor",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rA\nref rB\nref rC\nfloat fA\nfloat fB\nfloat fC\nint iR\nint iG\nint iB\nstring_var sText\narray_var aList\narray_var aOut\nBegin Function { }\nlet aOut := Ar_Shuffle (Ar_List 1, 2, 3, 4, 5)\nlet fA := Ar_Size aOut\nlet fB := aOut[0] + aOut[1] + aOut[2] + aOut[3] + aOut[4]\nSetFunctionValue (sv_Construct \"%g %g\" fA fB)\nEnd\n",
+   "label": "jg8.shuffle",
+   "field": "value",
+   "text": true
+  }
+ ]
+}

@@ -384,6 +384,17 @@ pub fn morphed(base: &[[f32; 3]], morphs: &[(usize, Displacement)], weights: &We
     out
 }
 
+/// Whether `morphed(base, morphs, after)` can differ from `morphed(base, morphs, before)`:
+/// a slot of the shape's own morphs whose weight, as `morphed` applies it (nothing below
+/// [`SMALL`]), changed. When not, the shape's mesh already holds the positions and is not
+/// written: writing a mesh sends it whole to the GPU again and has every entity drawing it
+/// checked for its pipeline once more, and a blink or a glance moves only the lids' or the
+/// eyes' morphs [design].
+pub fn shape_changed(morphs: &[(usize, Displacement)], before: &Weights, after: &Weights) -> bool {
+    let applied = |w: f32| if w.abs() < SMALL { 0.0 } else { w };
+    morphs.iter().any(|(s, _)| applied(before[*s]) != applied(after[*s]))
+}
+
 /// The `.lip` weights to show `t` seconds after the sound started: the file's frames
 /// around that moment, nothing before the sound starts or after the last frame, scaled
 /// by `ease` (1 while the line is said). Channels neither applied to morphs nor turning
@@ -441,6 +452,9 @@ struct Moving {
     mesh: Handle<Mesh>,
     base: Vec<[f32; 3]>,
     morphs: Vec<(usize, Displacement)>,
+    /// The weights its mesh was last written with (all 0: the base positions it is made
+    /// with).
+    shown: Weights,
 }
 
 /// The head bone of a face.
@@ -542,6 +556,12 @@ pub struct LipState {
 }
 
 impl LipState {
+    /// The meshes the moving faces are drawn from (the profile aid's `profile change
+    /// sources:` line).
+    pub fn face_meshes(&self) -> impl Iterator<Item = AssetId<Mesh>> + '_ {
+        self.faces.values().flat_map(|f| f.shapes.iter().map(|m| m.mesh.id()))
+    }
+
     fn new(enabled: bool, idle: bool, hold: Option<Weights>) -> LipState {
         LipState {
             enabled,
@@ -626,7 +646,7 @@ fn prepare(st: &mut LipState, rig: &LipRig, world: &ActorWorld, data: &GameData,
         mesh.asset_usage = RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD;
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, base.clone());
         count += morphs.len();
-        out.push(Moving { entity: s.entity, rest: s.rest.clone(), mesh: meshes.add(mesh), base, morphs });
+        out.push(Moving { entity: s.entity, rest: s.rest.clone(), mesh: meshes.add(mesh), base, morphs, shown: [0.0; SLOTS] });
     }
     (out, count)
 }
@@ -985,9 +1005,14 @@ fn drive(
             continue;
         }
         face.last = w;
-        for m in &face.shapes {
+        for m in &mut face.shapes {
+            // Only the shapes whose own morphs moved (`get_mut` alone marks a mesh changed).
+            if !shape_changed(&m.morphs, &m.shown, &w) {
+                continue;
+            }
             if let Some(mut mesh) = meshes.get_mut(&m.mesh) {
                 mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, morphed(&m.base, &m.morphs, &w));
+                m.shown = w;
             }
         }
     }
@@ -1290,6 +1315,25 @@ mod tests {
         assert_eq!(p, vec![[1.0, 2.0, 1.0], [2.25, 2.0, 1.0], [3.0, 4.0, 3.0]]);
         // At rest nothing moves.
         assert_eq!(morphed(&base, &morphs, &[0.0; SLOTS]), base);
+    }
+
+    #[test]
+    fn a_shape_is_written_only_when_its_own_morphs_move() {
+        let base = vec![[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]];
+        let lids = vec![(0usize, vec![(0u32, [0.0, 0.0, -1.0])])];
+        let eyes = vec![(2usize, vec![(1u32, [1.0, 0.0, 0.0])])];
+        let before = weights(&[(0, 0.5), (2, 0.25)]);
+        // Only slot 2 moved: the lids' shape is unchanged, the eyes' is not.
+        let after = weights(&[(0, 0.5), (2, 0.5), (7, 1.0)]);
+        assert!(!shape_changed(&lids, &before, &after));
+        assert!(shape_changed(&eyes, &before, &after));
+        // Unchanged means the same positions, bit for bit.
+        assert_eq!(morphed(&base, &lids, &before), morphed(&base, &lids, &after));
+        // Weights below SMALL move nothing, whatever their value.
+        let tiny = weights(&[(0, SMALL * 0.5)]);
+        assert!(!shape_changed(&lids, &[0.0; SLOTS], &tiny));
+        assert_eq!(morphed(&base, &lids, &tiny), base);
+        assert!(shape_changed(&lids, &tiny, &weights(&[(0, SMALL * 2.0)])));
     }
 
     #[test]

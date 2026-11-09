@@ -77,6 +77,10 @@ pub fn step(selected: usize, by: i32, len: usize) -> usize {
 /// [documented: xEdit, schema `world.json`].
 #[derive(Debug, Clone, PartialEq)]
 pub struct WorldMap {
+    /// The last WNAM parent reached through PNAM Use Map Data [documented: xEdit].
+    pub root: u32,
+    /// This worldspace's own ONAM and bounds, even when the picture is inherited.
+    pub transform: MapTransform,
     /// The picture, as the interface names it (under `textures\`).
     pub texture: String,
     /// `MNAM` usable width and height: the map's size on the canvas at a magnification
@@ -88,25 +92,41 @@ pub struct WorldMap {
     pub se: [i32; 2],
 }
 
-/// Where the cells from the north-west cell's north-west corner to the south-east cell's
-/// south-east corner lie on a map picture: from this point (parts of the picture's width
-/// and height from its top left), this part of it across and down [observed: fitted on
-/// `wasteland_nv_1024_no_map.dds` to three places, Goodsprings (its roads as the owner's
-/// World Map screenshot shows them round the marker), the arc of Hoover Dam and the ring
-/// of Jacobstown, at one scale both ways (309.8 game units a texel), each within 4 texels
-/// of 1024; the picture's frame, rulers and corner marks lie outside. That the margins
-/// are the same for other worldspaces' maps is a hypothesis].
-pub const MAP_ORIGIN: [f32; 2] = [0.108, 0.102];
-pub const MAP_SPAN: f32 = 0.7876;
+/// The cell span's share of the picture on both axes
+/// [observed: run08 captures of MapMenu traits, 2026-11-07].
+pub const MAP_SPAN: f32 = 51.0 / 64.0;
+
+/// WRLD ONAM scale and offsets about the centre of NAM0/NAM9 [documented: xEdit,
+/// schemas/fnv/world.json; observed: run08 captures of MapMenu traits, 2026-11-07].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MapTransform {
+    pub scale: f32,
+    pub offset: [f32; 2],
+    pub centre: [f32; 2],
+}
+
+impl Default for MapTransform {
+    fn default() -> Self {
+        Self { scale: 1.0, offset: [0.0; 2], centre: [0.0; 2] }
+    }
+}
+
+impl MapTransform {
+    pub fn apply(&self, x: f32, y: f32) -> [f32; 2] {
+        let axis = |p: f32, i: usize| self.scale * (p - self.centre[i]) + self.centre[i] + self.offset[i];
+        [axis(x, 0), axis(y, 1)]
+    }
+}
 
 impl WorldMap {
-    /// Where a game position falls on the picture, 0 to 1 from its top left
-    /// ([`MAP_ORIGIN`], [`MAP_SPAN`]).
+    /// Where a position in this worldspace falls on its root's picture, in texture
+    /// coordinates [observed: run08 captures of MapMenu traits, 2026-11-07].
     pub fn uv(&self, x: f32, y: f32) -> [f32; 2] {
+        let [x, y] = self.transform.apply(x, y);
         let across = (self.se[0] - self.nw[0] + 1).max(1) as f32;
         let down = (self.nw[1] - self.se[1] + 1).max(1) as f32;
         let cells = [(x / CELL - self.nw[0] as f32) / across, ((self.nw[1] + 1) as f32 - y / CELL) / down];
-        [MAP_ORIGIN[0] + cells[0] * MAP_SPAN, MAP_ORIGIN[1] + cells[1] * MAP_SPAN]
+        [0.5 + MAP_SPAN * (cells[0] - 0.5), 0.5 + MAP_SPAN * (cells[1] - 0.5)]
     }
 }
 
@@ -129,23 +149,8 @@ pub fn pan(t: f32, size: f32, mid: f32) -> f32 {
 /// "Monument", "Military", "Office", "Town Ruins", "Urban Ruins", "Sewer Ruins", "Metro",
 /// "Vault"; observed: Vault 22 and Vault 3 are 14, Hidden Supply Cave 5, Camp McCarran 8,
 /// Hoover Dam 7].
-const ICONS: [&str; 15] = [
-    "settlement",
-    "city",
-    "settlement",
-    "encampment",
-    "natural_landmark",
-    "cave",
-    "factory",
-    "monument",
-    "military",
-    "office",
-    "ruins_town",
-    "ruins_urban",
-    "ruins_sewer",
-    "metro",
-    "vault",
-];
+/// The table is the game's (GetCustomMapMarkerIcon reads it too).
+const ICONS: [&str; 15] = fnv_game::nvse_jg7::MAP_MARKER_ICONS;
 
 /// The picture of a map marker of type `kind`: its type's icon once it counts as
 /// discovered, the "undiscovered" icon while it is only known [hypothesis: by the files'
@@ -216,16 +221,37 @@ mod tests {
     }
 
     #[test]
-    fn the_wasteland_map_puts_places_on_their_pictures() {
-        // WastelandNV: MNAM usable 2048 × 2048, cells (-35, 35) to (25, -25) [observed].
-        let m = WorldMap { texture: String::new(), usable: [2048.0; 2], nw: [-35, 35], se: [25, -25] };
-        assert_eq!(m.uv(-35.0 * CELL, 36.0 * CELL), MAP_ORIGIN);
-        let se = m.uv(26.0 * CELL, -25.0 * CELL);
-        assert!((se[0] - MAP_ORIGIN[0] - MAP_SPAN).abs() < 1e-6 && (se[1] - MAP_ORIGIN[1] - MAP_SPAN).abs() < 1e-6);
-        // The three places the margins were fitted on, in texels of the 1024 picture.
-        for (x, y, tx, ty) in [(-70992.0, 2560.0, 342.0, 575.0), (74712.0, 24848.0, 815.0, 496.0), (-108427.0, 96470.0, 225.0, 270.0)] {
+    fn map_texture_coordinates_use_the_exact_span_on_both_axes() {
+        let m = WorldMap { root: 1, transform: MapTransform::default(), texture: String::new(), usable: [512.0, 1024.0], nw: [-2, 3], se: [1, 2] };
+        // Synthetic four-by-two-cell map: NW corner, centre and SE corner.
+        assert_eq!(m.uv(-2.0 * CELL, 4.0 * CELL), [13.0 / 128.0; 2]);
+        assert_eq!(m.uv(0.0, 3.0 * CELL), [0.5; 2]);
+        assert_eq!(m.uv(2.0 * CELL, 2.0 * CELL), [115.0 / 128.0; 2]);
+        // Texture coordinates do not depend on the picture's usable pixel size.
+        let resized = WorldMap { usable: [2048.0; 2], ..m.clone() };
+        assert_eq!(m.uv(-CELL, 2.5 * CELL), resized.uv(-CELL, 2.5 * CELL));
+        assert_eq!(m.uv(-CELL, 2.5 * CELL), [0.5 - 51.0 / 256.0, 0.5 + 51.0 / 256.0]);
+    }
+
+    #[test]
+    fn the_wasteland_map_puts_markers_where_the_original_reads_them() {
+        // WastelandNV: MNAM usable 2048 × 2048, cells (-35, 35) to (25, -25), ONAM scale 1
+        // and offsets 0, so the transform is the identity [FalloutNV.esm's WRLD, read with fnvtool].
+        let m = WorldMap { root: 1, transform: MapTransform::default(), texture: String::new(), usable: [2048.0; 2], nw: [-35, 35], se: [25, -25] };
+        // Each marker reference's world X/Y and the `_x`/`_y` the original's MapMenu
+        // reported for its tile (pipboy.md §5.3, World Map) [observed: run08, 2026-11-07].
+        // The rule fits all 184 markers placed in WastelandNV to under 0.0001 texel of
+        // the 1024 picture; 0.01 texel leaves room for 32-bit rounding, while the old
+        // screenshot fit (origin 0.108/0.102, span 0.7876) missed these by 1.5 to 5.3 texels.
+        let places = [
+            ("Goodsprings", -70992.0, 2560.0, 0.33236843, 0.5636847),
+            ("Hoover Dam", 74712.0, 24848.0, 0.79706764, 0.49260074),
+            ("Jacobstown", -108427.35, 96469.77, 0.21297449, 0.26417476),
+        ];
+        for (name, x, y, u, v) in places {
             let uv = m.uv(x, y);
-            assert!((uv[0] * 1024.0 - tx).abs() < 5.0 && (uv[1] * 1024.0 - ty).abs() < 5.0, "{x} {y}: {uv:?}");
+            let off = [(uv[0] - u) * 1024.0, (uv[1] - v) * 1024.0];
+            assert!(off[0].abs() < 0.01 && off[1].abs() < 0.01, "{name}: {uv:?} is {off:?} texels from ({u}, {v})");
         }
     }
 

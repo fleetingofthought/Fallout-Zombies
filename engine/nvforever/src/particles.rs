@@ -440,6 +440,11 @@ pub struct Particles {
 }
 
 impl Particles {
+    /// The live systems' meshes (the profile aid's `profile change sources:` line).
+    pub fn mesh_ids(&self) -> impl Iterator<Item = AssetId<Mesh>> + '_ {
+        self.systems.values().flatten().flatten().map(|l| l.mesh.id())
+    }
+
     /// The systems held (placed models' and shared ones), for the stress census. A
     /// system's entity always holds its materials, so an entry counts as idle when none of
     /// its systems has a particle alive (a shared explosion or flash between uses, a

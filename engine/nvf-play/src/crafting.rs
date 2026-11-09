@@ -561,7 +561,7 @@ fn brackets(p: &mut ChildSpawnerCommands, x: f32, y: f32, w: f32, bottom: f32, t
 }
 
 #[allow(clippy::too_many_arguments)]
-fn spawn(commands: &mut Commands, look: &RecipeLook, v: &View, words: &[String; 2], kit: &mut crate::menu::look::Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool) {
+fn spawn(commands: &mut Commands, look: &RecipeLook, v: &View, words: &[String; 2], kit: &mut crate::menu::look::Kit, data: Option<&GameData>, images: &mut Assets<Image>, bc: bool, glyphs: &crate::pad::PadGlyphs) {
     let left = Node { position_type: PositionType::Absolute, left: Val::Percent(50.0), margin: UiRect::left(u(-MAIN.x / 2.0)), top: crate::interface::from_top((960.0 - MAIN.y) / 2.0, 0.5), width: u(MAIN.x), height: u(MAIN.y), ..default() };
     commands.spawn((RecipeRoot, Node { position_type: PositionType::Absolute, width: Val::Percent(100.0), height: Val::Percent(100.0), ..default() }, GlobalZIndex(crate::interface::TOP_MENU_Z), crate::interface::top_menu_backing())).with_children(|root| {
         root.spawn(left).with_children(|m| {
@@ -586,7 +586,7 @@ fn spawn(commands: &mut Commands, look: &RecipeLook, v: &View, words: &[String; 
             // The scroll bar, right of the rows, when they do not all fit (owner's request
             // 2026-10-26; drawn as the container menu's).
             let bar = (ITEMS_AT.x + BOX_WIDTH - 5.0 - ROWS_BAR_W, LIST_TOP, ROWS as f32 * ROW);
-            crate::menu::look::spawn_rows_bar(m, kit, data, images, bc, bar, v.rows.len(), v.first, ROWS);
+            crate::menu::look::spawn_rows_bar(m, kit, data, images, bc, glyphs, bar, v.rows.len(), v.first, ROWS);
             if v.rows.is_empty() {
                 m.spawn(at(ITEMS_AT.x + 5.0, LIST_TOP, BOX_WIDTH, ROW)).with_children(|t| text(t, &look.row, "No recipes", 40.0, 6.0, color(Shade::Dim)));
             }
@@ -642,9 +642,9 @@ fn spawn(commands: &mut Commands, look: &RecipeLook, v: &View, words: &[String; 
             let accept = format!("Accept  {}", crate::pad::hint_as(&[KeyCode::KeyA], hint_at, v.labels));
             let exit = format!("Exit  {}", crate::pad::hint_as(&[KeyCode::KeyX, KeyCode::Escape], hint_at, v.labels));
             for (k, (label, b, on)) in [(accept.as_str(), RecipeButton::Accept, ready), (exit.as_str(), RecipeButton::Exit, true)].into_iter().enumerate() {
-                let w = look.row.font.width(label);
+                let w = crate::pad::hint_width(&look.row, label, glyphs);
                 m.spawn((Button, b, at(rx + BOX_WIDTH - w - 10.0, BUTTONS_TOP + k as f32 * 48.0, w + 10.0, 44.0))).with_children(|t| {
-                    text(t, &look.row, label, 0.0, 0.0, if on { bright } else { amber(NOT_READY) });
+                    crate::pad::set_hint(t, &look.row, label, 0.0, look.row.font.size * 0.8, if on { bright } else { amber(NOT_READY) }, glyphs);
                 });
             }
         });
@@ -652,7 +652,7 @@ fn spawn(commands: &mut Commands, look: &RecipeLook, v: &View, words: &[String; 
         if let Some((amount, most)) = v.quantity {
             let screen = Node { position_type: PositionType::Absolute, width: Val::Percent(100.0), height: Val::Percent(100.0), justify_content: JustifyContent::Center, align_items: AlignItems::Center, ..default() };
             let q = crate::menu::model::Quantity { cmd: crate::menu::model::Command::One, side: crate::menu::model::Side::Player, row: 0, max: most, amount };
-            root.spawn(screen).with_children(|s| crate::menu::look::spawn_quantity(s, &q, words, kit, data, images, bc));
+            root.spawn(screen).with_children(|s| crate::menu::look::spawn_quantity(s, &q, words, kit, data, images, bc, glyphs));
         }
     });
 }
@@ -669,6 +669,7 @@ fn draw(
     data: Option<Res<GameData>>,
     mut images: ResMut<Assets<Image>>,
     formats: Option<Res<CompressedImageFormatSupport>>,
+    glyphs: Res<crate::pad::PadGlyphs>,
     play: Option<Res<crate::PlayWorld>>,
     (mut forms, mut kit): (Local<Option<EffectForms>>, Local<Option<crate::menu::look::Kit>>),
 ) {
@@ -697,7 +698,7 @@ fn draw(
     let bc = bc_supported(formats.as_deref());
     let kit = kit.get_or_insert_with(|| crate::menu::look::Kit::load(data.as_deref(), &mut images, bc));
     let words = crate::menu::look::quantity_words(Some(&rt.game));
-    spawn(&mut commands, &look, &v, &words, kit, data.as_deref(), &mut images, bc);
+    spawn(&mut commands, &look, &v, &words, kit, data.as_deref(), &mut images, bc, &glyphs);
     if v.effects.is_some() && open.drawn.as_ref().is_none_or(|d| d.selected != v.selected) {
         info!("recipe menu: {} effects: {}", v.rows.get(v.selected).map_or("", |r| r.label.as_str()), v.effects.as_deref().unwrap_or(""));
     }

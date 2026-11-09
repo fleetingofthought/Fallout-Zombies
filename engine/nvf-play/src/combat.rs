@@ -332,6 +332,22 @@ fn spread_hit_areas(script: Option<&mut ScriptState>, sim: &mut SimState, stats:
 
 /// The WeaponIneffective and ArmorIneffective lines of a hit (`fnv_game::combat_lines`):
 /// what DT made of it.
+/// Whether a hit got past the target's DT, told before the hit is dealt so its OnHit
+/// block can ask (GetArmourPenetrated, `fnv_game::nvse_jip11`).
+fn note_armour(script: Option<&mut ScriptState>, target: FormId, d: &damage::Damage) {
+    if let Some(rt) = script.and_then(|s| s.rt.as_mut()) {
+        rt.game.note_armour_hit(target, f64::from(d.raw), f64::from(d.dt));
+    }
+}
+
+/// The weapon damage penalty below 75 % condition: SetConditionDamagePenalty's, else
+/// 0.67 (`fnv_game::Game::condition_damage_penalty`).
+fn sync_condition_penalty(c: &mut Combat, script: Option<&ScriptState>) {
+    if let Some(rt) = script.and_then(|s| s.rt.as_ref()) {
+        c.rules.condition_damage_penalty = rt.game.condition_damage_penalty();
+    }
+}
+
 fn armour_lines(script: Option<&mut ScriptState>, attacker: Option<FormId>, target: FormId, d: &damage::Damage, floor: f32) {
     if let Some(rt) = script.and_then(|s| s.rt.as_mut()) {
         rt.game.armour_lines(attacker, target, f64::from(d.raw), f64::from(d.dt), f64::from(d.dealt), f64::from(floor));
@@ -1386,6 +1402,13 @@ impl Combat {
     /// throw_action`). A round-by-round reload reads 17 while it opens the weapon, 9 for
     /// its rounds and its close [hypothesis: `AnimAction::ReloadOpen`]. A jam reads 13
     /// [hypothesis: the page's catch-all, "every action not included in the ones above"].
+    /// The player's weapon is thrown or laid by hand (SUP's GetGrenadeTimeHeld,
+    /// `crate::sup_screen`): its animation type is one of
+    /// `fnv_sim::forms::THROWN_ANIM_TYPES`.
+    pub fn player_weapon_is_throwable(&self) -> bool {
+        self.weapon.and_then(|w| self.forms.weapons.get(&w)).and_then(|w| w.anim_type.as_deref()).is_some_and(|t| fnv_sim::forms::THROWN_ANIM_TYPES.contains(&t))
+    }
+
     /// The player's weapon is a mine: its WEAP animation type is "Land Mine (1 Hand)" or
     /// "Mine Drop (1 Hand)" (IsPlayerActionActive 4 while one is laid).
     pub fn player_weapon_is_mine(&self) -> bool {
@@ -2107,6 +2130,12 @@ pub(crate) fn player_count(sim: &SimState, item: Option<FormId>) -> u32 {
 /// magazine's own among them: rounds dropped, sold or taken by a script are gone from the
 /// gun too. A weapon that uses no ammo item, a regenerating one and god mode's full
 /// magazine have no rounds in the inventory to follow.
+/// ShowOff's shot switches as the scripts left them: the tracer override (`None` the
+/// chance rolls) and whether hitscan shots are drawn (`fnv_game::nvse_showoff5`).
+fn shot_switches(script: Option<&ScriptState>) -> (Option<bool>, bool) {
+    script.and_then(|s| s.rt.as_ref()).map_or((None, false), |rt| (rt.game.showoff.b5.tracer_override, rt.game.showoff.b5.force_draw_hitscan))
+}
+
 fn magazine_in_hand(magazine: u32, carried: u32, no_ammo: bool, regenerates: bool, god: bool) -> u32 {
     if no_ammo || regenerates || god {
         magazine
@@ -2998,9 +3027,12 @@ pub(crate) fn fire(
                     }
                 }
                 stats.projectiles += shots.len() as u32;
+                // ShowOff's SetProjectileTracerChanceOverride and SetForceDrawHitscanProjectiles.
+                let (tracer_over, draw_hitscan) = shot_switches(script.as_deref());
                 for p in shots {
-                    let rolled = c.rng.next_f32() < tracer_chance || c.tracer_hold.is_some();
-                    let shown = rolled || DRAW_EVERY_PROJECTILE;
+                    let roll = c.rng.next_f32() < tracer_chance;
+                    let rolled = tracer_over.map_or(roll, |o| o && tracer_chance > 0.0) || c.tracer_hold.is_some();
+                    let shown = rolled || DRAW_EVERY_PROJECTILE || (draw_hitscan && p.hitscan);
                     // A line along the shot: for what is too fast to follow (found at
                     // once), and at the tracer chance for the rest [design].
                     let tracer = rolled || (shown && instant(&p));
@@ -3573,6 +3605,7 @@ fn melee(
     (sfx, mut sounds, mut impacts): (Option<Res<Sfx>>, MessageWriter<PlaySound>, MessageWriter<ImpactFx>),
     (mut vats, mut dm, mut knocks): (Option<ResMut<crate::vats_mode::VatsMode>>, ResMut<crate::dismember::Dismemberment>, MessageWriter<Knockback>),
 ) {
+    sync_condition_penalty(&mut c, script.as_deref());
     let dt = time.delta_secs();
     let c = &mut *c;
     // VATS mode's swing due now: one tap of Use (vats-mode.md §16.2).
@@ -3801,6 +3834,7 @@ fn melee(
             if let Some(spell) = special.and_then(|m| m.spell) {
                 items.push(spell);
             }
+            note_armour(script.as_deref_mut(), target, &d);
             let r = apply_hit(script.as_deref_mut(), &mut sim, target, d.dealt, info, &mut stats, &mut feedback, hud.as_deref_mut(), &mut messages, &items, guard_broken, crit_effect(c, Some(id)));
             armour_lines(script.as_deref_mut(), Some(FormId::PLAYER_REF), target, &d, c.tuning.dt_floor);
             spread_hit_areas(script.as_deref_mut(), &mut sim, &mut stats, target, &items, info.attacker);
@@ -3977,6 +4011,7 @@ fn actor_attacks(
     mut grenade_probe: ResMut<held_grenade_probe::Probe>,
     time: Res<Time>,
 ) {
+    sync_condition_penalty(&mut c, script.as_deref());
     let c = &mut *c;
     let gravity = phys.world.params.gravity;
     // The player blocks with Block held and fists or a melee weapon drawn (combat.md §5.4);
@@ -4027,9 +4062,11 @@ fn actor_attacks(
             ps.iter_mut().for_each(|p| p.speed_up(m));
         }
         let probe_created = ps.len();
+        let (tracer_over, draw_hitscan) = shot_switches(script.as_deref());
         for p in ps {
-            let rolled = c.rng.next_f32() < tracer_chance || c.tracer_hold.is_some();
-            let shown = rolled || DRAW_EVERY_PROJECTILE;
+            let roll = c.rng.next_f32() < tracer_chance;
+            let rolled = tracer_over.map_or(roll, |o| o && tracer_chance > 0.0) || c.tracer_hold.is_some();
+            let shown = rolled || DRAW_EVERY_PROJECTILE || (draw_hitscan && p.hitscan);
             let tracer = rolled || (shown && instant(&p));
             let dir = vec::normalize(p.vel);
             c.next_visual += 1;
@@ -4144,6 +4181,7 @@ fn actor_attacks(
             wear_actor_weapon(&c.forms, &mut sim, &mut stats, &mut broken, script.as_deref_mut(), b.attacker, weapon, points, b.point);
         }
         let items = hit_items(c, script.as_deref_mut(), &mut sim, &mut stats, b.attacker, b.weapon, b.anim);
+        note_armour(script.as_deref_mut(), b.target, &d);
         let r = apply_hit(script.as_deref_mut(), &mut sim, b.target, d.dealt, info, &mut stats, &mut feedback, hud.as_deref_mut(), &mut messages, &items, guard_broken, crit_effect(c, b.weapon));
         armour_lines(script.as_deref_mut(), Some(b.attacker), b.target, &d, c.tuning.dt_floor);
         // A killing blow (or one on a corpse) may dismember the part it lands on, by the
@@ -4217,6 +4255,7 @@ fn fly(
     mut effects: ShotEffects,
     mut dm: ResMut<crate::dismember::Dismemberment>,
 ) {
+    sync_condition_penalty(&mut c, script.as_deref());
     let dt = time.delta_secs();
     let c = &mut *c;
     // What scripts asked (DetonatePlacedExplosives, a placed explosion, DamageObject's
@@ -4530,6 +4569,11 @@ fn fly(
                 }
             }
         }
+        // The blast's live reference for the scripts (ShowOff's GetExplosionRefRadius and
+        // GetExplosionRefSource), gone after the frame (`fnv_game::nvse_showoff5`).
+        if let Some(rt) = script.as_deref_mut().and_then(|s| s.rt.as_mut()) {
+            crate::script::with_world(rt, &mut sim, |rt| rt.game.explosion_placed(id, cause.map(|c| c.actor), at, x.radius));
+        }
         let hits = {
             let world = view(&mut phys, script.as_deref(), Some(&sim));
             blast(&world, &c.tuning, &x, at)
@@ -4768,6 +4812,7 @@ fn fly(
             pushes.write(ActorPush { form_id: target.0, point: p.point, dv: vec::scale(p.dir, SHOT_PUSH) });
         }
         let items = hit_items(c, script.as_deref_mut(), &mut sim, &mut stats, shooter, Some(id), None);
+        note_armour(script.as_deref_mut(), target, &d);
         let r = apply_hit(script.as_deref_mut(), &mut sim, target, d.dealt, info, &mut stats, &mut feedback, hud.as_deref_mut(), &mut messages, &items, false, crit_effect(c, Some(id)));
         armour_lines(script.as_deref_mut(), Some(shooter), target, &d, c.tuning.dt_floor);
         spread_hit_areas(script.as_deref_mut(), &mut sim, &mut stats, target, &items, info.attacker);

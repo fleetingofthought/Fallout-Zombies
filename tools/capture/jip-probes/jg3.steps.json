@@ -1,0 +1,1041 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jg3",
+ "title": "jg3, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 1)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 2)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 3)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 4)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 5)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.5",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 6)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.6",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 7)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.7",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 8)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.8",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 9)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.9",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 10)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.10",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 11)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.11",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 12)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.12",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 13)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.13",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 14)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.14",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 15)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.15",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 16)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.16",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 17)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.17",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 18)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.18",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 19)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.19",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 20)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.20",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 21)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.21",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 22)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.22",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 23)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.23",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 24)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.24",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 25)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.25",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 26)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.26",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 27)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.27",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 28)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.28",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 29)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.29",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 30)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.30",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 31)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.31",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 32)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.32",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 33)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.33",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 34)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.34",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 35)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.35",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 36)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.36",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 37)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.37",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 38)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.38",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 39)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.39",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 40)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.40",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 41)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.41",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 42)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.42",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 43)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.43",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 44)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.44",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 45)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.45",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 46)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.46",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 47)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.47",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj -1)\nEnd\n",
+   "label": "jg3.efsh.trait.nuke.-1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5F\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg3.efsh.trait.cateye.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5F\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 4)\nEnd\n",
+   "label": "jg3.efsh.trait.cateye.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5F\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 13)\nEnd\n",
+   "label": "jg3.efsh.trait.cateye.13",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5F\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 14)\nEnd\n",
+   "label": "jg3.efsh.trait.cateye.14",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5F\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 23)\nEnd\n",
+   "label": "jg3.efsh.trait.cateye.23",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5F\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 27)\nEnd\n",
+   "label": "jg3.efsh.trait.cateye.27",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetEffectShaderTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg3.efsh.trait.notefsh",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nlet fSave := GetEffectShaderTraitNumeric rObj 13\nlet fRes := SetEffectShaderTraitNumeric rObj 13 1.5\nlet fA := GetEffectShaderTraitNumeric rObj 13\nSetEffectShaderTraitNumeric rObj 13 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetEffectShaderTraitNumeric rObj 13))\nEnd\n",
+   "label": "jg3.efsh.set.nuke.13",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nlet fSave := GetEffectShaderTraitNumeric rObj 0\nlet fRes := SetEffectShaderTraitNumeric rObj 0 2.7\nlet fA := GetEffectShaderTraitNumeric rObj 0\nSetEffectShaderTraitNumeric rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetEffectShaderTraitNumeric rObj 0))\nEnd\n",
+   "label": "jg3.efsh.set.nuke.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nlet fSave := GetEffectShaderTraitNumeric rObj 1\nlet fRes := SetEffectShaderTraitNumeric rObj 1 5.5\nlet fA := GetEffectShaderTraitNumeric rObj 1\nSetEffectShaderTraitNumeric rObj 1 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetEffectShaderTraitNumeric rObj 1))\nEnd\n",
+   "label": "jg3.efsh.set.nuke.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nlet fSave := GetEffectShaderTraitNumeric rObj 4\nlet fRes := SetEffectShaderTraitNumeric rObj 4 255\nlet fA := GetEffectShaderTraitNumeric rObj 4\nSetEffectShaderTraitNumeric rObj 4 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetEffectShaderTraitNumeric rObj 4))\nEnd\n",
+   "label": "jg3.efsh.set.nuke.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nlet fSave := GetEffectShaderTraitNumeric rObj 42\nlet fRes := SetEffectShaderTraitNumeric rObj 42 7.25\nlet fA := GetEffectShaderTraitNumeric rObj 42\nSetEffectShaderTraitNumeric rObj 42 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetEffectShaderTraitNumeric rObj 42))\nEnd\n",
+   "label": "jg3.efsh.set.nuke.42",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nlet fSave := GetEffectShaderTraitNumeric rObj 43\nlet fRes := SetEffectShaderTraitNumeric rObj 43 9\nlet fA := GetEffectShaderTraitNumeric rObj 43\nSetEffectShaderTraitNumeric rObj 43 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetEffectShaderTraitNumeric rObj 43))\nEnd\n",
+   "label": "jg3.efsh.set.nuke.43",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nlet fSave := GetEffectShaderTraitNumeric rObj 47\nlet fRes := SetEffectShaderTraitNumeric rObj 47 1\nlet fA := GetEffectShaderTraitNumeric rObj 47\nSetEffectShaderTraitNumeric rObj 47 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetEffectShaderTraitNumeric rObj 47))\nEnd\n",
+   "label": "jg3.efsh.set.nuke.47",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nlet fRes := SetEffectShaderTraitNumeric rObj 13 1.5\nSetFunctionValue (sv_Construct \"%g %g\" fRes (GetMediaSetTraitNumeric rObj 0))\nEnd\n",
+   "label": "jg3.efsh.set.notefsh",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTexturePath rObj 0)\nEnd\n",
+   "label": "jg3.efsh.tex.nuke.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTexturePath rObj 1)\nEnd\n",
+   "label": "jg3.efsh.tex.nuke.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTexturePath rObj 2)\nEnd\n",
+   "label": "jg3.efsh.tex.nuke.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTexturePath rObj 3)\nEnd\n",
+   "label": "jg3.efsh.tex.nuke.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetEffectShaderTexturePath rObj -1)\nEnd\n",
+   "label": "jg3.efsh.tex.nuke.-1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15FF5F\"\nSetFunctionValue (GetEffectShaderTexturePath rObj 1)\nEnd\n",
+   "label": "jg3.efsh.tex.cateye.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetEffectShaderTexturePath rObj 1 \"Effects\\NvfProbe.dds\"\nlet sText := GetEffectShaderTexturePath rObj 1\nSetEffectShaderTexturePath rObj 1 \"Effects\\FXDustSmallGen01.dds\"\nSetFunctionValue (sv_Construct \"[%z] [%z]\" sText (GetEffectShaderTexturePath rObj 1))\nEnd\n",
+   "label": "jg3.efsh.settex.nuke.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg3.mset.num.freeside.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 1)\nEnd\n",
+   "label": "jg3.mset.num.freeside.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 2)\nEnd\n",
+   "label": "jg3.mset.num.freeside.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 3)\nEnd\n",
+   "label": "jg3.mset.num.freeside.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 4)\nEnd\n",
+   "label": "jg3.mset.num.freeside.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 5)\nEnd\n",
+   "label": "jg3.mset.num.freeside.5",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 6)\nEnd\n",
+   "label": "jg3.mset.num.freeside.6",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 7)\nEnd\n",
+   "label": "jg3.mset.num.freeside.7",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 8)\nEnd\n",
+   "label": "jg3.mset.num.freeside.8",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 9)\nEnd\n",
+   "label": "jg3.mset.num.freeside.9",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 10)\nEnd\n",
+   "label": "jg3.mset.num.freeside.10",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 11)\nEnd\n",
+   "label": "jg3.mset.num.freeside.11",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 12)\nEnd\n",
+   "label": "jg3.mset.num.freeside.12",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 13)\nEnd\n",
+   "label": "jg3.mset.num.freeside.13",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 14)\nEnd\n",
+   "label": "jg3.mset.num.freeside.14",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 15)\nEnd\n",
+   "label": "jg3.mset.num.freeside.15",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 16)\nEnd\n",
+   "label": "jg3.mset.num.freeside.16",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 17)\nEnd\n",
+   "label": "jg3.mset.num.freeside.17",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg3.mset.num.corp.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 1)\nEnd\n",
+   "label": "jg3.mset.num.corp.1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 2)\nEnd\n",
+   "label": "jg3.mset.num.corp.2",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 3)\nEnd\n",
+   "label": "jg3.mset.num.corp.3",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 4)\nEnd\n",
+   "label": "jg3.mset.num.corp.4",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 5)\nEnd\n",
+   "label": "jg3.mset.num.corp.5",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 6)\nEnd\n",
+   "label": "jg3.mset.num.corp.6",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 7)\nEnd\n",
+   "label": "jg3.mset.num.corp.7",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 8)\nEnd\n",
+   "label": "jg3.mset.num.corp.8",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 9)\nEnd\n",
+   "label": "jg3.mset.num.corp.9",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 10)\nEnd\n",
+   "label": "jg3.mset.num.corp.10",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 11)\nEnd\n",
+   "label": "jg3.mset.num.corp.11",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 12)\nEnd\n",
+   "label": "jg3.mset.num.corp.12",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 13)\nEnd\n",
+   "label": "jg3.mset.num.corp.13",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 14)\nEnd\n",
+   "label": "jg3.mset.num.corp.14",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 15)\nEnd\n",
+   "label": "jg3.mset.num.corp.15",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 16)\nEnd\n",
+   "label": "jg3.mset.num.corp.16",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 17)\nEnd\n",
+   "label": "jg3.mset.num.corp.17",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"14E8AC\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg3.mset.num.bttl.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"14E8AC\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 13)\nEnd\n",
+   "label": "jg3.mset.num.bttl.13",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"166BFD\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 0)\nEnd\n",
+   "label": "jg3.mset.num.dung.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 18)\nEnd\n",
+   "label": "jg3.mset.num.corp.18",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj -1)\nEnd\n",
+   "label": "jg3.mset.num.corp.-1",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetMediaSetTraitNumeric rObj 1)\nEnd\n",
+   "label": "jg3.mset.num.notmset",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nlet fSave := GetMediaSetTraitNumeric rObj 8\nSetMediaSetTraitNumeric rObj 8 50.5\nlet fRes := -1\nlet fA := GetMediaSetTraitNumeric rObj 8\nSetMediaSetTraitNumeric rObj 8 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetMediaSetTraitNumeric rObj 8))\nEnd\n",
+   "label": "jg3.mset.set.corp.8",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nlet fSave := GetMediaSetTraitNumeric rObj 0\nSetMediaSetTraitNumeric rObj 0 2.6\nlet fRes := -1\nlet fA := GetMediaSetTraitNumeric rObj 0\nSetMediaSetTraitNumeric rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetMediaSetTraitNumeric rObj 0))\nEnd\n",
+   "label": "jg3.mset.set.corp.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nlet fSave := GetMediaSetTraitNumeric rObj 13\nSetMediaSetTraitNumeric rObj 13 5.5\nlet fRes := -1\nlet fA := GetMediaSetTraitNumeric rObj 13\nSetMediaSetTraitNumeric rObj 13 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetMediaSetTraitNumeric rObj 13))\nEnd\n",
+   "label": "jg3.mset.set.corp.13",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nlet fSave := GetMediaSetTraitNumeric rObj 14\nSetMediaSetTraitNumeric rObj 14 7.25\nlet fRes := -1\nlet fA := GetMediaSetTraitNumeric rObj 14\nSetMediaSetTraitNumeric rObj 14 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetMediaSetTraitNumeric rObj 14))\nEnd\n",
+   "label": "jg3.mset.set.corp.14",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitString rObj 0)\nEnd\n",
+   "label": "jg3.mset.str.corp.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitString rObj 1)\nEnd\n",
+   "label": "jg3.mset.str.corp.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitString rObj 2)\nEnd\n",
+   "label": "jg3.mset.str.corp.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitString rObj 3)\nEnd\n",
+   "label": "jg3.mset.str.corp.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitString rObj 4)\nEnd\n",
+   "label": "jg3.mset.str.corp.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitString rObj 5)\nEnd\n",
+   "label": "jg3.mset.str.corp.5",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitString rObj 6)\nEnd\n",
+   "label": "jg3.mset.str.corp.6",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetMediaSetTraitString rObj -1)\nEnd\n",
+   "label": "jg3.mset.str.corp.-1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"166BFD\"\nSetFunctionValue (GetMediaSetTraitString rObj 0)\nEnd\n",
+   "label": "jg3.mset.str.dung.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"166BFD\"\nSetFunctionValue (GetMediaSetTraitString rObj 1)\nEnd\n",
+   "label": "jg3.mset.str.dung.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"166BFD\"\nSetFunctionValue (GetMediaSetTraitString rObj 3)\nEnd\n",
+   "label": "jg3.mset.str.dung.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetMediaSetTraitString rObj 0 \"loc\\NvfProbe.mp3\"\nlet sText := GetMediaSetTraitString rObj 0\nSetMediaSetTraitString rObj 0 \"loc\\corporateruins\\mus_loc_corpruins_day_1low.mp3\"\nSetFunctionValue (sv_Construct \"[%z] [%z]\" sText (GetMediaSetTraitString rObj 0))\nEnd\n",
+   "label": "jg3.mset.setstr.corp.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"14E8AC\"\nSetFunctionValue (GetFormIDString (GetMediaSetTraitSound rObj 0))\nEnd\n",
+   "label": "jg3.mset.sound.bttl.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"14E8AC\"\nSetFunctionValue (GetFormIDString (GetMediaSetTraitSound rObj 1))\nEnd\n",
+   "label": "jg3.mset.sound.bttl.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetFormIDString (GetMediaSetTraitSound rObj 0))\nEnd\n",
+   "label": "jg3.mset.sound.freeside.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"16BA51\"\nSetFunctionValue (GetFormIDString (GetMediaSetTraitSound rObj 1))\nEnd\n",
+   "label": "jg3.mset.sound.freeside.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"14E8AC\"\nSetFunctionValue (GetFormIDString (GetMediaSetTraitSound rObj 2))\nEnd\n",
+   "label": "jg3.mset.sound.bttl.2",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"14E8AC\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"16B41B\"\nlet rItem := GetMediaSetTraitSound rObj 0\nSetMediaSetTraitSound rObj 0 rOther\nlet sText := GetFormIDString (GetMediaSetTraitSound rObj 0)\nSetMediaSetTraitSound rObj 0 rItem\nSetFunctionValue (sv_Construct \"%z %z %z\" (GetFormIDString rItem) sText (GetFormIDString (GetMediaSetTraitSound rObj 0)))\nEnd\n",
+   "label": "jg3.mset.setsound.bttl.sound",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"14E8AC\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet rItem := GetMediaSetTraitSound rObj 0\nSetMediaSetTraitSound rObj 0 rOther\nlet sText := GetFormIDString (GetMediaSetTraitSound rObj 0)\nSetMediaSetTraitSound rObj 0 rItem\nSetFunctionValue (sv_Construct \"%z %z %z\" (GetFormIDString rItem) sText (GetFormIDString (GetMediaSetTraitSound rObj 0)))\nEnd\n",
+   "label": "jg3.mset.setsound.bttl.notsound",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"14E8AC\"\nlet rItem := GetMediaSetTraitSound rObj 1\nSetMediaSetTraitSound rObj 1 rNone\nlet sText := GetFormIDString (GetMediaSetTraitSound rObj 1)\nSetMediaSetTraitSound rObj 1 rItem\nSetFunctionValue (sv_Construct \"%z %z %z\" (GetFormIDString rItem) sText (GetFormIDString (GetMediaSetTraitSound rObj 1)))\nEnd\n",
+   "label": "jg3.mset.setsound.bttl.none",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"140521\"\nSetFunctionValue (GetFormIDString (GetCasinoChip rObj))\nEnd\n",
+   "label": "jg3.casino.chip.gomorrah",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C3F\"\nSetFunctionValue (GetFormIDString (GetCasinoChip rObj))\nEnd\n",
+   "label": "jg3.casino.chip.tops",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C40\"\nSetFunctionValue (GetFormIDString (GetCasinoChip rObj))\nEnd\n",
+   "label": "jg3.casino.chip.ultra",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C41\"\nSetFunctionValue (GetFormIDString (GetCasinoChip rObj))\nEnd\n",
+   "label": "jg3.casino.chip.vikki",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C42\"\nSetFunctionValue (GetFormIDString (GetCasinoChip rObj))\nEnd\n",
+   "label": "jg3.casino.chip.wrangler",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetFormIDString (GetCasinoChip rObj))\nEnd\n",
+   "label": "jg3.casino.chip.nuke",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C3F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"144C3C\"\nlet rItem := GetCasinoChip rObj\nSetCasinoChip rObj rOther\nlet sText := GetFormIDString (GetCasinoChip rObj)\nSetCasinoChip rObj rItem\nSetFunctionValue (sv_Construct \"%z %z %z\" (GetFormIDString rItem) sText (GetFormIDString (GetCasinoChip rObj)))\nEnd\n",
+   "label": "jg3.casino.setchip.tops.chip",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C3F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"F\"\nlet rItem := GetCasinoChip rObj\nSetCasinoChip rObj rOther\nlet sText := GetFormIDString (GetCasinoChip rObj)\nSetCasinoChip rObj rItem\nSetFunctionValue (sv_Construct \"%z %z %z\" (GetFormIDString rItem) sText (GetFormIDString (GetCasinoChip rObj)))\nEnd\n",
+   "label": "jg3.casino.setchip.tops.notchip",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"140521\"\nSetFunctionValue (GetCasinoWinnings rObj)\nEnd\n",
+   "label": "jg3.casino.win.gomorrah",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C3F\"\nSetFunctionValue (GetCasinoWinnings rObj)\nEnd\n",
+   "label": "jg3.casino.win.tops",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C40\"\nSetFunctionValue (GetCasinoWinnings rObj)\nEnd\n",
+   "label": "jg3.casino.win.ultra",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C41\"\nSetFunctionValue (GetCasinoWinnings rObj)\nEnd\n",
+   "label": "jg3.casino.win.vikki",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C42\"\nSetFunctionValue (GetCasinoWinnings rObj)\nEnd\n",
+   "label": "jg3.casino.win.wrangler",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"446D3\"\nSetFunctionValue (GetCasinoWinnings rObj)\nEnd\n",
+   "label": "jg3.casino.win.nuke",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C3F\"\nlet fSave := GetCasinoWinnings rObj\nSetCasinoWinnings rObj 1234\nlet fRes := -1\nlet fA := GetCasinoWinnings rObj\nSetCasinoWinnings rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetCasinoWinnings rObj))\nEnd\n",
+   "label": "jg3.casino.setwin.tops.1234",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C3F\"\nlet fSave := GetCasinoWinnings rObj\nSetCasinoWinnings rObj 2.7\nlet fRes := -1\nlet fA := GetCasinoWinnings rObj\nSetCasinoWinnings rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetCasinoWinnings rObj))\nEnd\n",
+   "label": "jg3.casino.setwin.tops.frac",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"144C3F\"\nlet fSave := GetCasinoWinnings rObj\nSetCasinoWinnings rObj -50\nlet fRes := -1\nlet fA := GetCasinoWinnings rObj\nSetCasinoWinnings rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetCasinoWinnings rObj))\nEnd\n",
+   "label": "jg3.casino.setwin.tops.neg",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetTerminalMenuItemCount rObj)\nEnd\n",
+   "label": "jg3.term.count.v34",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"9596E\"\nSetFunctionValue (GetTerminalMenuItemCount rObj)\nEnd\n",
+   "label": "jg3.term.count.east",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"EFB7B\"\nSetFunctionValue (GetTerminalMenuItemCount rObj)\nEnd\n",
+   "label": "jg3.term.count.contreras",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"1672C6\"\nSetFunctionValue (GetTerminalMenuItemCount rObj)\nEnd\n",
+   "label": "jg3.term.count.nellis",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetTerminalMenuItemCount rObj)\nEnd\n",
+   "label": "jg3.term.count.corp",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetTerminalMenuItemText rObj 1 0)\nEnd\n",
+   "label": "jg3.term.text.v34.1.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetTerminalMenuItemText rObj 2 0)\nEnd\n",
+   "label": "jg3.term.text.v34.2.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetTerminalMenuItemText rObj 1 4)\nEnd\n",
+   "label": "jg3.term.text.v34.1.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetTerminalMenuItemText rObj 0 0)\nEnd\n",
+   "label": "jg3.term.text.v34.0.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetTerminalMenuItemText rObj 3 0)\nEnd\n",
+   "label": "jg3.term.text.v34.3.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"9596E\"\nSetFunctionValue (GetTerminalMenuItemText rObj 2 0)\nEnd\n",
+   "label": "jg3.term.text.east.2.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"9596E\"\nSetFunctionValue (GetTerminalMenuItemText rObj 2 8)\nEnd\n",
+   "label": "jg3.term.text.east.2.8",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetFormIDString (GetTerminalMenuItemNote rObj 0))\nEnd\n",
+   "label": "jg3.term.note.v34.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetFormIDString (GetTerminalMenuItemNote rObj 3))\nEnd\n",
+   "label": "jg3.term.note.v34.3",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetFormIDString (GetTerminalMenuItemNote rObj 4))\nEnd\n",
+   "label": "jg3.term.note.v34.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetFormIDString (GetTerminalMenuItemSubmenu rObj 0))\nEnd\n",
+   "label": "jg3.term.submenu.v34.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetFormIDString (GetTerminalMenuItemSubmenu rObj 4))\nEnd\n",
+   "label": "jg3.term.submenu.v34.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"9596E\"\nSetFunctionValue (GetFormIDString (GetTerminalMenuItemSubmenu rObj 9))\nEnd\n",
+   "label": "jg3.term.submenu.east.9",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"9596E\"\nSetFunctionValue (GetTerminalMenuItemFlags rObj 0)\nEnd\n",
+   "label": "jg3.term.flags.east.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"9596E\"\nSetFunctionValue (GetTerminalMenuItemFlags rObj 8)\nEnd\n",
+   "label": "jg3.term.flags.east.8",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"EFB7B\"\nSetFunctionValue (GetTerminalMenuItemFlags rObj 0)\nEnd\n",
+   "label": "jg3.term.flags.contreras.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetTerminalMenuItemFlags rObj 0)\nEnd\n",
+   "label": "jg3.term.flags.v34.0",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetFunctionValue (GetTerminalMenuItemFlags rObj 7)\nEnd\n",
+   "label": "jg3.term.flags.v34.7",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nSetTerminalMenuItemText rObj 1 4 \"NvfProbe\"\nlet sText := GetTerminalMenuItemText rObj 1 4\nSetTerminalMenuItemText rObj 1 4 \"System\"\nSetFunctionValue (sv_Construct \"[%z] [%z]\" sText (GetTerminalMenuItemText rObj 1 4))\nEnd\n",
+   "label": "jg3.term.settext.v34.1.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"9596E\"\nSetTerminalMenuItemText rObj 2 8 \"NvfProbe\"\nlet sText := GetTerminalMenuItemText rObj 2 8\nSetTerminalMenuItemText rObj 2 8 \"You walk to the west...\"\nSetFunctionValue (sv_Construct \"[%z] [%z]\" sText (GetTerminalMenuItemText rObj 2 8))\nEnd\n",
+   "label": "jg3.term.settext.east.2.8",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"132543\"\nlet rItem := GetTerminalMenuItemNote rObj 0\nSetTerminalMenuItemNote rObj 0 rOther\nlet sText := GetFormIDString (GetTerminalMenuItemNote rObj 0)\nSetTerminalMenuItemNote rObj 0 rItem\nSetFunctionValue (sv_Construct \"%z %z %z\" (GetFormIDString rItem) sText (GetFormIDString (GetTerminalMenuItemNote rObj 0)))\nEnd\n",
+   "label": "jg3.term.setnote.v34.0",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"95966\"\nlet rItem := GetTerminalMenuItemNote rObj 0\nSetTerminalMenuItemNote rObj 0 rOther\nlet sText := GetFormIDString (GetTerminalMenuItemNote rObj 0)\nSetTerminalMenuItemNote rObj 0 rItem\nSetFunctionValue (sv_Construct \"%z %z %z\" (GetFormIDString rItem) sText (GetFormIDString (GetTerminalMenuItemNote rObj 0)))\nEnd\n",
+   "label": "jg3.term.setnote.v34.0.notnote",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"95966\"\nlet rItem := GetTerminalMenuItemSubmenu rObj 4\nSetTerminalMenuItemSubmenu rObj 4 rOther\nlet sText := GetFormIDString (GetTerminalMenuItemSubmenu rObj 4)\nSetTerminalMenuItemSubmenu rObj 4 rItem\nSetFunctionValue (sv_Construct \"%z %z %z\" (GetFormIDString rItem) sText (GetFormIDString (GetTerminalMenuItemSubmenu rObj 4)))\nEnd\n",
+   "label": "jg3.term.setsubmenu.v34.4",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"132543\"\nlet rItem := GetTerminalMenuItemSubmenu rObj 4\nSetTerminalMenuItemSubmenu rObj 4 rOther\nlet sText := GetFormIDString (GetTerminalMenuItemSubmenu rObj 4)\nSetTerminalMenuItemSubmenu rObj 4 rItem\nSetFunctionValue (sv_Construct \"%z %z %z\" (GetFormIDString rItem) sText (GetFormIDString (GetTerminalMenuItemSubmenu rObj 4)))\nEnd\n",
+   "label": "jg3.term.setsubmenu.v34.4.notterm",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"9596E\"\nlet fSave := GetTerminalMenuItemFlags rObj 0\nSetTerminalMenuItemFlags rObj 0 7\nlet fRes := -1\nlet fA := GetTerminalMenuItemFlags rObj 0\nSetTerminalMenuItemFlags rObj 0 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetTerminalMenuItemFlags rObj 0))\nEnd\n",
+   "label": "jg3.term.setflags.east.0.7",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nlet fSave := GetTerminalMenuItemFlags rObj 4\nSetTerminalMenuItemFlags rObj 4 1\nlet fRes := -1\nlet fA := GetTerminalMenuItemFlags rObj 4\nSetTerminalMenuItemFlags rObj 4 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetTerminalMenuItemFlags rObj 4))\nEnd\n",
+   "label": "jg3.term.setflags.v34.4.1",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13253C\"\nlet fSave := GetTerminalMenuItemFlags rObj 4\nSetTerminalMenuItemFlags rObj 4 6\nlet fRes := -1\nlet fA := GetTerminalMenuItemFlags rObj 4\nSetTerminalMenuItemFlags rObj 4 fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetTerminalMenuItemFlags rObj 4))\nEnd\n",
+   "label": "jg3.term.setflags.v34.4.6",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17A836\"\nSetFunctionValue (GetQuestDelay rObj)\nEnd\n",
+   "label": "jg3.quest.delay.legion",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17BA15\"\nSetFunctionValue (GetQuestDelay rObj)\nEnd\n",
+   "label": "jg3.quest.delay.patch04",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17B713\"\nSetFunctionValue (GetQuestDelay rObj)\nEnd\n",
+   "label": "jg3.quest.delay.complex",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"10A214\"\nSetFunctionValue (GetQuestDelay rObj)\nEnd\n",
+   "label": "jg3.quest.delay.vcg02",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"176E3F\"\nSetFunctionValue (GetQuestDelay rObj)\nEnd\n",
+   "label": "jg3.quest.delay.corp",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nref rItem\nref rNone\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nstring_var sText\nstring_var sSave\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"17A836\"\nlet fSave := GetQuestDelay rObj\nSetQuestDelay rObj 2.5\nlet fRes := -1\nlet fA := GetQuestDelay rObj\nSetQuestDelay rObj fSave\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fSave fRes fA (GetQuestDelay rObj))\nEnd\n",
+   "label": "jg3.quest.setdelay.legion",
+   "field": "value",
+   "text": true
+  }
+ ]
+}

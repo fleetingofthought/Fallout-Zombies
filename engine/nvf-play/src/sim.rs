@@ -18,6 +18,7 @@ impl SimState {
     /// Build the simulation's tables from the plugins (they live for the whole run).
     pub fn new(lo: &LoadOrder, schema: &Schema, index: &WorldIndex) -> SimState {
         let forms: &'static FormStore = Box::leak(Box::new(FormStore::build(lo, schema)));
+        crate::pipboy::labels::set(&forms.settings);
         let refs: &'static RefTable = Box::leak(Box::new(RefTable::from_index(lo, schema, index)));
         SimState { forms, refs, world: World::new(forms, refs, SimConfig::default()) }
     }
@@ -168,6 +169,8 @@ pub(crate) fn placed_ref(id: u32) -> fnv_sim::refs::PlacedRef {
         radius: None,
         encounter_zone: None,
         level_modifier: None,
+        map_marker: None,
+        radio: None,
     }
 }
 
@@ -283,6 +286,8 @@ pub(crate) mod test_world {
             radius: None,
             encounter_zone: None,
             level_modifier: None,
+            map_marker: None,
+            radio: None,
         }
     }
 
@@ -296,6 +301,11 @@ pub(crate) mod test_world {
         }
         let mut refs = RefTable::default();
         for r in placed {
+            // In its cell's list, as `RefTable::from_index` puts it (what a cell reset
+            // walks).
+            if let Some(c) = r.cell {
+                refs.by_cell.entry(c).or_default().push(r.id);
+            }
             refs.refs.insert(r.id, r);
         }
         let forms: &'static FormStore = Box::leak(Box::new(forms));

@@ -140,6 +140,11 @@ pub enum BroadcastRange {
 }
 
 impl BroadcastRange {
+    /// The range type of an `XRDO` code (LU's SetRadioBroadcastType, `fnv_game::nvse_lu2`).
+    pub fn of_code(code: u32) -> BroadcastRange {
+        BroadcastRange::of(code)
+    }
+
     fn of(code: u32) -> BroadcastRange {
         match code {
             0 => BroadcastRange::Radius,

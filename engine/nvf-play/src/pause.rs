@@ -1080,9 +1080,11 @@ fn from_middle(left: f32, top: f32, width: f32, height: f32) -> Node {
 /// A right-aligned list entry: the whole row takes the pointer, the box round it when
 /// `boxed`.
 #[allow(clippy::too_many_arguments)]
-fn right_entry(p: &mut ChildSpawnerCommands, face: &Face, label: &str, node: Node, width: f32, shade: Shade, boxed_on: bool, b: PauseButton) {
-    let w = face.font.width(label);
-    p.spawn((Button, b, boxed(node, boxed_on))).with_children(|t| sm_text(t, face, label, width - w - 10.0, BASE, color(shade)));
+fn right_entry(p: &mut ChildSpawnerCommands, face: &Face, label: &str, node: Node, width: f32, shade: Shade, boxed_on: bool, b: PauseButton, glyphs: &crate::pad::PadGlyphs) {
+    let w = crate::pad::hint_width(face, label, glyphs);
+    p.spawn((Button, b, boxed(node, boxed_on))).with_children(|t| {
+        crate::pad::set_hint(t, face, label, width - w - 10.0, BASE, color(shade), glyphs);
+    });
 }
 
 /// A node with the highlight box round it when `on`.
@@ -1110,7 +1112,7 @@ fn band(root: &mut ChildSpawnerCommands, look: &PauseLook, node: Node) {
 }
 
 /// Draw the page `d` (the one before it is gone already).
-fn spawn_page(commands: &mut Commands, d: &Drawn, look: &PauseLook, settings: &[Setting], list: &LoadList) {
+fn spawn_page(commands: &mut Commands, d: &Drawn, look: &PauseLook, settings: &[Setting], list: &LoadList, glyphs: &crate::pad::PadGlyphs) {
     if d.under_main && d.page == Page::Main {
         return;
     }
@@ -1159,7 +1161,7 @@ fn spawn_page(commands: &mut Commands, d: &Drawn, look: &PauseLook, settings: &[
             let lit = d.page_entry();
             for (i, (label, ok)) in d.column.iter().enumerate() {
                 let shade = if (on_column && *ok) || (!on_column && i == lit) { Shade::Bright } else { Shade::Dim };
-                right_entry(root, &f.entry, label, from_right(RIGHT, top + i as f32 * ITEM, COLUMN - 5.0, ITEM), COLUMN - 5.0, shade, on_column && i == d.main_selected, PauseButton::Column(i));
+                right_entry(root, &f.entry, label, from_right(RIGHT, top + i as f32 * ITEM, COLUMN - 5.0, ITEM), COLUMN - 5.0, shade, on_column && i == d.main_selected, PauseButton::Column(i), glyphs);
             }
             match d.page {
                 Page::Main => {
@@ -1181,16 +1183,16 @@ fn spawn_page(commands: &mut Commands, d: &Drawn, look: &PauseLook, settings: &[
                         });
                     }
                 }
-                Page::Settings { selected } => settings_page(root, d, look, settings, selected, top, left),
-                Page::Controls { selected, listening } => controls_page(root, d, look, settings, selected, listening, top, left),
-                Page::Load { selected } => load_page(root, d, look, list, selected),
+                Page::Settings { selected } => settings_page(root, d, look, settings, selected, top, left, glyphs),
+                Page::Controls { selected, listening } => controls_page(root, d, look, settings, selected, listening, top, left, glyphs),
+                Page::Load { selected } => load_page(root, d, look, list, selected, glyphs),
                 Page::Mods => {}
             }
             // Back (and Defaults) at the bottom right.
             if d.page != Page::Main {
-                right_entry(root, &f.entry, "Back", from_right(RIGHT, BACK_TOP, 200.0, ITEM), 200.0, Shade::Bright, false, PauseButton::Back);
+                right_entry(root, &f.entry, "Back", from_right(RIGHT, BACK_TOP, 200.0, ITEM), 200.0, Shade::Bright, false, PauseButton::Back, glyphs);
                 if matches!(d.page, Page::Settings { .. } | Page::Controls { .. }) {
-                    right_entry(root, &f.entry, "Defaults", from_right(RIGHT, BACK_TOP - ITEM, 200.0, ITEM), 200.0, Shade::Bright, false, PauseButton::Defaults);
+                    right_entry(root, &f.entry, "Defaults", from_right(RIGHT, BACK_TOP - ITEM, 200.0, ITEM), 200.0, Shade::Bright, false, PauseButton::Defaults, glyphs);
                 }
             }
             if let Some((label, left, sel)) = d.keep {
@@ -1231,9 +1233,9 @@ struct KeepLine;
 /// The settings page: the categories left of the column, the chosen category's switches
 /// in the middle with the chosen one's note under them, the version at the bottom left.
 #[allow(clippy::too_many_arguments)]
-fn settings_page(root: &mut ChildSpawnerCommands, d: &Drawn, look: &PauseLook, list: &[Setting], selected: usize, top: f32, left: f32) {
+fn settings_page(root: &mut ChildSpawnerCommands, d: &Drawn, look: &PauseLook, list: &[Setting], selected: usize, top: f32, left: f32, glyphs: &crate::pad::PadGlyphs) {
     let f = &look.faces;
-    category_column(root, f, list, list.get(selected).map(|s| s.group), top);
+    category_column(root, f, list, list.get(selected).map(|s| s.group), top, glyphs);
     let top = OPTIONS_TOP;
     if list.is_empty() {
         root.spawn(from_middle(left, top, OPTIONS_WIDTH, OPTION_ROW)).with_children(|t| sm_text(t, &f.entry, tr("Nothing to switch."), 10.0, BASE, color(Shade::Dim)));
@@ -1312,24 +1314,24 @@ fn list_row(r: &mut ChildSpawnerCommands, look: &PauseLook, i: usize, chosen: &s
 
 /// The categories left of the column: the switches' groups, then Controls; `current`
 /// bright (`None`: Controls).
-fn category_column(root: &mut ChildSpawnerCommands, f: &Faces, list: &[Setting], current: Option<&str>, top: f32) {
+fn category_column(root: &mut ChildSpawnerCommands, f: &Faces, list: &[Setting], current: Option<&str>, top: f32, glyphs: &crate::pad::PadGlyphs) {
     let cats = categories(list);
     let tabs = cats.iter().map(|&(name, first)| (name, Some(name) == current, PauseButton::Category(first))).chain([(CONTROLS_TAB, current.is_none(), PauseButton::ControlsTab)]);
     for (i, (name, on, b)) in tabs.enumerate() {
         let name = tr(name);
         let w = SUB_WIDTH.max(f.entry.font.width(name) + 20.0);
         let shade = if on { Shade::Bright } else { Shade::Dim };
-        right_entry(root, &f.entry, name, from_right(SUB_RIGHT, top + i as f32 * ITEM, w, ITEM), w, shade, false, b);
+        right_entry(root, &f.entry, name, from_right(SUB_RIGHT, top + i as f32 * ITEM, w, ITEM), w, shade, false, b, glyphs);
     }
 }
 
 /// The settings page's Controls tab: every control with its key and mouse button, a
 /// window of [`OPTION_ROWS`] round the chosen one, the chosen one's note under them.
 #[allow(clippy::too_many_arguments)]
-fn controls_page(root: &mut ChildSpawnerCommands, d: &Drawn, look: &PauseLook, list: &[Setting], selected: usize, listening: bool, top: f32, left: f32) {
+fn controls_page(root: &mut ChildSpawnerCommands, d: &Drawn, look: &PauseLook, list: &[Setting], selected: usize, listening: bool, top: f32, left: f32, glyphs: &crate::pad::PadGlyphs) {
     use crate::bindings::{label, Bindings};
     let f = &look.faces;
-    category_column(root, f, list, None, top);
+    category_column(root, f, list, None, top, glyphs);
     let top = OPTIONS_TOP;
     let (device, controller) = d.device;
     let n = control_rows(controller);
@@ -1353,9 +1355,9 @@ fn controls_page(root: &mut ChildSpawnerCommands, d: &Drawn, look: &PauseLook, l
                 slider_row(r, look, i, crate::bindings::sensitivity_part(d.sensitivity), &value);
                 return;
             }
-            let vw = f.entry.font.width(&value);
+            let vw = crate::pad::button_width(&f.entry, &value, glyphs);
             r.spawn((SwitchState(i), Text::new(value.clone()), Node { display: Display::None, ..default() }));
-            sm_text(r, &f.entry, &value, (VALUE_AT - vw / 2.0).min(OPTIONS_WIDTH - vw - 14.0), BASE + 2.0, color(Shade::Bright));
+            crate::pad::set_button(r, &f.entry, &value, (VALUE_AT - vw / 2.0).min(OPTIONS_WIDTH - vw - 14.0), BASE + 2.0, color(Shade::Bright), glyphs);
         });
     }
     let note = match control_at(selected) {
@@ -1509,7 +1511,7 @@ fn slider_row(r: &mut ChildSpawnerCommands, look: &PauseLook, i: usize, v: f32, 
 /// of [`LOAD_ROWS`] from [`PauseView::scroll`], moved by the wheel, the scroll bar or the
 /// keys, never by the pointer), left of the column; the scroll bar at the rows' right
 /// when not all of them fit.
-fn load_page(root: &mut ChildSpawnerCommands, d: &Drawn, look: &PauseLook, list: &LoadList, selected: usize) {
+fn load_page(root: &mut ChildSpawnerCommands, d: &Drawn, look: &PauseLook, list: &LoadList, selected: usize, glyphs: &crate::pad::PadGlyphs) {
     let f = &look.faces;
     let panel = |top: f32, height: f32| from_right(RIGHT + COLUMN, top, LOAD_WIDTH, height);
     if list.saves.is_empty() {
@@ -1547,7 +1549,7 @@ fn load_page(root: &mut ChildSpawnerCommands, d: &Drawn, look: &PauseLook, list:
     let side = |top: f32, height: f32| from_right(RIGHT + COLUMN, top, DELETE_WIDTH, height);
     let top = DETAILS_TOP - THUMB_DRAWN.y - 10.0;
     match d.delete_ask.filter(|r| *r == selected) {
-        None => right_entry(root, &f.small, &format!("Delete  {}", crate::pad::hint(&[KeyCode::Delete], crate::pad::PAUSE_AT)), side(top, ITEM), DELETE_WIDTH, Shade::Bright, false, PauseButton::Delete),
+        None => right_entry(root, &f.small, &format!("Delete  {}", crate::pad::hint(&[KeyCode::Delete], crate::pad::PAUSE_AT)), side(top, ITEM), DELETE_WIDTH, Shade::Bright, false, PauseButton::Delete, glyphs),
         Some(_) => {
             root.spawn((DetailLine, Text::new("Delete this save?"), Node { display: Display::None, ..default() }));
             root.spawn(side(top, ITEM)).with_children(|t| {
@@ -1555,8 +1557,8 @@ fn load_page(root: &mut ChildSpawnerCommands, d: &Drawn, look: &PauseLook, list:
                 sm_text(t, &f.small, "Delete this save?", DELETE_WIDTH - w - 10.0, BASE, color(Shade::Bright));
             });
             let (yes, no) = (crate::pad::hint(&[KeyCode::KeyY, KeyCode::Enter], crate::pad::PAUSE_AT), crate::pad::hint(&[KeyCode::KeyN, KeyCode::Escape], crate::pad::PAUSE_AT));
-            right_entry(root, &f.small, &format!("Yes  {yes}"), side(top + ITEM, ITEM), DELETE_WIDTH, Shade::Bright, true, PauseButton::DeleteAnswer(true));
-            right_entry(root, &f.small, &format!("No  {no}"), side(top + 2.0 * ITEM, ITEM), DELETE_WIDTH, Shade::Bright, false, PauseButton::DeleteAnswer(false));
+            right_entry(root, &f.small, &format!("Yes  {yes}"), side(top + ITEM, ITEM), DELETE_WIDTH, Shade::Bright, true, PauseButton::DeleteAnswer(true), glyphs);
+            right_entry(root, &f.small, &format!("No  {no}"), side(top + 2.0 * ITEM, ITEM), DELETE_WIDTH, Shade::Bright, false, PauseButton::DeleteAnswer(false), glyphs);
         }
     }
     // With the scroll bar the rows leave room for it at their right.
@@ -1590,13 +1592,32 @@ fn open(
     mut status: ResMut<PauseStatus>,
     mut next: ResMut<NextState<PlayState>>,
     wheel: Option<Res<crate::weapon_wheel::WeaponWheel>>,
+    (script, mut seen, mut request): (Option<Res<crate::script::ScriptState>>, Local<u64>, ResMut<PageRequest>),
 ) {
     let by_aid = fire(&mut aid.open, time.elapsed_secs());
-    if !keys.just_pressed(KeyCode::Escape) && !by_aid {
+    // ShowOff's ShowPauseMenu: each new ask opens the menu, on the page its mode names
+    // (1 load, 3 settings; the others the main page) (`fnv_game::nvse_showoff5`).
+    let asked = script.as_ref().and_then(|s| s.rt.as_ref()).map(|rt| (rt.game.showoff.b5.pause_asks, rt.game.showoff.b5.pause_mode));
+    let by_script = match asked {
+        Some((n, mode)) if n != *seen => {
+            *seen = n;
+            (n > 0 && !paused.0).then_some(mode)
+        }
+        _ => None,
+    };
+    if !keys.just_pressed(KeyCode::Escape) && !by_aid && by_script.is_none() {
         return;
     }
+    if let Some(mode) = by_script {
+        info!("pause menu: opened by ShowPauseMenu {mode}");
+        request.0 = match mode {
+            1 => Some(Page::Load { selected: 0 }),
+            3 => Some(Page::Settings { selected: 0 }),
+            _ => None,
+        };
+    }
     // Esc closes the weapon wheel (`crate::weapon_wheel`), not the game.
-    if wheel.is_some_and(|w| w.holds_input()) && !by_aid {
+    if wheel.is_some_and(|w| w.holds_input()) && !by_aid && by_script.is_none() {
         return;
     }
     if by_aid {
@@ -2592,10 +2613,11 @@ fn draw(world: &mut World) {
         world.despawn(e);
     }
     let settings = world.resource::<Settings>().list().to_vec();
+    let glyphs = world.resource::<crate::pad::PadGlyphs>().clone();
     world.resource_scope(|world, look: Mut<PauseLook>| {
         world.resource_scope(|world, list: Mut<LoadList>| {
             let mut commands = world.commands();
-            spawn_page(&mut commands, &now, &look, &settings, &list);
+            spawn_page(&mut commands, &now, &look, &settings, &list, &glyphs);
         });
     });
     world.flush();
@@ -2842,7 +2864,7 @@ mod tests {
     #[test]
     fn the_load_page_lists_the_saves_and_shows_the_chosen_one() {
         let mut app = App::new();
-        app.init_resource::<Assets<Image>>();
+        app.init_resource::<Assets<Image>>().init_resource::<crate::pad::PadGlyphs>();
         let mut list = LoadList::default();
         for (name, t) in [("Save 2", 20), ("autosave", 10)] {
             let mut h = SaveHeader::new(if name == "autosave" { SaveKind::Auto } else { SaveKind::Manual });
@@ -2853,7 +2875,7 @@ mod tests {
         }
         app.insert_resource(list);
         let drawn = Drawn { page: Page::Load { selected: 1 }, main_selected: 0, confirm: None, states: vec![], disabled: vec![], status: String::new(), column: entries(false).iter().map(|e| (e.label(), true)).collect(), under_main: false, thumb: None, controls: vec![], device: ("Keyboard and Mouse", false), rumble: true, invert_y: false, sensitivity: 1.0, scroll: 0, lists: vec![], dropdown: None, keep: None, delete_ask: None, view_w: VIEW_W as u32, language: 0 };
-        app.world_mut().run_system_cached_with(|In(d): In<Drawn>, mut commands: Commands, list: Res<LoadList>| spawn_page(&mut commands, &d, &PauseLook::plain(), &[], &list), drawn).unwrap();
+        app.world_mut().run_system_cached_with(|In(d): In<Drawn>, mut commands: Commands, list: Res<LoadList>, glyphs: Res<crate::pad::PadGlyphs>| spawn_page(&mut commands, &d, &PauseLook::plain(), &[], &list, &glyphs), drawn).unwrap();
         let world = app.world_mut();
         let mut rows = world.query::<(&PauseButton, &BorderColor)>();
         let rows: Vec<(PauseButton, bool)> = rows.iter(world).filter(|(b, _)| matches!(b, PauseButton::LoadRow(_))).map(|(b, c)| (*b, c.top != Color::NONE)).collect();
@@ -2879,7 +2901,7 @@ mod tests {
         let mut app = App::new();
         app.init_resource::<Lamp>().init_resource::<Paused>().insert_resource(Page::Settings { selected: 0 });
         add_setting(&mut app, Setting { key: "lamp", group: "Test", label: "Lamp", note: "A lamp.", get: |w| w.resource::<Lamp>().0, set: |w, on| w.resource_mut::<Lamp>().0 = on, slider: None });
-        app.init_resource::<PauseView>().init_resource::<LoadList>().init_resource::<PauseStatus>().insert_resource(PauseLook::plain());
+        app.init_resource::<PauseView>().init_resource::<LoadList>().init_resource::<PauseStatus>().init_resource::<crate::pad::PadGlyphs>().insert_resource(PauseLook::plain());
         app.world_mut().resource_mut::<Paused>().0 = true;
         app.add_systems(Update, draw);
         let state = |app: &mut App| {
@@ -2908,7 +2930,7 @@ mod tests {
         let slider = crate::settings::Slider { get: |w| w.resource::<Reach>().0, set: |w, v| w.resource_mut::<Reach>().0 = v, min: 0.1, step: 0.05, shown: None };
         add_setting(&mut app, Setting::slider("reach", "Test", "Reach", "How far.", slider));
         crate::settings::set_disabled_status(&mut app, "reach", |w| w.resource::<Lamp>().0.then_some("Off (FSR active)"));
-        app.init_resource::<PauseView>().init_resource::<LoadList>().init_resource::<PauseStatus>().insert_resource(PauseLook::plain());
+        app.init_resource::<PauseView>().init_resource::<LoadList>().init_resource::<PauseStatus>().init_resource::<crate::pad::PadGlyphs>().insert_resource(PauseLook::plain());
         app.world_mut().resource_mut::<Paused>().0 = true;
         app.add_systems(Update, draw);
         app.update();
@@ -2935,7 +2957,7 @@ mod tests {
         app.insert_resource(Reach(0.5)).init_resource::<Paused>().insert_resource(Page::Settings { selected: 0 });
         let slider = crate::settings::Slider { get: |w| w.resource::<Reach>().0, set: |w, v| w.resource_mut::<Reach>().0 = v, min: 0.1, step: 0.05, shown: None };
         add_setting(&mut app, Setting::slider("reach", "Test", "Reach", "How far.", slider));
-        app.init_resource::<PauseView>().init_resource::<LoadList>().init_resource::<PauseStatus>().insert_resource(PauseLook::plain());
+        app.init_resource::<PauseView>().init_resource::<LoadList>().init_resource::<PauseStatus>().init_resource::<crate::pad::PadGlyphs>().insert_resource(PauseLook::plain());
         app.world_mut().resource_mut::<Paused>().0 = true;
         app.add_systems(Update, draw);
         let shown = |app: &mut App| {
@@ -2964,7 +2986,7 @@ mod tests {
         let jump = crate::bindings::GAME_CONTROLS.iter().position(|(c, _, _)| *c == Control::Jump).unwrap() + 1;
         let mut app = App::new();
         app.init_resource::<Paused>().init_resource::<Settings>().init_resource::<Bindings>().insert_resource(Page::Controls { selected: jump, listening: false });
-        app.init_resource::<PauseView>().init_resource::<LoadList>().init_resource::<PauseStatus>().insert_resource(PauseLook::plain());
+        app.init_resource::<PauseView>().init_resource::<LoadList>().init_resource::<PauseStatus>().init_resource::<crate::pad::PadGlyphs>().insert_resource(PauseLook::plain());
         app.world_mut().resource_mut::<Paused>().0 = true;
         app.add_systems(Update, draw);
         let value = |app: &mut App| {

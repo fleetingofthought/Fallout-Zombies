@@ -18,6 +18,16 @@
 //!   meshes of placed objects and items are culled: actors, the player's body, dropped
 //!   items, lights, particles and effects are always drawn (actors walk between rooms;
 //!   the editor's pages say objects moved by Havok are drawn while they move).
+//! - **Linked rooms** (`XLRM` on a room marker, with its count in `XRMR`) [documented:
+//!   xEdit's record definitions name them "Linked Rooms Count" and "Linked Room";
+//!   observed: Fallout 3's masters as Tale of Two Wastelands loads them have them (320 in
+//!   Fallout3.esm), the New Vegas masters none; hypothesis for the rule]: two linked
+//!   rooms are seen together with no portal between them, as if they were one room, so a
+//!   room in view makes its linked rooms visible through the same rectangle. Links are
+//!   taken both ways (the data names them both ways). Vault 101 needs them: the room
+//!   just outside the G.O.A.T. classroom (0x060ABBF5) has no portal but the classroom
+//!   door and is linked to the corridor (0x060ABBF6); without links the corridor was
+//!   culled from there (owner report 2026-11-08).
 //! - **The narrower frustum** is a screen rectangle: a portal's corners projected, their
 //!   bounding rectangle cut by the rectangle the room was seen through. A portal with a
 //!   corner behind the camera passes the whole rectangle on (the camera is in or near it).
@@ -137,6 +147,8 @@ pub struct Rooms {
     pub cell: Option<u32>,
     pub rooms: Vec<RoomBox>,
     pub portals: Vec<Portal>,
+    /// Linked rooms (indices into `rooms`), each pair once (module notes).
+    pub links: Vec<[usize; 2]>,
     /// The spaces in view this frame (`None` in it: the unbounded space); `None`: all.
     pub visible: Option<HashSet<Space>>,
     pub camera_room: Option<usize>,
@@ -223,10 +235,11 @@ pub fn portal_corners(center: Vec3, rot: Mat3, half: Vec3) -> Vec<Vec3> {
 }
 
 /// Read the rooms and portals of interior `cell` (module notes).
-fn read(world: &WorldData, cell: u32) -> (Vec<RoomBox>, Vec<Portal>) {
-    let Some(c) = world.index.cells.get(&cell) else { return (Vec::new(), Vec::new()) };
+fn read(world: &WorldData, cell: u32) -> (Vec<RoomBox>, Vec<Portal>, Vec<[usize; 2]>) {
+    let Some(c) = world.index.cells.get(&cell) else { return (Vec::new(), Vec::new(), Vec::new()) };
     let mut rooms = Vec::new();
     let mut raw_portals = Vec::new();
+    let mut raw_links: Vec<(u32, u32)> = Vec::new();
     for &r in &c.refs {
         let Some(p) = placement(world.lo, world.schema, r) else { continue };
         let base = p.base.map(|b| b & 0x00FF_FFFF);
@@ -241,6 +254,11 @@ fn read(world: &WorldData, cell: u32) -> (Vec<RoomBox>, Vec<Portal>) {
         let rot = Mat3::from_cols_array(&ref_rotation(p.rotation)).transpose();
         if base == Some(ROOM_MARKER) {
             rooms.push(RoomBox { id: r, center, rot, half });
+            for link in f.subs.iter().filter(|s| &s.sig == b"XLRM").filter_map(|s| f.decode(s)) {
+                if let Some(to) = formid_of(&link).and_then(|l| global(world.lo, pi, l)) {
+                    raw_links.push((r, to));
+                }
+            }
         } else {
             let pair: Vec<Option<u32>> = f
                 .get(b"XPOD")
@@ -268,7 +286,24 @@ fn read(world: &WorldData, cell: u32) -> (Vec<RoomBox>, Vec<Portal>) {
             Some(Portal { id, corners, rooms: [to(&pair[0])?, to(&pair[1])?] })
         })
         .collect();
-    (rooms, portals)
+    let links = linked_pairs(&rooms, &raw_links);
+    (rooms, portals, links)
+}
+
+/// Linked rooms as pairs of room indices, each pair once whichever way the data names it;
+/// a link to a room not among the cell's markers is dropped.
+fn linked_pairs(rooms: &[RoomBox], links: &[(u32, u32)]) -> Vec<[usize; 2]> {
+    let index: HashMap<u32, usize> = rooms.iter().enumerate().map(|(i, r)| (r.id, i)).collect();
+    let mut out: Vec<[usize; 2]> = links
+        .iter()
+        .filter_map(|(a, b)| {
+            let (a, b) = (*index.get(a)?, *index.get(b)?);
+            (a != b).then_some([a.min(b), a.max(b)])
+        })
+        .collect();
+    out.sort_unstable();
+    out.dedup();
+    out
 }
 
 fn load(mut rooms: ResMut<Rooms>, streamer: Option<Res<Streamer>>, world: Option<Res<WorldData>>) {
@@ -277,6 +312,7 @@ fn load(mut rooms: ResMut<Rooms>, streamer: Option<Res<Streamer>>, world: Option
         rooms.cell = interior;
         rooms.rooms.clear();
         rooms.portals.clear();
+        rooms.links.clear();
         rooms.planes.clear();
         rooms.plane_cells.clear();
         rooms.plane_grid.clear();
@@ -284,12 +320,13 @@ fn load(mut rooms: ResMut<Rooms>, streamer: Option<Res<Streamer>>, world: Option
         rooms.logged = None;
         rooms.planes_logged = None;
         if let (Some(cell), Some(world)) = (interior, world.as_ref()) {
-            let (r, p) = read(world, cell);
+            let (r, p, l) = read(world, cell);
             if !r.is_empty() {
-                info!("rooms: {cell:08X}: {} rooms, {} portals", r.len(), p.len());
+                info!("rooms: {cell:08X}: {} rooms, {} portals, {} linked pairs", r.len(), p.len(), l.len());
             }
             rooms.rooms = r;
             rooms.portals = p;
+            rooms.links = l;
             let planes = world.index.cells.get(&cell).map(|c| crate::occlusion::read(world, c.refs.iter().copied())).unwrap_or_default();
             if !planes.is_empty() {
                 info!("occlusion: {cell:08X}: {} planes", planes.len());
@@ -397,9 +434,9 @@ fn portal_rect(corners: &[Vec3], clip_from_game: &Mat4) -> Option<Rect2> {
     }
 }
 
-/// The spaces seen from `start` through the portals (module notes); a portal wholly in
-/// one of the planes' `shadows` is not followed (counted in `blocked`).
-pub fn visible_spaces(portals: &[Portal], start: Space, clip_from_game: &Mat4, shadows: &[Shadow], blocked: &mut usize) -> HashSet<Space> {
+/// The spaces seen from `start` through the portals and linked rooms (module notes); a
+/// portal wholly in one of the planes' `shadows` is not followed (counted in `blocked`).
+pub fn visible_spaces(portals: &[Portal], links: &[[usize; 2]], start: Space, clip_from_game: &Mat4, shadows: &[Shadow], blocked: &mut usize) -> HashSet<Space> {
     let hidden: Vec<bool> = portals.iter().map(|p| shadows.iter().any(|s| s.hides_points(&p.corners))).collect();
     *blocked = hidden.iter().filter(|h| **h).count();
     let mut seen: HashMap<Space, Rect2> = HashMap::from([(start, FULL)]);
@@ -409,6 +446,23 @@ pub fn visible_spaces(portals: &[Portal], start: Space, clip_from_game: &Mat4, s
         steps += 1;
         if steps > MAX_STEPS {
             break;
+        }
+        // A linked room is seen through the same rectangle as this one.
+        if let Some(here) = space {
+            for l in links.iter().filter(|l| l.contains(&here)) {
+                let other = Some(if l[0] == here { l[1] } else { l[0] });
+                match seen.get_mut(&other) {
+                    Some(had) if covers(*had, rect) => {}
+                    Some(had) => {
+                        *had = union(*had, rect);
+                        queue.push_back((other, rect));
+                    }
+                    None => {
+                        seen.insert(other, rect);
+                        queue.push_back((other, rect));
+                    }
+                }
+            }
         }
         for (p, _) in portals.iter().zip(&hidden).filter(|(_, h)| !**h) {
             let other = if p.rooms[0] == space {
@@ -478,7 +532,7 @@ fn cull(
             // `game_to_bevy`; an interior's cell entity sits at the origin).
             let bevy_from_game = crate::world::game_to_bevy().to_matrix();
             let clip_from_game = c.clip_from_view() * gt.to_matrix().inverse() * bevy_from_game;
-            Some(visible_spaces(&rooms.portals, Some(start), &clip_from_game, &shadows, &mut blocked))
+            Some(visible_spaces(&rooms.portals, &rooms.links, Some(start), &clip_from_game, &shadows, &mut blocked))
         }
         _ => None,
     };
@@ -609,13 +663,38 @@ mod tests {
         // behind the camera's back, far off; room 3 behind room 1's far portal.
         let p = |id, x: f32, a, b| Portal { id, corners: portal_corners(Vec3::new(x, 0.0, 0.0), Mat3::IDENTITY, Vec3::new(0.5, 50.0, 50.0)), rooms: [a, b] };
         let portals = vec![p(10, 200.0, Some(0), Some(1)), p(11, -300.0, Some(0), Some(2)), p(12, 600.0, Some(1), Some(3)), p(13, 900.0, Some(3), None)];
-        let v = visible_spaces(&portals, Some(0), &camera(), &[], &mut 0);
+        let v = visible_spaces(&portals, &[], Some(0), &camera(), &[], &mut 0);
         assert!(v.contains(&Some(0)) && v.contains(&Some(1)) && v.contains(&Some(3)) && v.contains(&None));
         assert!(!v.contains(&Some(2)), "the room behind the camera is not seen");
         // A portal off to the side, outside the first portal's rectangle, is not followed.
         let side = vec![p(10, 200.0, Some(0), Some(1)), Portal { id: 14, corners: portal_corners(Vec3::new(600.0, 2000.0, 0.0), Mat3::IDENTITY, Vec3::new(0.5, 50.0, 50.0)), rooms: [Some(1), Some(4)] }];
-        let v = visible_spaces(&side, Some(0), &camera(), &[], &mut 0);
+        let v = visible_spaces(&side, &[], Some(0), &camera(), &[], &mut 0);
         assert!(v.contains(&Some(1)) && !v.contains(&Some(4)));
+    }
+
+    /// Vault 101 outside the G.O.A.T. classroom: the camera's room (0) has a portal only
+    /// behind it, but is linked to the corridor (1), which has a portal ahead to room 2
+    /// and a link to room 3. The linked rooms are seen without a portal, and what lies
+    /// through the linked room's portals too.
+    #[test]
+    fn linked_rooms_are_seen_together() {
+        let p = |id, x: f32, a, b| Portal { id, corners: portal_corners(Vec3::new(x, 0.0, 0.0), Mat3::IDENTITY, Vec3::new(0.5, 50.0, 50.0)), rooms: [a, b] };
+        let portals = vec![p(10, -300.0, Some(0), Some(4)), p(11, 600.0, Some(1), Some(2))];
+        let v = visible_spaces(&portals, &[[0, 1], [1, 3]], Some(0), &camera(), &[], &mut 0);
+        assert!(v.contains(&Some(1)) && v.contains(&Some(3)), "linked rooms: {v:?}");
+        assert!(v.contains(&Some(2)), "through the linked room's portal: {v:?}");
+        assert!(!v.contains(&Some(4)), "the portal behind the camera");
+        // Without links only the camera's room.
+        let v = visible_spaces(&portals, &[], Some(0), &camera(), &[], &mut 0);
+        assert_eq!(v, HashSet::from([Some(0)]));
+    }
+
+    #[test]
+    fn links_are_pairs_of_rooms_taken_once() {
+        let rooms = vec![room(5, [0.0; 3], [1.0; 3]), room(6, [0.0; 3], [1.0; 3]), room(7, [0.0; 3], [1.0; 3])];
+        // Named both ways, a link to a room of another cell, and one to itself.
+        let links = [(5, 6), (6, 5), (6, 7), (7, 99), (5, 5)];
+        assert_eq!(linked_pairs(&rooms, &links), vec![[0, 1], [1, 2]]);
     }
 
     #[test]
@@ -626,7 +705,7 @@ mod tests {
         let wall = Plane::new(1, Vec3::new(400.0, 0.0, 0.0), Mat3::IDENTITY, Vec3::new(0.5, 200.0, 200.0));
         let shadows: Vec<Shadow> = wall.shadow_from(Vec3::ZERO).into_iter().collect();
         let mut blocked = 0;
-        let v = visible_spaces(&portals, Some(0), &camera(), &shadows, &mut blocked);
+        let v = visible_spaces(&portals, &[], Some(0), &camera(), &shadows, &mut blocked);
         assert!(v.contains(&Some(1)) && !v.contains(&Some(3)));
         assert_eq!(blocked, 1);
     }

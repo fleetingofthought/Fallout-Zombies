@@ -39,6 +39,8 @@ pub struct Delayed {
     /// mode, 16 not while paused) [documented].
     mode: u32,
     condition_flags: bool,
+    /// Kept across a load (SUP's CallFunctionNextFrame with removeOnLoad 0).
+    keep_on_load: bool,
 }
 
 impl Delayed {
@@ -66,6 +68,7 @@ pub(crate) fn call(g: &mut Game, ctx: &RunCtx, name: &str, on: Option<FormId>, a
         args: args.iter().skip(rest).cloned().collect(),
         mode,
         condition_flags,
+        keep_on_load: false,
     };
     let d = match name {
         // `seconds udf [runWhen] args…`; 0 seconds runs next frame [documented].
@@ -98,10 +101,42 @@ pub(crate) fn call_next_frame(g: &mut Game, func: XVal, on: Option<FormId>, args
     for a in &args {
         g.ext.retain(a);
     }
-    g.delayed.push(Delayed { when: When::AfterFrames(g.frame + 1), func, on, args, mode: 1, condition_flags: false });
+    g.delayed.push(Delayed { when: When::AfterFrames(g.frame + 1), func, on, args, mode: 1, condition_flags: false, keep_on_load: false });
+}
+
+/// SUP's CallFunctionNextFrame (`crate::nvse_sup4`): `func` on `on` `frames` frames from
+/// now, in menus too [hypothesis: frames pass in menu mode as well]; `keep` outlasts a
+/// load (`Game::take_session`).
+pub(crate) fn call_in_frames(g: &mut Game, func: XVal, on: Option<FormId>, frames: u64, keep: bool) {
+    g.delayed.push(Delayed { when: When::AfterFrames(g.frame + frames), func, on, args: Vec::new(), mode: 1, condition_flags: false, keep_on_load: keep });
 }
 
 impl Game<'_> {
+    /// The calls that outlast a load, their frames counted from now: those of function
+    /// scripts only (a lambda is gone with the game it was made in).
+    pub(crate) fn take_kept_calls(&mut self) -> Vec<Delayed> {
+        let frame = self.frame;
+        self.delayed
+            .iter()
+            .filter(|d| d.keep_on_load && matches!(d.func, XVal::Ref(f) if f < crate::game::LAMBDA_BASE))
+            .filter_map(|d| match d.when {
+                When::AfterFrames(f) => Some(Delayed { when: When::AfterFrames(f.saturating_sub(frame)), ..d.clone() }),
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// The kept calls back after a load, from the restored game's frame.
+    pub(crate) fn put_kept_calls(&mut self, calls: Vec<Delayed>) {
+        let frame = self.frame;
+        for mut d in calls {
+            if let When::AfterFrames(left) = d.when {
+                d.when = When::AfterFrames(frame + left.max(1));
+            }
+            self.delayed.push(d);
+        }
+    }
+
     /// The queued calls due this frame.
     pub(crate) fn run_delayed(&mut self) {
         if self.delayed.is_empty() {

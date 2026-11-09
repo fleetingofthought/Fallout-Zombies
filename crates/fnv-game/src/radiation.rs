@@ -270,7 +270,7 @@ impl Game<'_> {
     /// A space's markers with SetRadiationExtraData's levels: a marker's own level
     /// replaced, and a reference of the space that had none given one at its XRDS radius
     /// (0 without one, so it gives nothing); a level of 0 or less takes the marker away.
-    fn edited_markers(&self, list: &[RadMarker], space: FormId) -> Vec<RadMarker> {
+    pub(crate) fn edited_markers(&self, list: &[RadMarker], space: FormId) -> Vec<RadMarker> {
         let mut out: Vec<RadMarker> = list.iter().filter(|m| !self.showoff.radiation.contains_key(&m.id)).cloned().collect();
         let mut set: Vec<(FormId, f32)> = self.showoff.radiation.iter().map(|(&r, &l)| (r, l)).collect();
         set.sort_by_key(|x| x.0);

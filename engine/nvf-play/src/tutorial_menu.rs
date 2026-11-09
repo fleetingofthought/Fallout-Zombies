@@ -407,6 +407,7 @@ fn draw(
     windows: Query<&Window, With<PrimaryWindow>>,
     data: Option<Res<GameData>>,
     mut images: ResMut<Assets<Image>>,
+    glyphs: Res<crate::pad::PadGlyphs>,
     (formats, switch): (Option<Res<CompressedImageFormatSupport>>, Option<Res<crate::tiles::vanilla::TileMenus>>),
     mut shown: Local<Shown>,
 ) {
@@ -446,7 +447,7 @@ fn draw(
     let bc = crate::interface::bc_supported(formats.as_deref());
     let view = view.into_inner();
     let kit = view.kit.get_or_insert_with(|| Kit::load(data.as_deref(), &mut images, bc));
-    let mut c = Ctx { kit, data: data.as_deref(), images: &mut images, bc };
+    let mut c = Ctx { kit, data: data.as_deref(), images: &mut images, bc, glyphs: &glyphs };
     let (w, h) = (screen.x * SCALE, screen.y * SCALE);
     let widths = [0, 1, 2].map(|k| c.width(Which::Body, &words.buttons[k]));
     let l = layout(w, h, widths, crate::chargen::draw::BODY_H);

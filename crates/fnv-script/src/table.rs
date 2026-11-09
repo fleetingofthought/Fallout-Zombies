@@ -348,8 +348,9 @@ impl FunctionTable {
                 return Err(TableError::Format(format!("encodings: opcode 0x{op:04X} is not in functions.json")));
             }
         }
-        // FOSE names xNVSE does not register (encodings.json `compiler.not_commands`,
-        // [observed]): they read as text.
+        // Names the installed xNVSE and its plugins do not register (FOSE's, and
+        // GetMessageDisplayTime/GetMDT [observed: lutana1 misc.messagedisplaytime]) (encodings.json
+        // `compiler.not_commands`, [observed]): they read as text.
         for name in strings(comp.and_then(|c| c.get("not_commands"))) {
             t.unnumbered.remove(&name.to_ascii_lowercase());
         }

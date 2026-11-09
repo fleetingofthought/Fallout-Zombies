@@ -214,8 +214,9 @@ pub fn layout(p: &Prompt, font: &Font) -> Layout {
     let line = |s: &str| font.lines(s, None).into_iter().next().unwrap_or_default();
     let set = |line: Line, x: f32, base: f32| Set { line, x, base };
     let action = line(&p.action);
-    // A face button under the PlayStation names: its glyph, then ")" [design, #1452].
-    let glyph = p.key_text().strip_suffix(')').and_then(crate::pad::Glyph::named).filter(|_| !p.action.is_empty());
+    // A face button under the PlayStation names: its glyph, then ")" [design, #1452]. The
+    // labelled buttons (L1, Select…) are drawn by the menu hints, not the crosshair.
+    let glyph = p.key_text().strip_suffix(')').and_then(crate::pad::Glyph::named).filter(|g| g.is_face()).filter(|_| !p.action.is_empty());
     let key = line(if glyph.is_some() { ")" } else { p.key_text() });
     let name = line(&p.name);
     let action_x = ACTION_X - action.width / 2.0;
@@ -375,7 +376,7 @@ struct Kit {
     divider: Option<Picture>,
     /// The gun cross's bars, all four or none.
     bars: Option<[Picture; 4]>,
-    /// NVForever's PlayStation face button glyphs, in [`crate::pad::Glyph::ALL`]'s order.
+    /// NVForever's PlayStation face button glyphs, in [`crate::pad::Glyph::FACES`]'s order.
     glyphs: Vec<Handle<Image>>,
 }
 
@@ -386,7 +387,7 @@ impl Kit {
         let (plain, filled, divider) = (picture(PLAIN), picture(FILLED), picture(DIVIDER));
         let bars: Vec<Picture> = BARS.iter().filter_map(|(path, _)| picture(path)).collect();
         let bars = bars.try_into().ok();
-        let glyphs = crate::pad::Glyph::ALL.iter().map(|g| images.add(g.image(GLYPH_PIXELS))).collect();
+        let glyphs = crate::pad::Glyph::FACES.iter().map(|g| images.add(g.image(GLYPH_PIXELS))).collect();
         Kit { face: face(FONT, plain_font(36.0, 17.0), data, images, bc), plain, filled, divider, bars, glyphs }
     }
 }
@@ -503,7 +504,7 @@ fn spawn_texts(p: &mut ChildSpawnerCommands, kit: &Kit, prompt: &Prompt) {
         set_text(p, &kit.face, set, Vec2::ZERO, color, ());
     }
     if let Some((g, corner, side)) = l.glyph {
-        let i = crate::pad::Glyph::ALL.iter().position(|x| *x == g).unwrap_or(0);
+        let i = crate::pad::Glyph::FACES.iter().position(|x| *x == g).unwrap_or(0);
         if let Some(image) = kit.glyphs.get(i) {
             p.spawn((at(corner.x, corner.y, side, side), ImageNode { color, ..ImageNode::new(image.clone()) }));
         }

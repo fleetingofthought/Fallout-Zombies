@@ -126,11 +126,19 @@ pub struct CreatorMenu {
     drawn_w: f32,
     /// The look last written into the game.
     written: Option<fnv_actor::Look>,
+    /// Opened by the gene projector: drawn in a studio (`Game::race_menu_studio`).
+    studio: bool,
 }
 
 impl CreatorMenu {
     pub fn is_open(&self) -> bool {
         self.model.is_some()
+    }
+
+    /// Open and drawn in a studio instead of the room (docs/spec-notes/
+    /// character-creator.md §5, "The studio").
+    pub fn in_studio(&self) -> bool {
+        self.is_open() && self.studio
     }
 }
 
@@ -277,6 +285,7 @@ fn sync(mut st: ResMut<CreatorMenu>, data: Option<Res<CreatorData>>, script: Opt
     }
     if !open {
         st.model = None;
+        st.studio = false;
         st.answered = false;
         st.drag = None;
         st.dirty = true;
@@ -314,6 +323,10 @@ fn sync(mut st: ResMut<CreatorMenu>, data: Option<Res<CreatorData>>, script: Opt
     let what = if kind == model::RaceMenu::Barber { "the hair" } else { "the face" };
     info!("creator: camera on opening: {:.0} units away, looking {:.0} under the eye ({what})", c.distance, c.drop);
     control.portrait = Some(c);
+    st.studio = rt.game.race_menu_studio;
+    if st.studio {
+        info!("creator: in the studio (the gene projector)");
+    }
     st.written = Some(m.look.clone());
     st.model = Some(m);
     st.answered = false;

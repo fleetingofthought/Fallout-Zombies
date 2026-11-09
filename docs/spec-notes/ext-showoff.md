@@ -159,6 +159,48 @@ Left unbuilt (73), with the reason:
   GetSpellUsageNumEx, GetVATSTargetable, PlaceAtReticleAlt, RefillPlayerAmmo (deprecated
   for ITR's RefillAmmo), RemoveAllItemsShowOff (its page says its flags are buggy).
 
+## 8. Batch 5, the last 37 (2026-11-08, #1010, `nvse_showoff5.rs`)
+
+From the pages [documented], then probe set `showoff5` (`tools/capture/jip_probes.py`, lab
+`L5.ext.showoff5`) run in the original on 2026-11-08 (save nvfairport, the player at the
+airport test ground, Doc Mitchell in his house) [observed]. With it the census has no
+ShowOff function left. GetHitLocationLingering on the unhurt player crashed the original
+[observed 2026-11-08]; the row is left out of the set. Tests: `crates/fnv-game/tests/showoff5.rs`.
+
+| Function (aliases) | NVForever |
+|---|---|
+| GetLevelUpMenuCurrentPage (GetLevelUpMenuPage) | -1 closed, 0 skills, 1 perks: the page the engine's menu reports each frame (`nvse_showoff5::LevelUpAsk`, `nvf_play::levelup::script_asks`) [documented] |
+| SetLevelUpMenuCurrentPage (SetLevelUpMenuPage) `page` | 1 as Continue (which closes the menu when no perk is due), 0 as Back, 2 closes it, each whatever points are left; 0 when closed or already there [documented]. Closing keeps what was allotted [hypothesis] |
+| GetLevelUpMenuPoints `[checkPerks] [checkAssigned]` | the skill points or perks to allot, or allotted; -1 closed [documented]. The page and points read at once after ShowSkillMenu, in the same script: ShowSkillMenu 3 then page 0, points 3, allotted 0, perks 0 [observed 2026-11-08: levelup.skillmenu]; ShowPerkMenu's alike [hypothesis]. SetLevelUpMenuCurrentPage 2 returned 1 and the menu read closed (-1) the next step [observed: levelup.after]; NVForever's engine closes it (`nvf_play::levelup`), the headless query tool has no level-up menu to close, so the lab row stays 0 there |
+| SetLevelUpMenuCanExitEarly `1/0` | Continue and Done work with points left; 0 does not undo it [documented] |
+| ShowPerkMenu `[numPerks] [title]` | the menu on its perks page alone, Back hidden, no level gained; by default the level's perk (1 at a perk level, else 0, browsing); 0 with no perk to take [documented]; 0 while another menu is open [hypothesis] |
+| ShowSkillMenu (ShowSkillsMenu) `[numSkills] [showDespiteNoPoints] [title]` | the skills page as the last page, the level's points by default; 0 with no points and showDespiteNoPoints 0 [documented] |
+| ShowPauseMenu `[mode]` | the engine opens the pause menu on each call: 1 its load page, 3 its settings; 2 (save) and 4 (help) its main page, NVForever's pause menu having neither [documented: the modes; hypothesis: the fallback] |
+| Get/SetExplosionRefRadius, Get/SetExplosionRefSource | the blast's live reference, placed by the engine for its frame (`Game::explosion_placed`) [documented]; GetExplosionRefRadius -1 on a reference that is no explosion [observed 2026-11-08: explosion.none, the player]. The engine works out who the blast reaches in the frame it places it, so a change reaches later reads only [not built: no script runs in between] |
+| GetProjectileRefIsStuck | a shot that hit something and stays (`ProjState`) [hypothesis: the isStuck flag] |
+| SpawnTracingProjectile | 0 [not built: the engine has no request to fire a bare projectile; follow-up] |
+| SetForceDrawHitscanProjectiles `[forceDraw]`, SetProjectileTracerChanceOverride `[chance]` | whether before / the override before; the engine draws hitscan shots, never or always rolls tracers by them (`nvf_play::combat::shot_switches`) [documented] |
+| GetPCHasScriptedFastTravelOverride, GetPCCanFastTravel | EnableFastTravel 0's bar [hypothesis: that is the override]; the Pip-Boy's checks but the marker's: the bar, the cell's or world's flag, in the air, in combat, hostiles within fHostileActor…Distance, over-encumbered without Long Haul [documented: "the same check"; hypothesis: combat as the player's combat state] |
+| IsActorInvisibleToPlayer, HighlightAdditionalReferenceAlt `[check] [flash]` | Invisibility or Chameleon above 0 and no Improved Detection [documented]; the highlight list is kept, the engine's VATS highlight does not draw it yet [not built: follow-up] |
+| GetNumCombatActorsFromActor `[maxDistance] [flags]` | the caller's combat targets (2) and allies (1), 0 meaning 3; 4 no invisible ones, 8 only detected ones [documented]; an ally fights one of the caller's targets and would not attack the caller [hypothesis] |
+| ForceHitStaggerReaction (ForceHitReaction), ForceRecoilAnim | stagger: 1 when the actor has a hit location (and, when asked, no Ignore Crippled Limbs) [documented; observed: 0 on the unhurt player]; recoil: 1 for a living actor [observed 2026-11-08: recoil.player 1; the save's weapon not recorded; hypothesis: whatever it holds]; the engine does not play the animations [not built, as ForceWeaponJamAnim §4] |
+| KillAllHostiles `[killer]` | KillActor on each loaded actor hostile to the player [documented; hypothesis: "within range" is the loaded area] |
+| GetCalculatedItemValue `[barter]` | the value at the item's condition (fItemConditionValue…, as the barter menu); with the flag while bartering, the Barter skill's sell or buy multiplier; -1 for no item [documented]; weapon mods and Calculate Buy Price not counted [hypothesis]. An item with a health is at full condition when it has none of its own and the formula holds there too, the fraction dropped: a fresh 10mm pistol (Value 750) 749 [observed 2026-11-08: itemvalue.pistol "749 749"; 750 · 0.0316 · 10^1.5 = 749.46; hypothesis: truncated, not rounded] |
+| GetCalculatedAPCost (GetCalculatedWeaponAttackAPCost) `attack [weapon]` | 0 the weapon's override or its animation type's fActionPointsAttack… setting [documented]: the 10mm pistol 17, its override [observed 2026-11-08: ap.pistol]; Fists 22, fActionPointsAttackUnarmed, their override AP 18 not used [observed: ap.fists; hypothesis: Fists only, other unarmed weapons keep theirs]. 1 and 2 give 0 for the pistol and for Fists [observed: "17 0 0", "22 0 0"; the page's uppercut and cross settings not read], a melee weapon's 1 its VATS attack's AP [documented, not observed]; perks not counted [hypothesis] |
+| GetVATSMaxEngageDistance, GetVATSTargetable | fVATSMaxEngageDistance [documented], 5000 when no plugin sets it [observed 2026-11-08: vats.engage, base game and DLCs]; enabled and present, a living actor or a reference VATS may mark (`Game::vats_targetable`) [documented]. The player is targetable [observed: vats.target.player 1]; Doc Mitchell, in his house while the player stood at the airport, was not [observed: vats.target.doc 0; hypothesis: an actor out of the loaded cells is not] |
+| ToANSIChar | "" [decision: the keyboard layout is the user's system's, which no game→engine channel carries; owner's 2026-11-08 rule; follow-up]. On the owner's machine scan code 16 gave "q" and 2 gave "1" [observed 2026-11-08: ansi.16, ansi.2; machine-dependent, the lab rows stay apart] |
+| GetHitLocationLingering | GetHitLocation's last hit, which NVForever keeps already [documented] |
+| PlayerHasNightVisionActive | through a scope with "Scope has NightVision" at night, 20:00 to 6:00 [documented; hypothesis: the hours] |
+| PlayerIsDrinkingPlacedWater | within a second of a drink from placed water [documented; hypothesis: the length] |
+| GetIsActivationPromptShown, IsPlayerLookingAround | a reference under the crosshair within reach and no menu; the player's rotation changed since the last frame and looking not disabled [documented; hypothesis: what counts] |
+| GetSpellUsageNumEx `ingestible` | the usage monitor's count times its magnitude while it lasts; 0 after, as GetSpellUsageNum [documented; hypothesis: NVForever's monitor forgets the count] |
+| PlaceAtReticleAlt `form [count] [min] [max] [health]` | placed where the crosshair points, at least min and at most max along it, at the health given [documented; hypothesis: how the distances bound the point] |
+| RefillPlayerAmmo `count`, RemoveAllItemsShowOff `[flags] [type] [target] [exceptions]` | ITR's RefillAmmo on the player [documented: deprecated for it]; RemoveAllTypedItems with flags 1 keep owners, 2 no messages, 4 the player's quest items, 8 non-playable biped items too (`functions::items::remove_all`) [documented] |
+
+Follow-ups for the engine: a bare-projectile request (SpawnTracingProjectile), the VATS
+highlight list, the stagger and recoil animations on request, the keyboard layout
+(ToANSIChar), and reading back a live explosion's radius and source when a script can run
+between placing it and its damage.
 ## 7. Batch 4 (2026-11-08, #1010, `nvse_showoff4.rs` and `mod_files.rs`)
 
 The owner lifted the 2026-11-06 pause on 2026-11-08 ("finish every unbuilt extender
@@ -175,7 +217,7 @@ their titles have a space where the name has an underscore).
 | Matrix_ApplyOperationWithMatrix (Mat_ApplyOpWithMat) `A op B` | `+ - / %` element by element (`%` the Schur product), `*` the matrix product when A's columns are B's rows; anything else no array [documented: the table and examples, e.g. (3 4; 5 6)·(7 8; 9 10) = (57 64; 89 100), 1×3 · 1×3 undefined] |
 | Matrix_ApplyOperationWithScalar (Mat_ApplyOpWithScal) `A op s` | `+ - * /` on each element, `%` no array [documented]; division by 0 the floating-point infinity [hypothesis]. The catalogue row was named "Matrix" (the template's name has a space); fixed in `script_functions.py` NAME_FIXES |
 | Matrix_Transpose (Mat_T), Matrix_Dump (Mat_Dump) | the transpose [documented]; the dump prints a heading and each row with four decimals to the console, the heading in NVForever's own words |
-| Quaternion_GetMatrix (Quat_GetMat) `[w x y z]`, Matrix3x3_GetQuaternion (Mat_GetQuat) | the layout [w, x, y, z] [documented]; the usual right-handed rotation matrix of the normalised quaternion, and back by the largest of trace and diagonal with w not negative [hypothesis: the pages give no convention; probe quat.*] |
+| Quaternion_GetMatrix (Quat_GetMat) `[w x y z]`, Matrix3x3_GetQuaternion (Mat_GetQuat) | the layout [w, x, y, z] [documented]. Quat_GetMat does not normalise and gives the transpose of the usual right-handed matrix, in single precision: diagonal 2(w²+a²)−1, (2 0 0 0) gives 7 7 7 [observed 2026-11-08: quat.unnormal]; (0.7071 0 0 0.7071) gives m[0][0] −5.96046e-08, m[0][1] 1, m[1][0] −1, m[2][2] 1 [observed: quat.z90; the x and y terms transposed alike, hypothesis]. Mat_GetQuat reads the usual right-handed form, by the largest of trace and diagonal with w not negative [observed: quat.back, quat.back.270 equal], so the two are not inverses |
 | Results' shape | a one-row result of a one-dimensional input stays one-dimensional; a 1-D row transposed is a column of one-element lists [hypothesis; probe schur.flat.size, transpose.flat.size] |
 | SayTo_GetTopic, SayTo_GetTopicInfo | the topic and response of the actor's running SayTo line (`Game::speech`), none without one [documented] |
 | Get/SetItemHotkeyIconPath `item [onlyOverride]`, `item path` | the override, else GetTexturePath's icon; onlyOverride 1 the override or ""; "" resets [documented]. Kept game-side only: the engine's hotkey pictures (`weapon_wheel::draw`, `pipboy::hotkey_panel`) do not read it yet [follow-up] |
@@ -191,9 +233,10 @@ their titles have a space where the name has an underscore).
 | DisableAlt (SnigOff), EnableAlt (SnigOn) `[fade]` | Disable and Enable that also work on a reference with an enable parent: from then on its own flag counts (`World::keep_own_enable`) [documented: "Ignores Disable's limitation"; hypothesis: until SetEnableParent] |
 | SetEnableParent (SetParentRef) `[newParent]` | the reference's enable parent for the session, none removing it; GetParentRef and the enable state follow (`World::set_enable_parent`) [documented]; not saved [hypothesis] |
 | HasINISetting_Cached (HasINISettingC), ReloadIniCache, SaveCachedIniFile (SaveCachedIni) `[iniPath]` | the cache of `Data\Config` INI files (`mod_files.rs`): whether a key is cached; read again (0 for a missing file); written back into the file in NVForever's layer, keys in place, new ones added to their section in lower case [documented; hypothesis: the format kept] |
-| ReadFromJSON `path [pointer] [mode] [useCache]`, WriteToJSON `value path [pointer] [mode] [useCache] [saveFile] [compact]` | files under the game's folder through NVForever's layer (`GameRoot`, never the game folder); objects are string maps, arrays lists, forms "@Plugin.esm:FormID" [documented]; every parser mode reads standard JSON, a pointer into a missing part makes the objects on the way, failures give 0 [hypothesis] |
+| ReadFromJSON `path [pointer] [mode] [useCache]`, WriteToJSON `value path [pointer] [mode] [useCache] [saveFile] [compact]` | files under the game's folder through NVForever's layer (`GameRoot`, never the game folder); objects are string maps, arrays lists, forms "@Plugin.esm:FormID" [documented]; every parser mode reads standard JSON, a pointer into a missing part makes the objects on the way [hypothesis]. ReadFromJSON on a missing file gives no value, the call fails [observed 2026-11-08: readjson.missing, TestExpr 0]; a file that is not JSON likewise, a pointer to nothing 0 [hypothesis]; WriteToJSON's failures 0 [hypothesis] |
 | CreateFolder (CreateDirectory) `path`, DumpFormList (FListDump) `list [file] [append]` | the folder made in NVForever's layer; the list's forms to the console or appended to a file there [documented], the lines in NVForever's own words |
-| GetActorFadeState, GetCalculatedActorSpread, IsFormLoading | 0 [decision: the pages are marked Incomplete with no summary, arguments or result; nothing to build from] |
+| GetActorFadeState | −1 for an actor not fading [observed 2026-11-08: fadestate.doc, Doc Mitchell in his house]; NVForever has no actor fade state to report, so always −1 [hypothesis: the other states unknown] |
+| GetCalculatedActorSpread, IsFormLoading | 0 [decision: the pages are marked Incomplete with no summary, arguments or result; nothing to build from] |
 
 Follow-ups: the engine's hotkey pictures should read SetItemHotkeyIconPath's override;
 the three Incomplete pages need their text.

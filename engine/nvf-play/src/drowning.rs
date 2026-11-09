@@ -123,6 +123,12 @@ fn breathe(
     }
     let (was_under, had) = (pb.breath.under, pb.breath.left);
     let dmg = pb.breath.step(&pb.rules, under, breathes, time.delta_secs());
+    // GetActorDiveBreath and SetActorDiveBreath (`fnv_game::nvse_jip11`).
+    if let Some(rt) = script.as_deref_mut().and_then(|s| s.rt.as_mut()) {
+        if let Some(left) = rt.game.sync_player_breath(pb.breath.left, under) {
+            pb.breath.left = left.min(pb.rules.seconds);
+        }
+    }
     if under && !was_under {
         info!(
             "drowning: head under water ({:.1} below the surface), breath {:.1} of {:.1} s, {:.1} health a second without{}",

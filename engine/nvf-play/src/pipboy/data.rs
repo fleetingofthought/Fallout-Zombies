@@ -333,7 +333,7 @@ pub struct DataState {
     /// square without land), kept while one outline is made.
     outline_land: HashMap<(i32, i32), Option<Vec<f32>>>,
     /// How many markers the world map showed when last logged.
-    world_logged: Option<(usize, usize)>,
+    world_logged: Option<(u32, usize, usize, usize, usize)>,
     /// The World Map's marker under the highlight box, when last drawn.
     cursor_marker: Option<u32>,
     /// Where the left button went down on the World Map, and how far the pointer has
@@ -471,6 +471,7 @@ pub struct Tools<'w> {
     data: Option<Res<'w, GameData>>,
     images: ResMut<'w, Assets<Image>>,
     formats: Option<Res<'w, CompressedImageFormatSupport>>,
+    glyphs: Res<'w, crate::pad::PadGlyphs>,
 }
 
 /// Keep track of the quests and markers, take the player's input while the page is
@@ -539,7 +540,7 @@ pub fn draw(
     if added.get(body).is_err() && st.shown.as_ref() == Some(&view) {
         return;
     }
-    let mut c = Ctx::new(&mut tools.kit, tools.data.as_deref(), &mut tools.images, tools.formats.as_deref());
+    let mut c = Ctx::new(&mut tools.kit, tools.data.as_deref(), &mut tools.images, tools.formats.as_deref(), &tools.glyphs);
     commands.entity(body).despawn_children().with_children(|p| show(p, &mut c, st, &view));
     st.shown = Some(view);
 }
@@ -1056,9 +1057,14 @@ fn button(st: &mut DataState, k: ButtonKind, input: &mut Input) {
 
 fn map_of(st: &mut DataState, game: &Game) -> Option<WorldMap> {
     let world = game.location.as_ref()?.world;
+    map_for(st, game, world)
+}
+
+/// The root's picture and this worldspace's own projection [design: read::world_map].
+fn map_for(st: &mut DataState, game: &Game, world: u32) -> Option<WorldMap> {
     if let Entry::Vacant(e) = st.maps.entry(world) {
         let w = game.world.as_ref()?;
-        e.insert(read::world_map(w.lo, w.schema, w.index, world));
+        e.insert(read::world_map(w.lo, w.schema, world));
     }
     st.maps.get(&world).cloned().flatten()
 }
@@ -1072,12 +1078,12 @@ fn build(st: &mut DataState, tab: usize, l: &Lists, game: &Game, pointer: Option
     let mut buttons = Vec::new();
     let body = match tab {
         LOCAL | WORLD => {
-            buttons.push(Button { text: "Place Marker".into(), key: None, kind: ButtonKind::PlaceMarker });
+            buttons.push(Button { text: super::labels::label("sPlaceMarker", "Place Marker").into(), key: None, kind: ButtonKind::PlaceMarker });
             Body::Map(if tab == WORLD { world_map(st, game, pointer) } else { local_map(st, game, pointer) })
         }
         QUESTS => {
             if !l.quests.is_empty() {
-                buttons.push(Button { text: "Show Location".into(), key: None, kind: ButtonKind::ShowLocation });
+                buttons.push(Button { text: super::labels::label("sShowLocation", "Show Location").into(), key: None, kind: ButtonKind::ShowLocation });
             }
             let rows = l
                 .quests
@@ -1138,7 +1144,9 @@ fn objectives(game: &Game, q: u32) -> Vec<Row> {
         .iter()
         .filter(|(_, o)| o.displayed || o.completed)
         .filter_map(|(i, o)| {
-            let text = rt.game.expand_codes(def.objectives.get(i)?.text.as_deref()?);
+            def.objectives.get(i)?;
+            // SetObjectiveText's first (`fnv_game::nvse_jip10`).
+            let text = rt.game.expand_codes(&rt.game.objective_text(FormId(q), *i)?);
             (!text.trim().is_empty()).then(|| ObjectiveLine { index: *i, text: text.trim().to_string(), done: o.completed })
         })
         .collect();
@@ -1258,31 +1266,36 @@ fn world_map(st: &mut DataState, game: &Game, pointer: Option<Vec2>) -> MapShown
     let player = player_at(st, game, world);
     let centre = *st.centre[WORLD].get_or_insert_with(|| player.map_or([0.5, 0.5], |(p, _)| m.uv(p[0], p[1])));
     let left = Vec2::new(model::pan(centre[0], size.x, MAP_MID.x), model::pan(centre[1], size.y, MAP_MID.y));
-    let on_map = |x: f32, y: f32| {
-        let uv = m.uv(x, y);
+    let on_map = |uv: [f32; 2]| {
         left + Vec2::new(uv[0] * size.x, uv[1] * size.y)
     };
     let mut marks = Vec::new();
     let mut names = Vec::new();
     let mut forms = Vec::new();
     let mut details = Vec::new();
+    let mut total = 0;
+    let mut drawn_other = 0;
     let all = markers(st, game).cloned().unwrap_or_default();
-    for mk in all.iter().filter(|mk| mk.world == world) {
+    for mk in &all {
+        let Some(projection) = map_for(st, game, mk.world).filter(|p| p.root == m.root) else { continue };
+        total += 1;
         let Some(found) = known(st, game, mk) else { continue };
-        marks.push(MapMark { icon: Some((mk.kind, found)), highlighted: false, at: on_map(mk.pos[0], mk.pos[1]) });
+        drawn_other += usize::from(mk.world != world);
+        marks.push(MapMark { icon: Some((mk.kind, found)), highlighted: false, at: on_map(projection.uv(mk.pos[0], mk.pos[1])) });
         names.push(mk.name.clone());
         forms.push(mk.form);
         details.push(mk.reputation.as_ref().map(|(rep, name)| model::reputation_line(name, standing(game, *rep))));
     }
-    let quests = quest_targets(st, game)
-        .into_iter()
-        .filter(|t| t.interior.is_none() && t.world == world)
-        .map(|t| quest_corner(on_map(t.pos[0], t.pos[1])))
-        .collect();
+    let mut quests = Vec::new();
+    for t in quest_targets(st, game).into_iter().filter(|t| t.interior.is_none()) {
+        let Some(projection) = map_for(st, game, t.world).filter(|p| p.root == m.root) else { continue };
+        quests.push(quest_corner(on_map(projection.uv(t.pos[0], t.pos[1]))));
+    }
     let drawn_found = marks.iter().filter(|mk| matches!(mk.icon, Some((_, true)))).count();
-    if st.world_logged != Some((marks.len(), drawn_found)) {
-        st.world_logged = Some((marks.len(), drawn_found));
-        info!("pipboy data: world map shows {} of {} markers of this worldspace, {drawn_found} as discovered", marks.len(), all.iter().filter(|mk| mk.world == world).count());
+    let logged = (world, total, marks.len(), drawn_found, drawn_other);
+    if st.world_logged != Some(logged) {
+        st.world_logged = Some(logged);
+        info!("pipboy data: world map shows {} of {total} markers of this map family, {drawn_found} as discovered; map family {}, {drawn_other} shown from other worldspaces", marks.len(), FormId(m.root));
     }
     let (cursor, label, under) = place_cursor(st, WORLD, pointer, &mut marks, &names);
     let detail = under.and_then(|i| details[i].clone());
@@ -1294,7 +1307,7 @@ fn world_map(st: &mut DataState, game: &Game, pointer: Option<Vec2>) -> MapShown
         picture: Some((m.texture.clone(), Rect::from_corners(left, left + size))),
         outline: None,
         marks,
-        player: player.map(|(p, h)| (on_map(p[0], p[1]), h)),
+        player: player.map(|(p, h)| (on_map(m.uv(p[0], p[1])), h)),
         quests,
         cursor,
         label,
@@ -1988,6 +2001,55 @@ fn highlight(p: &mut ChildSpawnerCommands, c: &mut Ctx, centre: Vec2, label: Opt
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn family_markers_share_the_map_but_discovery_and_the_local_map_stay_in_their_worldspace() {
+        use bevy::ecs::system::SystemState;
+        use model::MapTransform;
+
+        let root = WorldMap { root: 1, transform: MapTransform::default(), texture: "root.dds".into(), usable: [2048.0; 2], nw: [-2, 3], se: [1, 2] };
+        let child = WorldMap { transform: MapTransform { offset: [0.0, 3.0 * model::CELL], ..MapTransform::default() }, ..root.clone() };
+        let other = WorldMap { root: 3, ..root.clone() };
+        // Identical raw coordinates in different worldspaces must not discover each
+        // other's markers. Only the child projects onto the player's map centre.
+        let marker = |form, world| read::Marker { form, world, pos: [0.0; 3], name: format!("Place {form}"), kind: 1, flags: 1, radius: 10.0, reputation: None };
+        let mut st = DataState {
+            maps: [(1, Some(root)), (2, Some(child)), (3, Some(other))].into_iter().collect(),
+            markers: Some(vec![marker(10, 1), marker(20, 2), marker(30, 3)]),
+            ..DataState::default()
+        };
+        let mut world = World::new();
+        world.insert_resource(Location { world: 2, interior: None });
+        world.insert_resource(Player { heading: 0.7, pitch: 0.0, eye_height: 0.0, feet: [0.0; 3], body_eye: None, body_view: None, placed: None });
+        let mut state = SystemState::<Game>::new(&mut world);
+        {
+            let game = state.get_mut(&mut world).unwrap();
+            track(&mut st, &game);
+            assert_eq!(st.discovered, BTreeSet::from([20]));
+            let shown = world_map(&mut st, &game, None);
+            assert_eq!(shown.marks.len(), 2);
+            assert_eq!(shown.picture.as_ref().unwrap().0, "root.dds");
+            assert_eq!(shown.player, Some((MAP_MID, 0.7)));
+            assert_eq!(shown.marks[1].at, MAP_MID);
+            assert_eq!(shown.marks[0].icon, Some((1, false)));
+            assert_eq!(shown.marks[1].icon, Some((1, true)));
+            assert_eq!(st.cursor_marker, Some(20));
+            assert_eq!(shown.label.as_deref(), Some("Place 20"));
+            assert_eq!(st.world_logged, Some((2, 2, 2, 1, 1)));
+            // This is also the reference used by the map click to ask for travel.
+            assert_eq!(st.markers_of(2), vec![(20, [0.0; 3], true)]);
+            let local = local_map(&mut st, &game, None);
+            assert_eq!(local.marks.len(), 1);
+            assert_eq!(local.label.as_deref(), Some("Place 20"));
+        }
+        // The root view includes the child's marker too.
+        world.resource_mut::<Location>().world = 1;
+        let game = state.get_mut(&mut world).unwrap();
+        st.centre[WORLD] = None;
+        let shown = world_map(&mut st, &game, None);
+        assert_eq!(shown.marks.len(), 2);
+        assert_eq!(st.world_logged, Some((1, 2, 2, 1, 1)));
+    }
 
     #[test]
     fn silence_draws_the_flat_line() {

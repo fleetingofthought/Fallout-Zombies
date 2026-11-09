@@ -127,7 +127,8 @@ impl Game<'_> {
         }
         let owned: Vec<(FormId, u8)> = self.player.perks.iter().map(|(&p, &r)| (p, r)).collect();
         for (perk, rank) in owned {
-            let Some(def) = data.perks.get(&perk) else { continue };
+            let edited = self.lu3.perk_edits.get(&perk).cloned();
+            let Some(def) = edited.as_ref().or_else(|| data.perks.get(&perk)) else { continue };
             for e in def.entries.iter().filter(|e| e.rank < rank.max(1)) {
                 let PerkEffect::EntryPoint(ep) = &e.effect else { continue };
                 if ep.point != ACTIVATE || ep.function != ADD_ACTIVATE_CHOICE || ep.unit.is_none() {

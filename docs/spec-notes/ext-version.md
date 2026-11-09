@@ -167,6 +167,21 @@ low.
   implements that plugin's functions (C2's per-plugin modules), with the version that
   module claims; otherwise 0 and -1 [decision: claiming a plugin whose functions are
   missing would let mods take paths that then fail]. The names in §2 are the keys.
+  Reported (`fnv_script::vm::jip::PLUGINS`): JIP LN 57.3, ShowOff 184, kNVSE 37,
+  JohnnyGuitar 528, MCM Extensions 1 [observed: the owner's install], and since
+  2026-11-08 `"lStewieAl's Tweaks"` 941 and `"ttw_nvse"` 1 [design, owner: "technically
+  the dll is present, just in engine"]: Tale of Two Wastelands' start-up checks
+  (`TTWGenericHandlerScript`, TTW 3.4) show a "missing" message for Stewie's Tweaks
+  below 941 and for `IsPluginInstalled ttw_nvse` 0, while NVForever runs the functions
+  TTW calls from both (`TTW_*`, StewieGetValue, `fnv_game::nvse_small`). Neither plugin
+  is on the owner's install, so neither version was read: 941 is the lowest TTW accepts,
+  and TTW never asks ttw_nvse's. Most of Stewie's tweaks are not built (ext-small.md).
+- **GetIsLAA** (the 4 GB patch): 1 [design, 2026-11-08: NVForever is a 64-bit program with
+  no 2 GB limit; the unpatched original answers 0, observed in the gaps4 set; TTW's check
+  showed "4GB patch missing"].
+- Left as it is: TTW's `GetNumericIniSetting "bBackgroundLoadLipFiles:BackgroundLoad"`
+  check reads the game's INI as NVForever reads it; its message ("bad INI") shows only
+  when that setting is off or missing there.
 - **GetNVSEVersionFull**: a JIP function; answer only once JIP's module exists.
 - **GetLNVersion**: 0, as documented.
 

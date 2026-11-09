@@ -35,6 +35,17 @@ file keeps a flag per marker, "True if this marker can be used for fast-travelin
 is not a travel target is answered with the setting `sNoFastTravelUndiscovered`
 [hypothesis: by its name].
 
+The World Map includes markers from every worldspace sharing its map root: follow
+`WNAM` while `PNAM` Use Map Data (bit 2) is set [documented: xEdit WRLD,
+`schemas/fnv/world.json`]. Each uses its own `ONAM` and bounds before projection on
+the root's `ICON` / `MNAM`; the root's own offsets apply too [observed: run08 captures
+of MapMenu traits, 2026-11-07; formula in `pipboy.md` §5.3]. Discovery within `XRDS`
+requires the player to be in the marker's own worldspace. The Local Map and compass
+keep that worldspace's markers [design: `engine/nvf-play/src/pipboy/data.rs`].
+Travel uses the marker or linked arrival reference's destination worldspace, including
+another member of the map family; the clock rule below is unchanged
+[design: `engine/nvf-play/src/pipboy/data/travel.rs::go`].
+
 **From where.** The game settings name the refusals [documented: GECK wiki, game
 settings list]: `sNoFastTravelScriptBlock`, `sNoFastTravelCell`, `sNoFastTravelInAir`,
 `sNoFastTravelCombat`, `sNoFastTravelHostileActorsNear`, `sNoFastTravelOverencumbered`,

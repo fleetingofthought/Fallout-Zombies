@@ -168,6 +168,18 @@ work in New Vegas.
   so room membership is not stored per object and must be computed by containment when
   the cell loads [hypothesis]. All 677 interior room markers are persistent, none of the
   851 portals is. WastelandNV has no rooms or portals.
+- **Linked rooms** [documented: xEdit's record definitions name `XRMR` "Linked Rooms
+  Count" and `XLRM` "Linked Room"; observed: `fnvtool esm survey`, TTW 3.4 load order,
+  2026-11-08]: no New Vegas master has them, but Fallout 3's do, as Tale of Two
+  Wastelands loads them (REFR `XLRM` / `XRMR`: Fallout3.esm 320 / 265, Anchorage 16 / 13,
+  The Pitt 40 / 29, Broken Steel 38 / 29, Point Lookout 24 / 19, Mothership Zeta 69 / 56,
+  TaleOfTwoWastelands.esm 50 / 43). On a room marker each `XLRM` names another room
+  marker; the data names links both ways (Vault 101: 0x060ABBF5 → 0x060ABBF6, and
+  0x060ABBF6 → 0x060ABBF5 and 0x060ABBF7). The rule we build [hypothesis, from the name
+  and from that room: the space outside the G.O.A.T. classroom has no portal but the
+  classroom door, yet the corridor it opens onto is meant to be seen]: linked rooms are
+  seen together as if they were one room, through the same frustum (`engine/nvforever/src/rooms.rs`).
+  Owner report 2026-11-08: without them the corridor was culled from there.
 - **Primitive bounds are half extents** [observed, settles physics.md §4.1's
   hypothesis for room markers]: of the 1,341 (portal, room) pairs with an unrotated room,
   1,298 have the portal's centre on a face of the room box when `XPRM` bounds are read as

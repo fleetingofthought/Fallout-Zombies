@@ -16,6 +16,9 @@ pub const ON_EXPLOSION_HIT: &str = "showoff:onexplosionhit";
 
 #[derive(Debug, Default)]
 pub struct ShowOffState {
+    /// Batch 5's state: the level-up and pause menu asks, live explosions, the shot
+    /// switches (`nvse_showoff5`).
+    pub b5: crate::nvse_showoff5::State,
     /// The item a ShowOff:OnAdd handler is running for (GetAddedItemRefShowOff).
     pub added: Option<FormId>,
     /// The damage of the explosion a ShowOff:OnExplosionHit handler is running for.

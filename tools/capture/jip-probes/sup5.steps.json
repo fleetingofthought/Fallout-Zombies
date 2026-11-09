@@ -77,12 +77,6 @@
    "text": true
   },
   {
-   "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aIn := ar_Construct \"array\"\nar_Append aIn 7\nar_Append aIn 8\nlet fA := ExcelArrayToFile \"NVFProbe\\sup5\\arr\" 1 0 0 aIn 1\nSetFunctionValue (sv_Construct \"%g %g %g\" fA (ExcelReadFloat \"NVFProbe\\sup5\\arr\" 1 0 1) (ExcelGetRowCount \"NVFProbe\\sup5\\arr\" 1))\nEnd\n",
-   "label": "sup5.xl.arr.row",
-   "field": "value",
-   "text": true
-  },
-  {
    "query": "float fA\nfloat fB\nstring_var sText\narray_var aList\narray_var aIn\nref rP\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nExcelWriteString \"NVFProbe\\sup5\\arr\" 0 6 0 \"*FalloutNV.esm:000014\"\nlet aList := ExcelArrayFromFile \"NVFProbe\\sup5\\arr\" 0 0 0\nSetFunctionValue (sv_Construct \"%g %g %z %g %z %i\" (ar_Size aList) (aList[0]) (aList[1]) (aList[2]) (aList[3]) (aList[(ar_Size aList) - 1]))\nEnd\n",
    "label": "sup5.xl.arr.from",
    "field": "value",

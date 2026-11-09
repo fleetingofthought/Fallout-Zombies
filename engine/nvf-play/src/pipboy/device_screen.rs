@@ -326,6 +326,7 @@ pub fn draw(
     data: Option<Res<GameData>>,
     mut images: ResMut<Assets<Image>>,
     formats: Option<Res<CompressedImageFormatSupport>>,
+    glyphs: Res<crate::pad::PadGlyphs>,
 ) {
     // Laid out in the Pip-Boy's screen texture, at its size whatever the UI scale (#1631).
     let _canvas = crate::interface::original_units();
@@ -346,7 +347,7 @@ pub fn draw(
         fx.announced = false;
         return;
     }
-    let mut c = Ctx::new(&mut kit, data.as_deref(), &mut images, formats.as_deref());
+    let mut c = Ctx::new(&mut kit, data.as_deref(), &mut images, formats.as_deref(), &glyphs);
     fx.bake(c.data, &mut *c.images);
     let (rgb, kept) = (pipboy_rgb(), fx.kept);
     fx.rgb = rgb;
@@ -569,6 +570,7 @@ mod tests {
             .init_resource::<Kit>()
             .init_resource::<ScreenFx>()
             .init_resource::<Assets<Image>>()
+            .init_resource::<crate::pad::PadGlyphs>()
             .insert_resource(PipBoyScreen { image: Handle::default(), camera: Entity::PLACEHOLDER, on_model: true, pointer: None, scale: 1.0 })
             .add_systems(Update, (super::super::frame::draw, draw).chain());
         let mut pip = app.world_mut().resource_mut::<PipBoy>();

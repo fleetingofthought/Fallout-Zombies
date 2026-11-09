@@ -1468,3 +1468,38 @@ to the decoded file by cross-correlation and a per-band transfer estimate.
     lamps, or none; (b) which side of the crates and counter is lit brighter (that gives
     the azimuth). The same frame of a cell with azimuth 0 and pitch 270 (a cave on
     CavesDefaultTemplate) shows whether straight down holds.
+
+## Added 2026-11-09 (NVSE probe runs of the new batches and the merged sets, issue #1920)
+
+102. **Extender calls the runtime compiler refuses: HSVtoRGB, RGBtoHSV,
+    HudBarSetValueScriptVar.** (P3; ext-jg7.md, ext-sup7.md.) In the original none of
+    them compiles in a runtime-compiled probe script (xNVSE 6.4.9): HSVtoRGB/RGBtoHSV in 7
+    forms (literal inputs, float or int output variables, `let fA :=`, `let aR :=`, a bare
+    statement) and HudBarSetValueScriptVar in 7 (GameHour, a literal, a local float, 2 or 3
+    arguments, a quest variable, a missing bar) [observed: probe set jg7 and two
+    diagnostic sets, 2026-11-08]. NVForever's compiler takes all of them, so their answers
+    (channel rounding, hue in degrees, whether the bar follows the variable) are still
+    [hypothesis]. They need a script compiled into an ESP (the GECK, or NVFExtProbe.esp's
+    next version): for HSVtoRGB 120 0.5 0.5 and RGBtoHSV 0 0 255 and 64 128 64, print the
+    three outputs; for HudBarSetValueScriptVar, bind a bar to a quest float, change it, and
+    read the bar.
+    Also from these runs: HideItemBarterEx never made IsItemBarterHiddenEx read 1, on the
+    caps (F) or a 10mm pistol (434F), with and without the vendor argument [observed: jg7,
+    two runs]. Does HideItemBarterEx hide the item in Doc Mitchell's barter menu at all?
+    That needs the menu open (a capture with screenshots).
+
+103. **Setup the probe game lacks (owner step).** (P2; extender-compat.md.) On
+    2026-11-09 the probe game's load order gave NVFExtProbe.esp and The Mod Configuration
+    Menu.esp mod index 255 (not active), and the DLC packs load as GunRunnersArsenal 5,
+    ClassicPack 6, MercenaryPack 7, TribalPack 8, CaravanPack 9, not in the lab's order
+    [observed: GetModIndex in the original]. ITR NVSE, JIP++ (JIP PP LN) and ppNVSE are not
+    in `Data\NVSE\Plugins` (the original returns their function names as strings). The
+    ini-files set reads the test INIs of `tools/capture/jip-probes/config`, which must sit
+    in `Data\Config` first, and NVForever never writes into the game folder. Until these are
+    set up, the sets itr, jipppln, pp, ini-files, nvse-vars, mcm (one row) and the five xNVSE
+    core `ext/*` sets (strings, expressions, arrays, loops, udf; their SCOF logs stay empty)
+    can't be recorded on this machine, and rows that use NVFExtProbe.esp forms in
+    nvse-fourth, plugin-odds, gaps1 and showoff4 read as if the plugin were missing. Wanted
+    from the owner: NVFExtProbe.esp and the MCM plugin active, the three plugins installed,
+    the test INIs copied, and the plugin order, or the word that the lab should take the
+    game's order.

@@ -1,0 +1,89 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "jg7",
+ "title": "jg7, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := (IsCombatMusicEnabled)\nToggleCombatMusic 0\nlet fB := (IsCombatMusicEnabled)\nToggleCombatMusic 1\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB (IsCombatMusicEnabled))\nEnd\n",
+   "label": "jg7.music",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := (IsLevelUpMenuEnabled)\nToggleLevelUpMenu 0\nlet fB := (IsLevelUpMenuEnabled)\nToggleLevelUpMenu 1\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB (IsLevelUpMenuEnabled))\nEnd\n",
+   "label": "jg7.levelup",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fA := (GetYieldTimer)\nSetYieldTimer 5\nlet fB := (GetYieldTimer)\nSetYieldTimer 0\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB (GetYieldTimer))\nEnd\n",
+   "label": "jg7.yield",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := (GetViewmodelClipDistance)\nSetViewmodelClipDistance 2.5\nlet fA := (GetViewmodelClipDistance)\nSetViewmodelClipDistance 0\nlet fB := (GetViewmodelClipDistance)\nSetViewmodelClipDistance fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA fB)\nEnd\n",
+   "label": "jg7.clip",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fSave := (GetNiLODLevel)\nSetNiLODLevel 2\nlet fA := (GetNiLODLevel)\nSetNiLODLevel fSave\nSetFunctionValue (sv_Construct \"%g %g %g\" fSave fA (GetNiLODLevel))\nEnd\n",
+   "label": "jg7.lod",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fA := IsItemBarterHiddenEx rObj\nHideItemBarterEx rObj 1 1\nlet fB := IsItemBarterHiddenEx rObj\nHideItemBarterEx rObj 1\nlet fC := IsItemBarterHiddenEx rObj\nHideItemBarterEx rObj 0\nlet sText := sv_Construct \"%g %g %g %g\" fA fB fC (IsItemBarterHiddenEx rObj)\nHideItemBarterEx rObj 1 2 rOther\nlet fA := IsItemBarterHiddenEx rObj rOther\nlet fB := IsItemBarterHiddenEx rObj\nHideItemBarterEx rObj 0 0 rOther\nSetFunctionValue (sv_Construct \"%z %g %g %g\" sText fA fB (IsItemBarterHiddenEx rObj rOther))\nEnd\n",
+   "label": "jg7.barter",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"434F\"\nlet rOther := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fA := IsItemBarterHiddenEx rObj\nHideItemBarterEx rObj 1 1\nlet fB := IsItemBarterHiddenEx rObj\nHideItemBarterEx rObj 1\nlet fC := IsItemBarterHiddenEx rObj\nHideItemBarterEx rObj 0\nlet sText := sv_Construct \"%g %g %g %g\" fA fB fC (IsItemBarterHiddenEx rObj)\nHideItemBarterEx rObj 1 2 rOther\nlet fA := IsItemBarterHiddenEx rObj rOther\nlet fB := IsItemBarterHiddenEx rObj\nHideItemBarterEx rObj 0 0 rOther\nSetFunctionValue (sv_Construct \"%z %g %g %g\" sText fA fB (IsItemBarterHiddenEx rObj rOther))\nEnd\n",
+   "label": "jg7.barter.pistol",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"104C22\"\nlet fA := SetCustomReputationChangeIcon rObj 2 \"interface\\icons\\nvf.dds\"\nSetFunctionValue (sv_Construct \"%g %g\" fA (SetCustomReputationChangeIcon rObj 5 \"interface\\icons\\nvf.dds\"))\nEnd\n",
+   "label": "jg7.repicon",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"CDF51\"\nSetFunctionValue (rObj.GetCustomMapMarkerIcon)\nEnd\n",
+   "label": "jg7.markericon",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g %g %g %g %g %g %g %g\" (GetJohnnyPatch 1) (GetJohnnyPatch 2) (GetJohnnyPatch 3) (GetJohnnyPatch 4) (GetJohnnyPatch 5) (GetJohnnyPatch 6) (GetJohnnyPatch 7) (GetJohnnyPatch 8))\nEnd\n",
+   "label": "jg7.patches",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetDefaultHeapSize)\nEnd\n",
+   "label": "jg7.heap",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (sv_Construct \"%g %g %g\" (IsMenuPaused) (IsMenuPaused 1002) (IsMenuPaused 1009))\nEnd\n",
+   "label": "jg7.menupaused",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetLocationSpecificLoadScreensOnly)\nEnd\n",
+   "label": "jg7.lsonly",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\nfloat fRes\nfloat fSave\nfloat fA\nfloat fB\nfloat fC\nfloat fH\nfloat fS\nfloat fV\nstring_var sText\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue ((rP.RefAddr) != 0)\nEnd\n",
+   "label": "jg7.refaddr",
+   "field": "value"
+  }
+ ]
+}

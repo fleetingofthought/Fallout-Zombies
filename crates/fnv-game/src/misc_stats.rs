@@ -219,6 +219,10 @@ impl Game<'_> {
             self.count_stat(TIMES_SLEPT, 1.0);
         }
         self.rest.begin(sleep, hours);
+        // JohnnyGuitar's sleep/wait handlers: 1 wait, 2 sleep [documented:
+        // SetJohnnyOnSleepWaitEventHandler] (`crate::nvse_jg8`).
+        let mode = fnv_script::vm::XVal::Num(if sleep { 2.0 } else { 1.0 });
+        self.jg8_fire(crate::nvse_jg8::Ev::SleepWait, std::slice::from_ref(&mode), vec![mode.clone()]);
     }
 
     /// A quest was completed (CompleteQuest, a Complete Quest stage): every quest counts,

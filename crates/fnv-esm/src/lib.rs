@@ -16,6 +16,7 @@ pub mod plugin;
 pub mod raw;
 pub mod schema;
 pub mod survey;
+pub mod text_guess;
 
 pub use loadorder::LoadOrder;
 pub use plugin::{Plugin, PluginHeader};

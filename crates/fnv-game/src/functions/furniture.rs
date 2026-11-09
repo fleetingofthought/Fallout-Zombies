@@ -16,6 +16,14 @@ impl Game<'_> {
         self.extra.entry(actor).or_default().furniture = using;
     }
 
+    /// Whether an actor other than `actor` is on (or getting on or off) the furniture
+    /// `reference`: the player or any actor the engine seats, not only the AI's own
+    /// (`fnv_ai`'s kept furniture). A seat the player took is not free for a Find or Use
+    /// Item At package (the G.O.A.T., CG03: Paul went to the desk the player sat at).
+    pub fn furniture_used_by_other(&self, actor: FormId, reference: FormId) -> bool {
+        self.extra.iter().any(|(a, e)| *a != actor && e.furniture.is_some_and(|u| u.reference == reference))
+    }
+
     pub fn furniture_use(&self, actor: FormId) -> Option<FurnitureUse> {
         self.extra.get(&actor).and_then(|e| e.furniture)
     }
@@ -77,7 +85,7 @@ fn used(g: &Game, actor: FormId) -> Option<FormId> {
 /// `items::form_type_code` gives, and ACTI 21, TACT 22, TERM 23, CONT 27, DOOR 28,
 /// FLOR 38, FURN 39 [hypothesis: the same numbering continued; a shipped idle condition
 /// asks `GetIsUsedItemType 0x15` of seated actors, furniture.md §8].
-fn used_type_code(sig: &[u8; 4]) -> Option<i32> {
+pub(crate) fn used_type_code(sig: &[u8; 4]) -> Option<i32> {
     Some(match sig {
         b"ACTI" => 21,
         b"TACT" => 22,

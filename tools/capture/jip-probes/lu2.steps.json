@@ -1,0 +1,86 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "lu2",
+ "title": "lu2, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (RNVTARef.IsRadioRef)\nEnd\n",
+   "label": "lu2.radio.rnv.is",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (RNVTARef.GetRadioBroadcastType)\nEnd\n",
+   "label": "lu2.radio.rnv.type",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13D7A2\"\nSetFunctionValue (rObj.GetRadioRadius)\nEnd\n",
+   "label": "lu2.radio.cg.radius",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13D7A2\"\nSetFunctionValue (rObj.GetRadioStatic)\nEnd\n",
+   "label": "lu2.radio.cg.static",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13D7A2\"\nSetFunctionValue (rObj.GetRadioBroadcastType)\nEnd\n",
+   "label": "lu2.radio.cg.type",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13D7A2\"\nset rOther to rObj.GetRadioPosRef\nSetFunctionValue (GetFormIDString rOther)\nEnd\n",
+   "label": "lu2.radio.cg.posref",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.IsRadioRef)\nEnd\n",
+   "label": "lu2.radio.player.is",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"13D7A2\"\nrObj.SetRadioRadius 2000\nlet fRes := rObj.GetRadioRadius\nrObj.SetRadioRadius 5000\nSetFunctionValue fRes\nEnd\n",
+   "label": "lu2.radio.cg.set",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (rP.IsMapMarker)\nEnd\n",
+   "label": "lu2.marker.player",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (IsSkillMagazine MagazineNVExplosives)\nEnd\n",
+   "label": "lu2.magazine.explosives",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15169\"\nSetFunctionValue (IsSkillMagazine rObj)\nEnd\n",
+   "label": "lu2.magazine.stimpak",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nSetFunctionValue (GetShowQuestItems)\nEnd\n",
+   "label": "lu2.questitems",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet rObj := GetFormFromMod \"FalloutNV.esm\" \"15169\"\nlet aR := ar_List rObj, rObj, rP\nlet fRes := GetFormCountType aR, 47\nSetFunctionValue fRes\nEnd\n",
+   "label": "lu2.formcount.alch",
+   "field": "value"
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet aR := GetFormMods Scotch\nSetFunctionValue (sv_Construct \"%g %z\" (ar_Size aR) (aR[0]))\nEnd\n",
+   "label": "lu2.formmods.scotch",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rP\nref rObj\nref rOther\narray_var aR\nfloat fRes\nfloat fA\nBegin Function { }\nlet rP := GetFormFromMod \"FalloutNV.esm\" \"14\"\nlet fRes := GetIngestibleFlag JalapenoPepper 2\nSetIngestibleFlag JalapenoPepper 2 0\nlet fA := GetIngestibleFlag JalapenoPepper 2\nSetIngestibleFlag JalapenoPepper 2 1\nSetFunctionValue (sv_Construct \"%g %g %g\" fRes fA (GetIngestibleFlag JalapenoPepper 2))\nEnd\n",
+   "label": "lu2.ingestible.food",
+   "field": "value",
+   "text": true
+  }
+ ]
+}

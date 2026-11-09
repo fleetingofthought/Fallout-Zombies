@@ -682,15 +682,19 @@ fn big_numbers_in_g_are_scientific() {
 
 #[test]
 fn format_signs_and_huge_fields() {
-    // -0 writes as 0, + never doubles a minus, and a huge precision or width is cut
-    // (#1145 review, #1134) [hypothesis: the C library's forms].
+    // %g writes -0 as 0 [hypothesis], %f keeps its sign [observed: "%.4f" of -0 reads
+    // "-0.0000" in the original, #1919], + never doubles a minus, and a huge precision or
+    // width is cut (#1145 review, #1134) [hypothesis: the C library's forms].
     let h = run("string_var s
 string_var t
+string_var u
 begin GameMode
 let s := Sv_Construct \"%g|%+.2f|%+g|%05.1f\", -0, -0, -2.5, -1.5
 let t := Sv_Construct \"%.4000000000f|%4000000000g\", 1, 2
+let u := Sv_Construct \"%.4f|%.4f|%+.1f\", -0, 0, 0
 end");
-    assert_eq!(h.text(1), "0|+0.00|-2.5|-01.5");
+    assert_eq!(h.text(1), "0|-0.00|-2.5|-01.5");
+    assert_eq!(h.text(3), "-0.0000|0.0000|+0.0");
     assert!(h.text(2).len() < 1200, "{}", h.text(2).len());
 }
 
@@ -928,6 +932,25 @@ end",
     assert_eq!(h.0[&7], Value::Num(-1.0));
     assert_eq!(h.text(8), "FalloutNV");
     assert_eq!(h.text(9), "FalloutNV.esm:104C0C");
+}
+
+/// Tale of Two Wastelands' start-up checks pass for the plugins built into the engine:
+/// Stewie's Tweaks at TTW's minimum 941 and its own ttw_nvse (ext-version.md §5).
+#[test]
+fn ttws_plugin_checks_find_the_plugins_built_in() {
+    let h = run(
+        "float s
+float t
+float u
+begin GameMode
+let s := GetPluginVersion \"lStewieAl's Tweaks\"
+let t := IsPluginInstalled \"ttw_nvse\"
+let u := IsPluginInstalled \"Not A Plugin\"
+end",
+    );
+    assert_eq!(h.0[&1], Value::Num(941.0));
+    assert_eq!(h.0[&2], Value::Num(1.0));
+    assert_eq!(h.0[&3], Value::Num(0.0));
 }
 
 #[test]

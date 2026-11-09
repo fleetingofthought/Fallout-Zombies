@@ -1,0 +1,71 @@
+{
+ "format": "fnv.capture.steps/1",
+ "name": "sup4",
+ "title": "sup4, runtime-compiled",
+ "start": "any save (read-only)",
+ "steps": [
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Ar_List 10, 20, 30, 40, 50\nlet fA := Ar_GetRandomKey aR\nlet aIn := Ar_Map \"LALALA\"::1, \"TROLOLO\"::2\nlet sOut := Ar_GetRandomKeyMap aIn\nlet aR := Ar_List\nSetFunctionValue (sv_Construct \"%g %g %g\" ((fA >= 0) && (fA <= 4) && (fA == Floor fA)) ((sOut == \"LALALA\") || (sOut == \"TROLOLO\")) (Ar_GetRandomKey aR))\nEnd\n",
+   "label": "sup4.randomkey",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Ar_List PlayerREF, rD\nlet fA := Ar_HasInvalidRefs aR\nlet aR := Ar_List PlayerREF, rNone\nlet fB := Ar_HasInvalidRefs aR\nlet aIn := Ar_List rNone\nlet aR := Ar_List PlayerREF, aIn\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fA fB (Ar_HasInvalidRefs aR) (Ar_HasInvalidRefs aR 1))\nEnd\n",
+   "label": "sup4.invalidrefs",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := Ar_List 3, 8, 5, 1\nAr_SetFloatsFrom aR fA fB fC\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB fC)\nEnd\n",
+   "label": "sup4.setfloats",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nPlayerREF.AuxVarErase \"*sup4\"\nCallFunctionNextFrame (Begin Function { }\nPlayerREF.AuxVarSetFlt \"*sup4\" 1\nEnd) 2\nSetFunctionValue (PlayerREF.AuxVarGetFlt \"*sup4\")\nEnd\n",
+   "label": "sup4.nextframe.set",
+   "field": "value"
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue 0\nEnd\n",
+   "label": "sup4.nextframe.wait",
+   "field": "value"
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nSetFunctionValue (PlayerREF.AuxVarGetFlt \"*sup4\")\nPlayerREF.AuxVarErase \"*sup4\"\nEnd\n",
+   "label": "sup4.nextframe.read",
+   "field": "value"
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet sOut := GetSaveName 1\nSetFunctionValue (sv_Construct \"%g %g %g %g\" ((GetLoadedSaveSize 0) > 0) ((GetLoadedSaveSize 1) > 0) ((Sv_Length sOut) > 0) ((Sv_Length (GetSaveName 0)) > 0))\nEnd\n",
+   "label": "sup4.saves",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet aR := GetNearCells 0\nlet fA := Ar_Size aR\nlet aR := GetNearCells 2\nlet fB := Ar_Size aR\nlet aR := GetNearCells -1\nlet fC := Ar_Size aR\nlet aR := GetNearMapMarkers 2\nSetFunctionValue (sv_Construct \"%g %g %g %g\" fA fB fC (Ar_Size aR))\nEnd\n",
+   "label": "sup4.near",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fA := MarkScriptOnLoad\nSetFunctionValue (sv_Construct \"%g %g\" fA (IsScriptMarkedOnLoad GSDocMitchellScript))\nEnd\n",
+   "label": "sup4.markonload",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet fA := rD.SetCaughtPCPickpocketting\nlet fB := rD.SetCaughtPCPickpocketting 1\nlet fC := rD.SetCaughtPCPickpocketting\nrD.SetCaughtPCPickpocketting fA\nSetFunctionValue (sv_Construct \"%g %g %g\" fA fB fC)\nEnd\n",
+   "label": "sup4.caught",
+   "field": "value",
+   "text": true
+  },
+  {
+   "query": "ref rD\nref rNone\nref rH\narray_var aR\narray_var aIn\nfloat fA\nfloat fB\nfloat fC\nstring_var sOut\nBegin Function { }\nlet rD := GetFormFromMod \"FalloutNV.esm\" \"104C0F\"\nlet sOut := TranslitText \"\u00cf\u00f0\u00e8\u00e2\u00e5\u00f2\"\nSetFunctionValue sOut\nEnd\n",
+   "label": "sup4.translit",
+   "field": "value",
+   "text": true
+  }
+ ]
+}

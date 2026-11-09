@@ -36,6 +36,18 @@ impl Game<'_> {
         let open: Vec<i32> = state.objectives.iter().filter(|(_, o)| o.displayed && !o.completed).map(|(i, _)| *i).collect();
         let mut out = Vec::new();
         for objective in open {
+            // The scripts' target list when they changed it (`crate::nvse_jip10`): a
+            // record's target keeps its conditions, an added one has none [hypothesis].
+            if self.objective_targets_changed(quest, objective) {
+                let record = def.objectives.get(&objective).map(|d| d.targets.clone()).unwrap_or_default();
+                for (index, target) in self.objective_targets(quest, objective).into_iter().enumerate() {
+                    let t = record.iter().find(|t| t.target == Some(target));
+                    let label = format!("QUST {quest} objective {objective} target {index}");
+                    let shown = t.is_none_or(|t| self.conditions_pass(&t.conditions, Some(target), None, &label));
+                    out.push(TargetCheck { quest, objective, index, target, ignores_locks: t.is_some_and(|t| t.ignores_locks), shown });
+                }
+                continue;
+            }
             for (index, t) in def.objectives.get(&objective).into_iter().flat_map(|d| d.targets.iter().enumerate()) {
                 let Some(target) = t.target else { continue };
                 let label = format!("QUST {quest} objective {objective} target {index}");

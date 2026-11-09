@@ -215,6 +215,11 @@ pub trait Host {
     fn var_name(&mut self, _var: &VarRef) -> Option<String> {
         None
     }
+    /// A number for a variable the host can read again later, outside this run (SUP's
+    /// HudBarSetValueScriptVar); `None` when it cannot (a result script's locals).
+    fn var_place(&mut self, _var: &VarRef) -> Option<u32> {
+        None
+    }
     /// The UDF MessageBoxExAlt runs with the pressed button.
     fn box_callback(&mut self, _func: XVal) {}
     /// A message without a Message form (MessageEx; MessageBoxEx with its buttons).
@@ -1203,9 +1208,10 @@ const MAX_FORMAT_FIELD: usize = 512;
 /// `%.Ye`/`%.YE`; switches `+`, space, `-` (left-aligned), `0` (zero padding). The wiki's
 /// "%g as an integer, 1E+006" (String Formatting, Vanilla Game Options) differs [hypothesis:
 /// the older runtime's form]. The sign is written apart from the digits, so `+` never
-/// doubles one; -0 writes as 0, as NVForever wrote it before (the C library writes `-0`;
-/// what the game writes is not probed, and an angle of -0 reads "0" in the smoke runs)
-/// [hypothesis]; infinity and NaN write `inf` and `nan` (`INF`, `NAN`
+/// doubles one; `%f` writes -0 with its sign, as the C library does [observed: nvse.math
+/// `qtoeuler.z90`, `%.4f` of QToEuler's -0 Y angle reads "-0.0000" in the original,
+/// #1919]; `%g` and `%e` write -0 as 0, as NVForever wrote it before [hypothesis: not
+/// probed; the C library writes `-0`]; infinity and NaN write `inf` and `nan` (`INF`, `NAN`
 /// for an upper-case code) and are padded with spaces, as the C library does
 /// [hypothesis: not probed].
 fn printf_number(spec: &str, code: char, x: f64) -> String {
@@ -1217,7 +1223,7 @@ fn printf_number(spec: &str, code: char, x: f64) -> String {
     };
     let width: usize = w.parse::<usize>().unwrap_or(0).min(MAX_FORMAT_FIELD);
     let upper = code.is_ascii_uppercase();
-    let negative = x < 0.0;
+    let negative = x < 0.0 || (x == 0.0 && x.is_sign_negative() && code.eq_ignore_ascii_case(&'f'));
     let a = x.abs();
     // The C library's scientific form of a value at or above 0: the mantissa, then e (or
     // E), a sign and at least two digits.
@@ -2231,7 +2237,22 @@ impl Vm<'_, '_> {
                 }
                 Ok(XVal::Array(self.store()?.new_array(kind, es)))
             }
-            _ => Err(VmError::NotBuilt(format!("the extender function {n} (task D2)"))),
+            // The plugins' own array functions are the host's (JohnnyGuitar's Ar_Shuffle,
+            // Ar_SortEditor; SUP's Ar_GetRandomKey …); one that writes script variables
+            // (SUP's Ar_SetFloatsFrom) goes as the other output functions do.
+            _ => {
+                if let Some(outs) = out_params(n) {
+                    return self.out_call(n, c, outs);
+                }
+                let mut args = Vec::with_capacity(nargs);
+                for k in 0..nargs {
+                    args.push(val(self, k)?);
+                }
+                match self.host.ext_call(n, None, &args) {
+                    Some(r) => r.map_err(VmError::Host),
+                    None => Err(VmError::NotBuilt(format!("the extender function {n} (task D2)"))),
+                }
+            }
         }
     }
 
@@ -2888,8 +2909,10 @@ impl Vm<'_, '_> {
         // [documented: SetBipedModelPathAlt `armor slot "format" values…`; observed:
         // gaps8, "NVF\Ground%g.nif" 7 reads NVF\Ground7.nif]: the format third.
         // RunScriptSnippet `delay "format" values…` likewise [documented].
-        if lname == "setformdescription" || lname == "messageexalt" || lname == "setbipedmodelpathalt" || lname == "runscriptsnippet" {
-            let at = if lname == "setbipedmodelpathalt" { 2 } else { 1 };
+        // [documented: SetObjectiveText `quest index "format" valuesâ€¦`, WriteStringToFile
+        // `path append "format" valuesâ€¦`, ModLogPrint `indent "format" valuesâ€¦`] likewise.
+        if matches!(lname.as_str(), "setformdescription" | "messageexalt" | "setbipedmodelpathalt" | "runscriptsnippet" | "setobjectivetext" | "writestringtofile" | "modlogprint") {
+            let at = if matches!(lname.as_str(), "setbipedmodelpathalt" | "setobjectivetext" | "writestringtofile") { 2 } else { 1 };
             let mut first = Vec::new();
             for e in c.args.iter().take(at) {
                 first.push(self.xeval(e)?);
@@ -2899,6 +2922,33 @@ impl Vm<'_, '_> {
             return match self.host.ext_call(&lname, None, &first) {
                 Some(r) => r.map_err(VmError::Host),
                 None => Ok(XVal::Num(0.0)),
+            };
+        }
+        // [documented: HudBarSetValueScriptVar `barName MyQuest.MyVariable calcMax`, the
+        // bar reading the variable later]: the variable goes to the host by its place
+        // (`Host::var_place`), as -1 - its number; anything that is no placed variable as
+        // 0, which the host refuses.
+        if lname == "hudbarsetvaluescriptvar" {
+            let mut args = Vec::with_capacity(c.args.len());
+            for (k, a) in c.args.iter().enumerate() {
+                args.push(match a {
+                    XExpr::Var { var, .. } if k == 1 => XVal::Num(self.host.var_place(var).map_or(0.0, |p| -1.0 - f64::from(p))),
+                    _ if k == 1 => XVal::Num(0.0),
+                    other => self.xeval(other)?,
+                });
+            }
+            return match self.host.ext_call(&lname, None, &args) {
+                Some(r) => r.map_err(VmError::Host),
+                None => Err(VmError::NotBuilt(format!("the extender function {name}"))),
+            };
+        }
+        // [documented: MarkScriptOnLoad, "Marks calling script"]: the host gets the
+        // running script form (0 for none) as the argument.
+        if lname == "markscriptonload" {
+            let script = XVal::Ref(self.host.current_script().unwrap_or(0));
+            return match self.host.ext_call(&lname, None, &[script]) {
+                Some(r) => r.map_err(VmError::Host),
+                None => Err(VmError::NotBuilt(format!("the extender function {name}"))),
             };
         }
         // Functions that give their results in script variables: the host answers with an
@@ -3213,6 +3263,8 @@ impl Vm<'_, '_> {
 fn out_params(lname: &str) -> Option<&'static [usize]> {
     Some(match lname {
         "getangleex" => &[0, 1, 2],
+        // [documented: GetActorVelocityAlt, "placed into the 3 specified Script Variables"].
+        "getactorvelocityalt" => &[0, 1, 2],
         "getanglesbetweenpoints" => &[6, 7],
         "getpointraycastpos" => &[5, 6, 7],
         "geteditorposition" => &[0, 1, 2, 3, 4, 5],
@@ -3226,6 +3278,20 @@ fn out_params(lname: &str) -> Option<&'static [usize]> {
         "gettfcposex" => &[0, 1, 2],
         "gettfcangleex" | "gettfcrotex" => &[0, 1],
         "getcalculatedpos" | "getcalculatedposalt" => &[2, 3],
+        // [documented: GetPosEx, GetNifBlockTranslationAlt, GetNifBlockRotationAlt, "the
+        // result XYZ are placed into the 3 specified Script Variables"].
+        "getposex" => &[0, 1, 2],
+        "getnifblocktranslationalt" | "getnifblockrotationalt" => &[1, 2, 3],
+        // [documented: GetMousePosition, GetMouseMovement, "output … to fPosX and fPosY
+        // script variables"].
+        "getmouseposition" | "getmousemovement" => &[0, 1],
+        // [documented: Ar_SetFloatsFrom, "Sets float variables from variables in array (up
+        // to 10)"].
+        "ar_setfloatsfrom" => &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        // [documented: HSVtoRGB, RGBtoHSV, three script variables in and three out].
+        "hsvtorgb" | "rgbtohsv" => &[3, 4, 5],
+        // [documented: GetSystemColorAlt and GetPixelFromBMP, three variables for R, G, B].
+        "getsystemcoloralt" | "getpixelfrombmp" => &[1, 2, 3],
         _ => return None,
     })
 }

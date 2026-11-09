@@ -30,6 +30,13 @@
 //! draw, and the per-view preparing scales with them (graphics-enhanced.md §5.5); then
 //! `transparent <v> views, <n> sorted draws`, the blended draws, one each.
 //!
+//! `profile changes:` counts the meshes, images and game materials made, changed and
+//! dropped per frame, and `profile change sources:` splits the changed meshes and game
+//! materials by the system holding them when they changed (faces, vertex morphs,
+//! particles, fades, effect shaders, rig and actor material animation, emittance; the rest
+//! by the entity using them) and counts the changes of the other material types (water,
+//! sky, grass, trees): `classify_changes`.
+//!
 //! `profile outfits:` counts successful NPC spawns by appearance source and committed
 //! `follow_inventory` replacements per window, with their total synchronous time in ms.
 //! A replacement counts one actor, even if both its armour and weapon change. Failed
@@ -318,7 +325,22 @@ impl Plugin for ProfilePlugin {
         info!("test aid NVF_PLAY_TEST_PROFILE: a span profile every {every} s");
         // GPU time per render pass (timestamp queries, Vulkan and DX12): `profile gpu:`.
         crate::graphics::ensure_render_diagnostics(app);
-        app.insert_resource(ProfileWindow { every, ..default() }).init_resource::<AssetChanges>().add_systems(Last, (count_asset_changes, report).chain());
+        app.insert_resource(ProfileWindow { every, ..default() }).init_resource::<AssetChanges>().init_resource::<ChangedAssets>().add_systems(
+            Last,
+            (
+                count_asset_changes,
+                count_material_type::<crate::water::WaterMaterial>,
+                count_material_type::<crate::sky::SkyMaterial>,
+                count_material_type::<crate::grass::GrassMaterial>,
+                count_material_type::<crate::tree::LeafMaterial>,
+                count_material_type::<crate::tree::BarkMaterial>,
+                count_material_type::<crate::tree::BillboardMaterial>,
+                classify_changes,
+                report,
+                report_change_sources,
+            )
+                .chain(),
+        );
         if let Some(render) = app.get_sub_app_mut(bevy::render::RenderApp) {
             render.add_systems(bevy::render::Render, pipeline_counts.in_set(bevy::render::RenderSystems::Render));
             render.add_systems(bevy::render::Render, (move |mut last: Local<Option<Instant>>, shadow: Res<ViewBinnedRenderPhases<bevy::pbr::Shadow>>, opaque: Res<ViewBinnedRenderPhases<Opaque3d>>, mask: Res<ViewBinnedRenderPhases<AlphaMask3d>>, prepass: Res<ViewBinnedRenderPhases<Opaque3dPrepass>>, mask_prepass: Res<ViewBinnedRenderPhases<AlphaMask3dPrepass>>, transparent: Res<bevy::render::render_phase::ViewSortedRenderPhases<bevy::core_pipeline::core_3d::Transparent3d>>| {
@@ -389,6 +411,7 @@ fn slot<A: Asset>(e: &AssetEvent<A>) -> Option<usize> {
 
 fn count_asset_changes(
     mut c: ResMut<AssetChanges>,
+    mut by_asset: ResMut<ChangedAssets>,
     mut mesh_events: MessageReader<AssetEvent<Mesh>>,
     mut image_events: MessageReader<AssetEvent<Image>>,
     mut material_events: MessageReader<AssetEvent<nvf_assets::NifMaterial>>,
@@ -398,6 +421,9 @@ fn count_asset_changes(
     for e in mesh_events.read() {
         if let Some(i) = slot(e) {
             c.counts[0][i] += 1;
+        }
+        if let AssetEvent::Modified { id } = e {
+            by_asset.frame_meshes.push(*id);
         }
         if let AssetEvent::Added { id } | AssetEvent::Modified { id } = e {
             if let Some(m) = meshes.get(*id) {
@@ -419,12 +445,243 @@ fn count_asset_changes(
         if let Some(i) = slot(e) {
             c.counts[2][i] += 1;
         }
+        if let AssetEvent::Modified { id } = e {
+            by_asset.frame_materials.push(*id);
+        }
     }
+}
+
+/// The changed (modified) meshes and game materials of a window, by the source holding
+/// them when they changed, and the other material types' changes by type, for `profile
+/// change sources:` (which systems the `profile changes:` counts come from). Filled only
+/// while the profile aid runs.
+#[derive(Resource, Default)]
+struct ChangedAssets {
+    frames: u32,
+    /// This frame's Modified events, classified by `classify_changes` the same frame.
+    frame_meshes: Vec<AssetId<Mesh>>,
+    frame_materials: Vec<AssetId<nvf_assets::NifMaterial>>,
+    /// Changes of the window by (source, detail); the detail is set for [`OTHER`] only.
+    meshes: HashMap<(&'static str, String), u32>,
+    materials: HashMap<(&'static str, String), u32>,
+    other_types: std::collections::BTreeMap<&'static str, u64>,
+    /// The first user's label of each `other` asset seen, kept across windows so that
+    /// the users are looked for once per asset ([`user_label`]).
+    mesh_labels: HashMap<AssetId<Mesh>, String>,
+    material_labels: HashMap<AssetId<nvf_assets::NifMaterial>, String>,
+    /// The `report` window last listed.
+    reported: u32,
+}
+
+/// Count the modified assets of another material type, under [`type_label`].
+fn count_material_type<M: Asset>(mut c: ResMut<ChangedAssets>, mut events: MessageReader<AssetEvent<M>>) {
+    let n = events.read().filter(|e| matches!(e, AssetEvent::Modified { .. })).count();
+    if n > 0 {
+        *c.other_types.entry(type_label::<M>()).or_default() += n as u64;
+    }
+}
+
+/// A material type's own name: the last path segment, inside an `ExtendedMaterial`'s
+/// generics the extension's (`GrassSway`, `WaterMaterial`).
+fn type_label<M>() -> &'static str {
+    let full = std::any::type_name::<M>().trim_end_matches('>');
+    full.rsplit("::").next().unwrap_or(full)
+}
+
+/// The source the `other` entries of a split fall under; their details are listed.
+const OTHER: &str = "other";
+
+/// Changes per frame by source, the most first, with the busiest `other` details after:
+/// `faces 3.00, other 1.50 (ref 0010ABCD 1.00, …)`. `items`: (source, detail, changes);
+/// the detail counts only for [`OTHER`].
+fn sources_text(items: &[(&'static str, String, u32)], frames: f64, details: usize) -> String {
+    let mut sources: HashMap<&str, u64> = HashMap::new();
+    let mut others: HashMap<&str, u64> = HashMap::new();
+    for (source, detail, n) in items {
+        *sources.entry(source).or_default() += u64::from(*n);
+        if *source == OTHER {
+            *others.entry(detail.as_str()).or_default() += u64::from(*n);
+        }
+    }
+    fn sorted(m: HashMap<&str, u64>) -> Vec<(&str, u64)> {
+        let mut v: Vec<(&str, u64)> = m.into_iter().collect();
+        v.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
+        v
+    }
+    let per = |n: u64| n as f64 / frames.max(1.0);
+    let others = sorted(others);
+    let parts: Vec<String> = sorted(sources)
+        .into_iter()
+        .map(|(s, n)| {
+            if s != OTHER {
+                return format!("{s} {:.2}", per(n));
+            }
+            let mut listed: Vec<String> = others.iter().take(details).map(|(d, n)| format!("{d} {:.2}", per(*n))).collect();
+            if others.len() > details {
+                listed.push(format!("{} more", others.len() - details));
+            }
+            format!("{s} {:.2} ({})", per(n), listed.join(", "))
+        })
+        .collect();
+    if parts.is_empty() {
+        "none".into()
+    } else {
+        parts.join(", ")
+    }
+}
+
+/// The source of a changed asset: the first of `sources` (name, the ids that source
+/// holds) that holds it, else [`OTHER`].
+fn source_of<I: PartialEq>(id: &I, sources: &[(&'static str, Vec<I>)]) -> &'static str {
+    sources.iter().find(|(_, ids)| ids.contains(id)).map_or(OTHER, |(name, _)| *name)
+}
+
+type UserLabels<'w, 's> = Query<'w, 's, (Option<&'static Name>, Option<&'static nvf_play::RefVisual>)>;
+
+/// What a changed asset's first user is called: its own or an ancestor's `Name` (a NIF
+/// node or file, an actor), or the placed reference it belongs to.
+fn user_label(e: Entity, parents: &Query<&ChildOf>, labels: &UserLabels) -> String {
+    for a in std::iter::once(e).chain(parents.iter_ancestors(e)) {
+        match labels.get(a) {
+            Ok((Some(n), _)) => return n.as_str().rsplit(['\\', '/']).next().unwrap_or(n.as_str()).to_string(),
+            Ok((None, Some(r))) => return format!("ref {:08X}", r.0),
+            _ => {}
+        }
+    }
+    "(unnamed)".into()
+}
+
+/// Classify this frame's changed meshes and game materials by the asset ids the writing
+/// systems hold now, so a fade, face or particle burst that ends inside the window is
+/// still counted as what it was when it changed.
+///
+/// Meshes: the moving faces (`lips`), the vertex morphs, the particle systems, the
+/// effect-shader bursts, the sky dome. Game materials: the see-through copies of fading
+/// meshes (`nvf_play::fade`), the effect shaders' overlay and hole copies, the copies a
+/// rig's clips drive (`material_anim`, `RigMaterials` slots it owns), the materials an
+/// actor's clips drive (`actor_materials`: each driven shape's own copy and the material
+/// it wears now, which is what posing writes while the shape fades or is drawn faded by
+/// actor alpha; NPCs' rigs and the player's, `PlayerRigMaterials`), the emittance copies.
+/// These are the assets
+/// each system writes, but holding is not writing: an asset two of them hold is counted
+/// under the first in that order (an actor's material copy that is fading is written by
+/// the fade and may be by `actor_materials` too: it counts as a fade), and a write by any
+/// other system to an asset one of them holds counts under that one. The rest is `other`,
+/// by its first user's [`user_label`], looked for once per asset (a scan of the users
+/// only on frames that bring an `other` asset not seen before).
+#[allow(clippy::type_complexity, clippy::too_many_arguments)]
+fn classify_changes(
+    mut changed: ResMut<ChangedAssets>,
+    (lips, models, particles, effect_particles, shaders, emittance): (
+        Option<Res<crate::lips::LipState>>,
+        Option<Res<nvf_assets::ModelCache>>,
+        Option<Res<crate::particles::Particles>>,
+        Option<Res<crate::effect_particles::EffectParticles>>,
+        Option<Res<crate::effect_shaders::Shaders>>,
+        Option<Res<crate::emittance::EmittanceState>>,
+    ),
+    (domes, fading, rigs, actors, player_rigs): (
+        Query<&Mesh3d, With<crate::sky::SkyDome>>,
+        Query<&nvf_play::fade::Fading>,
+        Query<&nvf_assets::material_anim::RigMaterials>,
+        Query<&crate::actor_materials::ActorMaterials>,
+        Option<Res<crate::actor_materials::PlayerRigMaterials>>,
+    ),
+    mesh_users: Query<(Entity, &Mesh3d)>,
+    material_users: Query<(Entity, &MeshMaterial3d<nvf_assets::NifMaterial>)>,
+    parents: Query<&ChildOf>,
+    labels: UserLabels,
+) {
+    let c = &mut *changed;
+    c.frames += 1;
+    if !c.frame_meshes.is_empty() {
+        let sources = [
+            ("faces", lips.iter().flat_map(|l| l.face_meshes()).collect::<Vec<_>>()),
+            ("vertex morphs", models.iter().flat_map(|m| m.morphs.ids()).collect()),
+            ("particles", particles.iter().flat_map(|p| p.mesh_ids()).collect()),
+            ("effect particles", effect_particles.iter().flat_map(|p| p.mesh_ids()).collect()),
+            ("sky dome", domes.iter().map(|m| m.0.id()).collect()),
+        ];
+        let ids = std::mem::take(&mut c.frame_meshes);
+        let classified: Vec<(&'static str, AssetId<Mesh>)> = ids.iter().map(|id| (source_of(id, &sources), *id)).collect();
+        if classified.iter().any(|(s, id)| *s == OTHER && !c.mesh_labels.contains_key(id)) {
+            if c.mesh_labels.len() > 20_000 {
+                c.mesh_labels.clear();
+            }
+            for (e, m) in &mesh_users {
+                let id = m.0.id();
+                if !c.mesh_labels.contains_key(&id) && classified.iter().any(|(s, i)| *s == OTHER && *i == id) {
+                    c.mesh_labels.insert(id, user_label(e, &parents, &labels));
+                }
+            }
+        }
+        for (source, id) in classified {
+            let detail = if source == OTHER { c.mesh_labels.get(&id).cloned().unwrap_or_else(|| "(no user)".into()) } else { String::new() };
+            *c.meshes.entry((source, detail)).or_default() += 1;
+        }
+    }
+    if !c.frame_materials.is_empty() {
+        let sources = [
+            ("fades", fading.iter().map(|f| f.copy().id()).collect::<Vec<_>>()),
+            ("effect shaders", shaders.iter().flat_map(|s| s.active.values().flat_map(|a| a.materials()).collect::<Vec<_>>()).collect()),
+            ("rig material animation", rigs.iter().flat_map(|r| r.slots.iter().filter(|s| s.own).map(|s| s.handle.id())).collect()),
+            ("actor material animation", {
+                // Each driven shape's own copy and the material it wears now (a faded
+                // shape's posing writes that one), NPCs' and the player's rigs alike.
+                let player = player_rigs.iter().flat_map(|p| p.0.values());
+                let shapes = actors.iter().chain(player).flat_map(|a| a.shapes());
+                shapes.flat_map(|(e, mine)| mine.into_iter().chain(material_users.get(e).ok().map(|(_, m)| m.0.id()))).collect()
+            }),
+            ("emittance", emittance.iter().flat_map(|e| e.copies()).collect()),
+        ];
+        let ids = std::mem::take(&mut c.frame_materials);
+        let classified: Vec<(&'static str, AssetId<nvf_assets::NifMaterial>)> = ids.iter().map(|id| (source_of(id, &sources), *id)).collect();
+        if classified.iter().any(|(s, id)| *s == OTHER && !c.material_labels.contains_key(id)) {
+            if c.material_labels.len() > 20_000 {
+                c.material_labels.clear();
+            }
+            for (e, m) in &material_users {
+                let id = m.0.id();
+                if !c.material_labels.contains_key(&id) && classified.iter().any(|(s, i)| *s == OTHER && *i == id) {
+                    c.material_labels.insert(id, user_label(e, &parents, &labels));
+                }
+            }
+        }
+        for (source, id) in classified {
+            let detail = if source == OTHER { c.material_labels.get(&id).cloned().unwrap_or_else(|| "(no user)".into()) } else { String::new() };
+            *c.materials.entry((source, detail)).or_default() += 1;
+        }
+    }
+}
+
+/// `profile change sources:` after each `report` window (`classify_changes` says what
+/// the sources are).
+fn report_change_sources(w: Res<ProfileWindow>, mut changed: ResMut<ChangedAssets>) {
+    if w.reports == changed.reported {
+        return;
+    }
+    let c = &mut *changed;
+    c.reported = w.reports;
+    let frames = f64::from(c.frames.max(1));
+    let items = |m: &HashMap<(&'static str, String), u32>| m.iter().map(|((s, d), n)| (*s, d.clone(), *n)).collect::<Vec<_>>();
+    let types: Vec<String> = c.other_types.iter().map(|(t, n)| format!("{t} {:.2}", *n as f64 / frames)).collect();
+    info!(
+        "profile change sources: per frame: meshes changed: {}; game materials changed: {}; other material types changed: {}",
+        sources_text(&items(&c.meshes), frames, 6),
+        sources_text(&items(&c.materials), frames, 6),
+        if types.is_empty() { "none".into() } else { types.join(", ") }
+    );
+    c.frames = 0;
+    c.meshes.clear();
+    c.materials.clear();
+    c.other_types.clear();
 }
 
 #[derive(Resource, Default)]
 struct ProfileWindow {
     every: f32,
+    /// Windows reported so far (`report_change_sources` follows them).
+    reports: u32,
     /// The process's processor time at the window's start (seconds).
     cpu_at: Option<f64>,
     since: f32,
@@ -602,7 +859,7 @@ fn report(
         let listed: Vec<String> = gpu.iter().take(16).map(|(k, ms)| format!("{k} {ms:.2}")).collect();
         info!("profile gpu: ms a frame: {}", listed.join(", "));
     }
-    *w = ProfileWindow { every: w.every, cpu_at: cpu, ..default() };
+    *w = ProfileWindow { every: w.every, cpu_at: cpu, reports: w.reports.wrapping_add(1), ..default() };
 }
 
 /// The counts at the start of a window (`report_counts`).
@@ -753,6 +1010,56 @@ fn process_cpu_secs() -> Option<f64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn change_sources_sum_per_source_and_list_the_others() {
+        let items = vec![
+            ("faces", String::new(), 30),
+            ("faces", String::new(), 10),
+            (OTHER, "ref 00000001".to_string(), 5),
+            (OTHER, "ref 00000002".to_string(), 15),
+            (OTHER, "ref 00000002".to_string(), 5),
+            (OTHER, "Flag".to_string(), 1),
+        ];
+        assert_eq!(sources_text(&items, 10.0, 2), "faces 4.00, other 2.60 (ref 00000002 2.00, ref 00000001 0.50, 1 more)");
+        assert_eq!(sources_text(&[], 10.0, 2), "none");
+    }
+
+    #[test]
+    fn actor_material_writes_count_under_their_writer_faded_or_the_player_s() {
+        use crate::actor_materials::{ActorMaterials, PlayerRigMaterials};
+        use bevy::ecs::system::RunSystemOnce;
+        let h = |n: u128| Handle::<nvf_assets::NifMaterial>::Uuid(bevy::asset::uuid::Uuid::from_u128(n), Default::default());
+        let mut world = World::new();
+        // An NPC's driven shape with no copy of its own: drawn faded (actor alpha), posing
+        // writes the see-through material it wears.
+        let faded = world.spawn(MeshMaterial3d(h(1))).id();
+        world.spawn(ActorMaterials::with_shape(faded));
+        // The player's weapon in hand, driven by the first-person rig's clips.
+        let weapon = world.spawn(MeshMaterial3d(h(2))).id();
+        let mut player = PlayerRigMaterials::default();
+        player.0.insert(Entity::PLACEHOLDER, ActorMaterials::with_shape(weapon));
+        world.insert_resource(player);
+        world.insert_resource(ChangedAssets { frame_materials: vec![h(1).id(), h(2).id(), h(3).id()], ..default() });
+        world.run_system_once(classify_changes).unwrap();
+        let c = world.resource::<ChangedAssets>();
+        assert_eq!(c.materials.get(&("actor material animation", String::new())), Some(&2));
+        assert_eq!(c.materials.get(&(OTHER, "(no user)".to_string())), Some(&1));
+    }
+
+    #[test]
+    fn a_change_counts_under_the_first_source_holding_it() {
+        let sources = [("fades", vec![1, 2]), ("rig material animation", vec![2, 3])];
+        assert_eq!(source_of(&2, &sources), "fades");
+        assert_eq!(source_of(&3, &sources), "rig material animation");
+        assert_eq!(source_of(&9, &sources), OTHER);
+    }
+
+    #[test]
+    fn material_types_are_named_by_their_own_part() {
+        assert_eq!(type_label::<crate::water::WaterMaterial>(), "WaterMaterial");
+        assert_eq!(type_label::<crate::grass::GrassMaterial>(), "GrassSway");
+    }
 
     #[test]
     fn system_names_keep_their_module() {

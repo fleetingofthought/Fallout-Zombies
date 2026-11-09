@@ -273,6 +273,10 @@ pub(crate) fn call(g: &mut Game, _ctx: &RunCtx, name: &str, subject: Option<Form
         "getbasefactionrank" => {
             let (Some(f), Some(a)) = (form(args, 0), actor_at(g, 1)) else { return Some(Ok(XVal::Num(-1.0))) };
             let src = g.data.base_template_source(a, |d| d.template_factions);
+            // SetBaseFactionRank's first (`crate::nvse_jip11`).
+            if let Some(r) = g.base_rank_override(src, f) {
+                return Some(Ok(XVal::Num(f64::from(r))));
+            }
             XVal::Num(g.data.actors.get(&src).and_then(|d| d.factions.iter().find(|(x, _)| *x == f)).map_or(-1.0, |&(_, r)| f64::from(r)))
         }
         // `ref.GetInFactionList list`: a member of one of the list's factions, by the

@@ -106,8 +106,10 @@ impl Game<'_> {
     /// `actor`'s aggro radius in game units when its AI data turns the behaviour on
     /// (LNSetAggroRadius's radius first, `nvse_lutana`).
     pub fn aggro_radius(&self, actor: FormId) -> Option<f64> {
-        let (id, d) = self.template_source(crate::functions::base_of(self, actor)?, actor, |d| d.template_ai)?;
-        let r = self.other.lutana.aggro_radius.get(&id).copied().unwrap_or(d.aggro_radius);
+        let b = crate::functions::base_of(self, actor)?;
+        let (_, d) = self.template_source(b, actor, |d| d.template_ai)?;
+        // LNSetAggroRadius changes the NPC record's radius (`nvse_lutana::ai_record`).
+        let r = self.other.lutana.aggro_radius.get(&b).copied().unwrap_or(d.aggro_radius);
         (d.aggro_radius_behavior && r > 0).then_some(r as f64)
     }
 

@@ -214,6 +214,7 @@ impl Game<'_> {
     /// its owner and the time since the last update, 1 for a timer counting frames
     /// (no flag 4) [documented: SetOnAuxTimerUpdateHandler; AuxTimerStart's flags].
     pub(crate) fn aux_timer_updates(&mut self) {
+        self.showoff5_tick();
         // Handlers set or removed last frame take effect now [observed: showoff3
         // so3.aux.start.reg, a start in the step that set the handler runs nothing, a
         // restart one frame later runs it; so3.aux.start.remove, a restart in the step that
